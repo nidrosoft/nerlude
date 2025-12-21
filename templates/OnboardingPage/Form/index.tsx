@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+import UserType from "./UserType";
+import CompanySize from "./CompanySize";
+import HowFoundUs from "./HowFoundUs";
+import UseCase from "./UseCase";
+import ProductCount from "./ProductCount";
+
+const OnboardingForm = () => {
+    const router = useRouter();
+    const [activeId, setActiveId] = useState(0);
+    const [userType, setUserType] = useState("");
+    const [companySize, setCompanySize] = useState("");
+    const [howFoundUs, setHowFoundUs] = useState("");
+    const [useCase, setUseCase] = useState("");
+    const [productCount, setProductCount] = useState("");
+
+    const handleNext = () => {
+        if (activeId < 4) {
+            setActiveId(activeId + 1);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (activeId > 0) {
+            setActiveId(activeId - 1);
+        }
+    };
+
+    const handleComplete = () => {
+        // TODO: Save onboarding data to store/database
+        console.log({
+            userType,
+            companySize,
+            howFoundUs,
+            useCase,
+            productCount,
+        });
+        router.push("/dashboard");
+    };
+
+    const canProceed = () => {
+        switch (activeId) {
+            case 0:
+                return userType !== "";
+            case 1:
+                return companySize !== "";
+            case 2:
+                return howFoundUs !== "";
+            case 3:
+                return useCase !== "";
+            case 4:
+                return productCount !== "";
+            default:
+                return false;
+        }
+    };
+
+    const getTitle = () => {
+        switch (activeId) {
+            case 0:
+                return "What best describes you?";
+            case 1:
+                return "What's the size of your team?";
+            case 2:
+                return "How did you hear about us?";
+            case 3:
+                return "What's your primary goal?";
+            case 4:
+                return "How many products do you manage?";
+            default:
+                return "";
+        }
+    };
+
+    return (
+        <div className="flex flex-col w-full max-w-152 max-h-200 h-full max-3xl:max-w-127 max-3xl:max-h-169 max-xl:max-w-136 max-md:max-h-full">
+            <div className="flex mb-20 max-3xl:mb-12 max-2xl:mb-10 max-md:flex-col-reverse max-md:mb-8">
+                <div className="grow text-h2 max-md:text-h3">
+                    {getTitle()}
+                </div>
+                <div className="flex justify-center items-center shrink-0 w-16 h-7 mt-3 ml-8 border-[1.5px] border-primary2/15 bg-primary2/5 rounded-full text-button text-primary2 max-md:m-0 max-md:mb-4">
+                    {activeId + 1} / 5
+                </div>
+            </div>
+            <div className="">
+                {activeId === 0 && (
+                    <UserType value={userType} onChange={setUserType} />
+                )}
+                {activeId === 1 && (
+                    <CompanySize value={companySize} onChange={setCompanySize} />
+                )}
+                {activeId === 2 && (
+                    <HowFoundUs value={howFoundUs} onChange={setHowFoundUs} />
+                )}
+                {activeId === 3 && (
+                    <UseCase value={useCase} onChange={setUseCase} />
+                )}
+                {activeId === 4 && (
+                    <ProductCount value={productCount} onChange={setProductCount} />
+                )}
+            </div>
+            <div className="flex mt-auto pt-10 max-md:-mx-1 max-md:pt-6">
+                {activeId > 0 && (
+                    <Button
+                        className="min-w-40 max-md:min-w-[calc(50%-0.5rem)] max-md:mx-1"
+                        isStroke
+                        onClick={handlePrevious}
+                    >
+                        Previous
+                    </Button>
+                )}
+                {activeId === 4 ? (
+                    <Button
+                        className="min-w-40 ml-auto max-md:min-w-[calc(50%-0.5rem)] max-md:mx-1"
+                        isSecondary
+                        onClick={handleComplete}
+                        disabled={!canProceed()}
+                    >
+                        Get Started
+                    </Button>
+                ) : (
+                    <Button
+                        className="min-w-40 ml-auto max-md:min-w-[calc(50%-0.5rem)] max-md:mx-1"
+                        isSecondary
+                        onClick={handleNext}
+                        disabled={!canProceed()}
+                    >
+                        Continue
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default OnboardingForm;
