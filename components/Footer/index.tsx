@@ -7,19 +7,32 @@ const Footer = () => {
     return (
         <div className={`${pathname === "/" ? "max-md:h-18" : ""}`}>
             <div
-                className={`center flex justify-center items-center h-22 max-md:h-12 ${
+                className={`center flex justify-between items-center h-22 max-md:h-auto max-md:flex-col max-md:gap-4 max-md:py-6 ${
                     pathname === "/" ? "max-md:hidden" : ""
                 }`}
             >
-                <div className="text-small text-t-tertiary">
-                    © 2024, Robot Global FZCO / UI8
-                </div>
-                <div className="w-0.25 h-1 mx-4 bg-t-tertiary max-md:mx-auto"></div>
                 <Link
                     className="text-small text-t-secondary transition-colors hover:text-t-primary"
-                    href="/"
+                    href="/terms"
                 >
-                    Terms & Licensing
+                    Terms & Conditions
+                </Link>
+                <div className="text-small text-t-tertiary">
+                    Made with ❤️ by{" "}
+                    <a
+                        href="https://www.linkedin.com/in/cyriac-zeh"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-t-secondary hover:text-t-primary transition-colors underline"
+                    >
+                        Cyriac Zeh
+                    </a>
+                </div>
+                <Link
+                    className="text-small text-t-secondary transition-colors hover:text-t-primary"
+                    href="/privacy"
+                >
+                    Privacy Policy
                 </Link>
             </div>
         </div>

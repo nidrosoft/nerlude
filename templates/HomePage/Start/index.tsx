@@ -1,20 +1,7 @@
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
-import { useMediaQuery } from "usehooks-ts";
 import Button from "@/components/Button";
 import Image from "@/components/Image";
 
 const Start = () => {
-    const [isMounted, setIsMounted] = useState(false);
-    const { theme } = useTheme();
-    const isTablet = useMediaQuery("(max-width: 1023px)");
-    const isMobile = useMediaQuery("(max-width: 767px)");
-
-    useEffect(() => {
-        setTimeout(() => {
-            setIsMounted(true);
-        }, 50);
-    }, []);
 
     return (
         <div className="section section-lines before:-top-38! before:-bottom-21! after:-top-38! after:-bottom-21! max-lg:before:-top-23.5! max-lg:before:-bottom-4! max-lg:after:-top-23.5! max-lg:after:-bottom-4! max-md:before:hidden max-md:after:hidden">
@@ -33,52 +20,36 @@ const Start = () => {
                         </div>
                         <div className="relative z-2 pt-20 px-18 bg-b-subtle95 rounded-4xl overflow-hidden max-lg:pt-12 max-lg:px-8 max-md:pt-8 max-md:px-6">
                             <div className="mb-18 text-center max-lg:max-w-96 max-lg:mx-auto max-lg:mb-10 max-md:max-w-full max-md:text-left max-md:mb-12">
+                                <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-primary1/10 text-primary1 text-button">
+                                    <span className="w-2 h-2 rounded-full bg-primary1 animate-pulse"></span>
+                                    Ready to start?
+                                </div>
                                 <div className="mb-5 text-h1">
                                     Take control of your product infrastructure
                                 </div>
                                 <div className="mb-8 text-body-lg text-t-secondary max-md:mb-6">
-                                    Join founders who never miss a renewal or lose
+                                    Join 2,000+ founders who never miss a renewal or lose
                                     track of their services again
                                 </div>
-                                <Button isSecondary as="link" href="/quiz">
-                                    Get started for free
-                                </Button>
-                            </div>
-                            <div className="relative max-w-155 mx-auto rounded-t-3xl shadow-hover before:absolute before:top-10.5 before:-left-23 before:right-13 before:-bottom-29.5 before:rounded-2xl before:bg-b-box-shadow before:blur-2xl max-lg:max-w-139 max-lg:before:left-20 max-lg:before:-right-35 max-md:px-1 max-md:before:left-25 dark:before:-left-5 dark:before:-right-5">
-                                <div className="absolute top-10 -right-16 -left-16 -bottom-8 rounded-t-xl bg-b-surface2 opacity-50 max-lg:-left-6 max-lg:-right-6 max-md:top-4 max-md:-left-3 max-md:-right-3 dark:before:absolute dark:before:inset-0 dark:before:rounded-t-2xl dark:before:border-[1.5px] dark:before:border-[#FDFDFD]/5 dark:before:mask-b-from-40% dark:before:mask-b-to-100%"></div>
-                                {isMounted && (
-                                    <Image
-                                        className="relative z-2 w-full h-auto rounded-t-2xl"
-                                        src={
-                                            theme === "dark"
-                                                ? isMobile
-                                                    ? "/images/start-pic-dark-mobile-1.png"
-                                                    : isTablet
-                                                    ? "/images/start-pic-dark-tablet-1.png"
-                                                    : "/images/start-pic-dark-1.png"
-                                                : isMobile
-                                                ? "/images/start-pic-light-mobile-1.png"
-                                                : isTablet
-                                                ? "/images/start-pic-light-tablet-1.png"
-                                                : "/images/start-pic-light-1.png"
-                                        }
-                                        width={
-                                            isMobile
-                                                ? 255
-                                                : isTablet
-                                                ? 556
-                                                : 620
-                                        }
-                                        height={
-                                            isMobile
-                                                ? 293
-                                                : isTablet
-                                                ? 328
-                                                : 328
-                                        }
-                                        alt=""
-                                    />
-                                )}
+                                <div className="flex flex-col items-center gap-4 max-md:items-start">
+                                    <Button isSecondary as="link" href="/onboarding">
+                                        Get started for free
+                                    </Button>
+                                    <div className="flex items-center gap-4 text-small text-t-secondary max-md:flex-col max-md:items-start max-md:gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary2"></span>
+                                            No credit card required
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary2"></span>
+                                            Free forever for 1 project
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary2"></span>
+                                            Setup in 2 minutes
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

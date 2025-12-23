@@ -1,20 +1,33 @@
 "use client";
 
 import Layout from "@/components/Layout";
-import Pricing from "@/components/Pricing";
 import Hero from "./Hero";
-import About from "./About";
+import LogoCloud from "./LogoCloud";
+import ProblemStatement from "./ProblemStatement";
+import Features from "./Features";
+import HowItWorks from "./HowItWorks";
+import Integrations from "./Integrations";
+import UseCases from "./UseCases";
+import Testimonials from "./Testimonials";
+import Comparison from "./Comparison";
+import PricingSection from "./PricingSection";
+import FAQ from "./FAQ";
 import Start from "./Start";
 
 const HomePage = () => {
     return (
         <Layout>
             <Hero />
-            <About />
-            <Pricing
-                className="section"
-                title="Simple pricing for founders and teams"
-            />
+            <LogoCloud />
+            <ProblemStatement />
+            <Features />
+            <HowItWorks />
+            <Integrations />
+            <UseCases />
+            <Testimonials />
+            <Comparison />
+            <PricingSection />
+            <FAQ />
             <Start />
         </Layout>
     );
