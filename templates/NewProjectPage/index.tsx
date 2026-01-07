@@ -186,7 +186,7 @@ const NewProjectPage = () => {
                         </div>
                         <button
                             onClick={handleCancel}
-                            className="flex items-center justify-center size-12 rounded-full bg-b-surface2 hover:shadow-hover hover:bg-b-surface1 transition-all fill-t-secondary hover:fill-t-primary"
+                            className="flex items-center justify-center size-12 rounded-full bg-b-surface2 border border-stroke-subtle hover:border-stroke-primary hover:shadow-hover transition-all fill-t-secondary hover:fill-t-primary"
                         >
                             <Icon className="!w-5 !h-5" name="close" />
                         </button>
@@ -230,7 +230,7 @@ const NewProjectPage = () => {
                     )}
 
                     {/* Step Content */}
-                    <div className={`p-6 rounded-4xl ${currentStep === "method" || currentStep === "processing" || currentStep === "success" ? "" : "bg-b-surface2"}`}>
+                    <div className={`p-6 rounded-4xl ${currentStep === "processing" || currentStep === "success" ? "" : "bg-b-surface2 border border-stroke-subtle"}`}>
                         {/* Method Selection */}
                         {currentStep === "method" && (
                             <MethodSelector onSelect={handleMethodSelect} />

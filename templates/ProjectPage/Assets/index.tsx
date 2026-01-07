@@ -9,6 +9,8 @@ type AssetCategory = "logos" | "screenshots" | "documents";
 
 type Props = {
     projectId: string;
+    showUploadModal?: boolean;
+    onCloseUploadModal?: () => void;
 };
 
 // Color styles for each asset category (soft bg + strong icon color)
@@ -18,13 +20,21 @@ const categoryStyles: Record<string, { bg: string; border: string; icon: string 
     Documents: { bg: "bg-amber-500/10", border: "border-amber-500/20", icon: "fill-amber-500" },
 };
 
-const Assets = ({ projectId }: Props) => {
+const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal }: Props) => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [uploadCategory, setUploadCategory] = useState<AssetCategory>("logos");
+
+    // Combine internal and external modal state
+    const modalOpen = showUploadModal || isUploadModalOpen;
 
     const handleOpenUploadModal = (category?: AssetCategory) => {
         if (category) setUploadCategory(category);
         setIsUploadModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsUploadModalOpen(false);
+        onCloseUploadModal?.();
     };
 
     const handleUpload = (asset: any) => {
@@ -102,8 +112,8 @@ const Assets = ({ projectId }: Props) => {
 
             {/* Upload Modal */}
             <AssetUploadModal
-                isOpen={isUploadModalOpen}
-                onClose={() => setIsUploadModalOpen(false)}
+                isOpen={modalOpen}
+                onClose={handleCloseModal}
                 onUpload={handleUpload}
                 defaultCategory={uploadCategory}
             />

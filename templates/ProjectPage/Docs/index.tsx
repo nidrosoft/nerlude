@@ -9,6 +9,8 @@ import { useDocsContext } from "./DocsContext";
 
 type Props = {
     projectId: string;
+    showNewDocModal?: boolean;
+    onCloseNewDocModal?: () => void;
 };
 
 const DocsContent = () => {
@@ -28,9 +30,9 @@ const DocsContent = () => {
     );
 };
 
-const Docs = ({ projectId }: Props) => {
+const Docs = ({ projectId, showNewDocModal = false, onCloseNewDocModal }: Props) => {
     return (
-        <DocsProvider projectId={projectId}>
+        <DocsProvider projectId={projectId} externalShowNewDocModal={showNewDocModal} onExternalCloseNewDocModal={onCloseNewDocModal}>
             <DocsContent />
         </DocsProvider>
     );

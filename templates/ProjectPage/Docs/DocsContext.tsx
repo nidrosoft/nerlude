@@ -36,16 +36,28 @@ export const useDocsContext = () => {
 interface DocsProviderProps {
     children: ReactNode;
     projectId: string;
+    externalShowNewDocModal?: boolean;
+    onExternalCloseNewDocModal?: () => void;
 }
 
-export const DocsProvider = ({ children, projectId }: DocsProviderProps) => {
+export const DocsProvider = ({ children, projectId, externalShowNewDocModal = false, onExternalCloseNewDocModal }: DocsProviderProps) => {
     const [documents, setDocuments] = useState<Document[]>(initialDocs);
     const [activeDocId, setActiveDocId] = useState<string>(initialDocs[0].id);
     const [isExpanded, setIsExpanded] = useState(false);
-    const [showNewDocModal, setShowNewDocModal] = useState(false);
+    const [internalShowNewDocModal, setInternalShowNewDocModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Combine internal and external modal state
+    const showNewDocModal = externalShowNewDocModal || internalShowNewDocModal;
+    
+    const setShowNewDocModal = (show: boolean) => {
+        setInternalShowNewDocModal(show);
+        if (!show) {
+            onExternalCloseNewDocModal?.();
+        }
+    };
 
     const activeDoc = documents.find((d) => d.id === activeDocId);
 

@@ -4,19 +4,19 @@ import Button from "@/components/Button";
 const Hero = () => {
 
     return (
-        <div className="section section-lines pt-20 text-center max-md:pt-10 max-md:text-left before:-top-22! after:-top-22! max-lg:before:top-0! max-lg:after:top-0! max-md:before:bottom-4! max-md:after:bottom-4!">
+        <div className="section section-lines pt-20 text-center max-md:pt-10 before:-top-22! after:-top-22! max-lg:before:top-0! max-lg:after:top-0! max-md:before:bottom-4! max-md:after:bottom-4!">
             <div className="relative mb-12 before:absolute before:-top-6 before:left-0 before:right-0 before:h-[1.5px] before:bg-linear-(--gradient-horizontal) max-lg:before:-top-11 max-md:before:-top-4 after:absolute after:-bottom-6 after:left-0 after:right-0 after:h-[1.5px] after:bg-linear-(--gradient-horizontal) max-lg:after:-bottom-7 max-md:after:-bottom-4 max-md:mb-8">
-                <div className="text-center max-md:text-left">
-                    <h1 className="mb-5 text-[5rem] leading-[5.5rem] font-bold tracking-tight max-lg:text-[3.5rem] max-lg:leading-[4rem] max-md:text-[3rem] max-md:leading-[3.5rem]">
-                        The Control Center For Your<br /> Product Infrastructure
+                <div className="text-center">
+                    <h1 className="mb-5 text-[5rem] leading-[5.5rem] font-bold tracking-tight max-lg:text-[3.5rem] max-lg:leading-[4rem] max-md:text-[1.75rem] max-md:leading-[2.25rem]">
+                        The Control Center For Your<br className="max-md:hidden" /> Product Infrastructure
                     </h1>
-                    <div className="max-w-150 mx-auto text-body-lg text-t-secondary max-md:max-w-full max-md:mx-0">
+                    <div className="max-w-150 mx-auto text-body-lg text-t-secondary max-md:max-w-[85%] max-md:text-sm">
                         Manage domains, hosting, databases, API keys, and credentials across all your products. Never miss a renewal again.
                     </div>
                 </div>
             </div>
             <Button
-                className="mb-12 max-lg:mb-10 max-md:ml-6"
+                className="mb-12 max-lg:mb-10"
                 isSecondary
                 as="link"
                 href="/onboarding"

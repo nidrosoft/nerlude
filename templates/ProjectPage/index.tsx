@@ -35,6 +35,8 @@ const ProjectPage = ({ projectId }: Props) => {
     const [viewMode, setViewMode] = useState<"list" | "graph">("list");
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
+    const [showAssetUploadModal, setShowAssetUploadModal] = useState(false);
+    const [showNewDocModal, setShowNewDocModal] = useState(false);
     const toast = useToast();
 
     const project = mockProjects.find((p) => p.id === projectId);
@@ -111,9 +113,9 @@ const ProjectPage = ({ projectId }: Props) => {
             case "stacks":
                 return <Stacks services={projectServices} stacks={projectStacks} projectId={projectId} viewMode={viewMode} />;
             case "assets":
-                return <Assets projectId={projectId} />;
+                return <Assets projectId={projectId} showUploadModal={showAssetUploadModal} onCloseUploadModal={() => setShowAssetUploadModal(false)} />;
             case "docs":
-                return <Docs projectId={projectId} />;
+                return <Docs projectId={projectId} showNewDocModal={showNewDocModal} onCloseNewDocModal={() => setShowNewDocModal(false)} />;
             case "team":
                 return <Team projectId={projectId} showInviteModal={showTeamInviteModal} onCloseInviteModal={() => setShowTeamInviteModal(false)} />;
             case "settings":
@@ -256,7 +258,7 @@ const ProjectPage = ({ projectId }: Props) => {
                 return (
                     <div className="flex items-center justify-between">
                         <h2 className="text-h3">Assets</h2>
-                        <Button isStroke>
+                        <Button isStroke onClick={() => setShowAssetUploadModal(true)}>
                             <Icon className="mr-2 !w-5 !h-5" name="plus" />
                             Upload Asset
                         </Button>
@@ -266,7 +268,7 @@ const ProjectPage = ({ projectId }: Props) => {
                 return (
                     <div className="flex items-center justify-between">
                         <h2 className="text-h3">Docs & Notes</h2>
-                        <Button isStroke>
+                        <Button isStroke onClick={() => setShowNewDocModal(true)}>
                             <Icon className="mr-2 !w-5 !h-5" name="plus" />
                             New Document
                         </Button>
