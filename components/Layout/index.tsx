@@ -3,6 +3,8 @@ import Header from "@/components/Header";
 import ThemeButton from "@/components/ThemeButton";
 import Footer from "@/components/Footer";
 import UpButton from "@/components/UpButton";
+import MobileNav from "@/components/MobileNav";
+import HelpWidget from "@/components/HelpWidget";
 
 type Props = {
     className?: string;
@@ -46,8 +48,10 @@ const Layout = ({
             />
             <div className={`grow ${classContainer || ""}`}>{children}</div>
             {!isHiddenFooter && <Footer />}
-            <ThemeButton className="fixed! left-5 bottom-5 z-5" />
+            <ThemeButton className="fixed! left-5 bottom-5 z-5 max-md:bottom-20" />
             <UpButton />
+            {isLoggedIn && <MobileNav />}
+            {isLoggedIn && <HelpWidget />}
         </div>
     );
 };

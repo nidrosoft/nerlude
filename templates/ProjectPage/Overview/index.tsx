@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Project, Service, Alert } from "@/types";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import { useToast } from "@/components/Toast";
 
 type Props = {
     project: Project;
@@ -11,6 +13,8 @@ type Props = {
 };
 
 const Overview = ({ project, services, alerts }: Props) => {
+    const toast = useToast();
+    const [showActionsMenu, setShowActionsMenu] = useState(false);
     const projectAlerts = alerts.filter((a) => a.projectId === project.id && !a.isDismissed);
     const totalMonthlyCost = services.reduce((sum, s) => {
         if (s.costFrequency === "monthly") return sum + s.costAmount;
@@ -64,17 +68,7 @@ const Overview = ({ project, services, alerts }: Props) => {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-h3">Overview</h2>
-                <div className="flex gap-2">
-                    <Button isStroke as="link" href={`/projects/${project.id}/services/new`}>
-                        <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                        Add Service
-                    </Button>
-                </div>
-            </div>
-
-            <div className="flex flex-wrap -mt-4 -mx-2 mb-8">
+            <div className="flex flex-wrap -mx-2 mb-8">
                 {stats.map((stat) => (
                     <div
                         key={stat.label}

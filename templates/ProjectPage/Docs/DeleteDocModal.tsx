@@ -1,0 +1,36 @@
+"use client";
+
+import Button from "@/components/Button";
+import { useDocsContext } from "./DocsContext";
+
+const DeleteDocModal = () => {
+    const { showDeleteConfirm, setShowDeleteConfirm, activeDoc, handleDeleteDocument } = useDocsContext();
+
+    if (!showDeleteConfirm) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-[#282828]/90" onClick={() => setShowDeleteConfirm(false)} />
+            <div className="relative z-10 w-full max-w-md mx-4 p-8 rounded-4xl bg-b-surface1">
+                <h3 className="text-h4 mb-2">Delete Document</h3>
+                <p className="text-small text-t-secondary mb-6">
+                    Are you sure you want to delete "{activeDoc?.title}"? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                    <Button className="flex-1" isStroke onClick={() => setShowDeleteConfirm(false)}>
+                        Cancel
+                    </Button>
+                    <Button 
+                        className="flex-1 !bg-red-500 hover:!bg-red-600 !text-white" 
+                        isPrimary 
+                        onClick={handleDeleteDocument}
+                    >
+                        Delete
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DeleteDocModal;

@@ -1,0 +1,194 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://nerlude.com/#website",
+      "url": "https://nerlude.com",
+      "name": "Nerlude",
+      "description": "The control center for founders to manage their entire SaaS stack. Track subscriptions, store credentials securely, and never miss a renewal.",
+      "publisher": {
+        "@id": "https://nerlude.com/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://nerlude.com/help?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://nerlude.com/#organization",
+      "name": "Nerlude",
+      "url": "https://nerlude.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://nerlude.com/images/Logo-dark.svg"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hello@nerlude.com",
+        "contactType": "customer support"
+      },
+      "sameAs": [
+        "https://twitter.com/nerlude"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://nerlude.com/#software",
+      "name": "Nerlude",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "SaaS Management",
+      "operatingSystem": "Web Browser",
+      "description": "Nerlude is a SaaS management platform that helps founders and teams track all their subscriptions, store credentials securely, manage costs, and never miss a renewal. It's the control center for your entire tech stack.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free Plan",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "1 project, 5 services, 1 team member, project documentation, community support"
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Plan",
+          "price": "12",
+          "priceCurrency": "USD",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "12",
+            "priceCurrency": "USD",
+            "billingDuration": "P1M"
+          },
+          "description": "Unlimited projects & services, 3 team members, credential encryption, priority support, 100+ integrations"
+        },
+        {
+          "@type": "Offer",
+          "name": "Team Plan",
+          "price": "29",
+          "priceCurrency": "USD",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "29",
+            "priceCurrency": "USD",
+            "billingDuration": "P1M"
+          },
+          "description": "Everything in Pro, unlimited team members, role-based access, audit logs, SSO integration, dedicated support"
+        }
+      ],
+      "featureList": [
+        "SaaS subscription tracking",
+        "Secure credential storage with AES-256 encryption",
+        "Automated renewal reminders",
+        "Monthly cost tracking and burn rate analysis",
+        "Team collaboration with role-based permissions",
+        "100+ pre-built service integrations",
+        "Project documentation and notes",
+        "REST API and webhooks",
+        "CSV import and export",
+        "Slack notifications"
+      ],
+      "screenshot": "https://nerlude.com/images/twittercard.png",
+      "softwareHelp": {
+        "@type": "WebPage",
+        "url": "https://nerlude.com/help"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://nerlude.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Nerlude?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nerlude is a SaaS management platform that helps founders and teams track all their subscriptions, store credentials securely, manage costs, and never miss a renewal. It's the control center for your entire tech stack."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Nerlude free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Nerlude offers a free plan that includes 1 project, 1 team member, 5 services, project documentation, and community support. No credit card required, free forever."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Nerlude keep my credentials secure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nerlude uses AES-256 encryption to protect all stored credentials. Your data is encrypted at rest and in transit. We're SOC 2 ready and GDPR compliant."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What services does Nerlude support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nerlude supports 100+ popular services including AWS, Stripe, Vercel, MongoDB, SendGrid, Sentry, and many more. You can also add custom services for any tool not in our library."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I collaborate with my team on Nerlude?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Nerlude supports team collaboration with role-based access control. You can invite team members as Owners, Admins, Members, or Viewers with different permission levels."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do renewal reminders work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nerlude automatically sends you reminders 30, 14, 7, and 1 day before any subscription renews. You can customize these intervals and receive notifications via email or Slack."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Nerlude have an API?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, Nerlude offers a REST API for programmatic access to your data, webhooks for real-time event notifications, and integrations with Zapier and Slack."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Who is Nerlude for?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nerlude is designed for solo founders, indie hackers, startup teams, and small businesses who need to manage multiple SaaS subscriptions across their projects."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://nerlude.com/help/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://nerlude.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Help Center",
+          "item": "https://nerlude.com/help"
+        }
+      ]
+    }
+  ]
+}

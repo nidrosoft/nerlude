@@ -1,9 +1,10 @@
-import { ServiceCategory } from "@/types";
+import { ServiceCategory, ServiceSubCategory } from "@/types";
 
 export interface ServiceRegistryItem {
     id: string;
     name: string;
     category: ServiceCategory;
+    subCategory: ServiceSubCategory;
     description: string;
     website: string;
     logoUrl?: string;
@@ -23,11 +24,16 @@ export interface ServiceRegistryItem {
 }
 
 export const serviceRegistry: ServiceRegistryItem[] = [
+    // ============================================
+    // INFRASTRUCTURE - Hosting, Database, Storage
+    // ============================================
+    
     // Hosting
     {
         id: "vercel",
         name: "Vercel",
-        category: "hosting",
+        category: "infrastructure",
+        subCategory: "hosting",
         description: "Deploy web projects with zero configuration",
         website: "https://vercel.com",
         plans: [
@@ -43,7 +49,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "railway",
         name: "Railway",
-        category: "hosting",
+        category: "infrastructure",
+        subCategory: "hosting",
         description: "Infrastructure platform for deploying apps",
         website: "https://railway.app",
         plans: [
@@ -58,7 +65,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "netlify",
         name: "Netlify",
-        category: "hosting",
+        category: "infrastructure",
+        subCategory: "hosting",
         description: "Build and deploy modern web projects",
         website: "https://netlify.com",
         plans: [
@@ -73,7 +81,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "aws",
         name: "AWS",
-        category: "hosting",
+        category: "infrastructure",
+        subCategory: "hosting",
         description: "Amazon Web Services cloud platform",
         website: "https://aws.amazon.com",
         plans: [
@@ -85,11 +94,13 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "region", label: "Region", type: "text", placeholder: "us-east-1", required: true },
         ],
     },
+    
     // Database
     {
         id: "supabase",
         name: "Supabase",
-        category: "database",
+        category: "infrastructure",
+        subCategory: "database",
         description: "Open source Firebase alternative with Postgres",
         website: "https://supabase.com",
         plans: [
@@ -106,7 +117,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "planetscale",
         name: "PlanetScale",
-        category: "database",
+        category: "infrastructure",
+        subCategory: "database",
         description: "Serverless MySQL platform",
         website: "https://planetscale.com",
         plans: [
@@ -121,7 +133,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "mongodb",
         name: "MongoDB Atlas",
-        category: "database",
+        category: "infrastructure",
+        subCategory: "database",
         description: "Cloud-hosted MongoDB service",
         website: "https://mongodb.com/atlas",
         plans: [
@@ -136,7 +149,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "redis",
         name: "Redis Cloud",
-        category: "database",
+        category: "infrastructure",
+        subCategory: "database",
         description: "Managed Redis hosting",
         website: "https://redis.com/cloud",
         plans: [
@@ -148,214 +162,13 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "redis_url", label: "Redis URL", type: "password", required: true },
         ],
     },
-    // Domain
-    {
-        id: "namecheap",
-        name: "Namecheap",
-        category: "domain",
-        description: "Domain registration and management",
-        website: "https://namecheap.com",
-        plans: [
-            { name: "Domain", price: 12, frequency: "yearly" },
-        ],
-        credentialFields: [
-            { key: "api_user", label: "API User", type: "text", required: true },
-            { key: "api_key", label: "API Key", type: "password", required: true },
-        ],
-    },
-    {
-        id: "cloudflare",
-        name: "Cloudflare",
-        category: "domain",
-        description: "DNS, CDN, and security services",
-        website: "https://cloudflare.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Pro", price: 20, frequency: "monthly" },
-            { name: "Business", price: 200, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_token", label: "API Token", type: "password", required: true },
-            { key: "zone_id", label: "Zone ID", type: "text", required: false },
-        ],
-    },
-    // Auth
-    {
-        id: "clerk",
-        name: "Clerk",
-        category: "auth",
-        description: "Complete user management and authentication",
-        website: "https://clerk.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Pro", price: 25, frequency: "monthly" },
-            { name: "Enterprise", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "publishable_key", label: "Publishable Key", type: "text", required: true },
-            { key: "secret_key", label: "Secret Key", type: "password", required: true },
-        ],
-    },
-    {
-        id: "auth0",
-        name: "Auth0",
-        category: "auth",
-        description: "Identity platform for authentication",
-        website: "https://auth0.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Essential", price: 23, frequency: "monthly" },
-            { name: "Professional", price: 240, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "domain", label: "Domain", type: "text", required: true },
-            { key: "client_id", label: "Client ID", type: "text", required: true },
-            { key: "client_secret", label: "Client Secret", type: "password", required: true },
-        ],
-    },
-    // Payments
-    {
-        id: "stripe",
-        name: "Stripe",
-        category: "payments",
-        description: "Payment processing platform",
-        website: "https://stripe.com",
-        plans: [
-            { name: "Standard", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "publishable_key", label: "Publishable Key", type: "text", required: true },
-            { key: "secret_key", label: "Secret Key", type: "password", required: true },
-            { key: "webhook_secret", label: "Webhook Secret", type: "password", required: false },
-        ],
-    },
-    {
-        id: "lemonsqueezy",
-        name: "Lemon Squeezy",
-        category: "payments",
-        description: "Payments, tax, and subscriptions for software",
-        website: "https://lemonsqueezy.com",
-        plans: [
-            { name: "Standard", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-            { key: "store_id", label: "Store ID", type: "text", required: true },
-        ],
-    },
-    // Email
-    {
-        id: "resend",
-        name: "Resend",
-        category: "email",
-        description: "Email API for developers",
-        website: "https://resend.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Pro", price: 20, frequency: "monthly" },
-            { name: "Enterprise", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-        ],
-    },
-    {
-        id: "sendgrid",
-        name: "SendGrid",
-        category: "email",
-        description: "Email delivery and marketing platform",
-        website: "https://sendgrid.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Essentials", price: 20, frequency: "monthly" },
-            { name: "Pro", price: 90, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-        ],
-    },
-    // Analytics
-    {
-        id: "posthog",
-        name: "PostHog",
-        category: "analytics",
-        description: "Product analytics and feature flags",
-        website: "https://posthog.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Growth", price: 0, frequency: "monthly" },
-            { name: "Enterprise", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-            { key: "host", label: "Host URL", type: "url", placeholder: "https://app.posthog.com", required: false },
-        ],
-    },
-    {
-        id: "mixpanel",
-        name: "Mixpanel",
-        category: "analytics",
-        description: "Product analytics for user behavior",
-        website: "https://mixpanel.com",
-        plans: [
-            { name: "Free", price: 0, frequency: "monthly" },
-            { name: "Growth", price: 28, frequency: "monthly" },
-            { name: "Enterprise", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "token", label: "Project Token", type: "password", required: true },
-        ],
-    },
-    // AI
-    {
-        id: "openai",
-        name: "OpenAI",
-        category: "ai",
-        description: "GPT and AI models API",
-        website: "https://openai.com",
-        plans: [
-            { name: "Pay as you go", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-            { key: "org_id", label: "Organization ID", type: "text", required: false },
-        ],
-    },
-    {
-        id: "anthropic",
-        name: "Anthropic",
-        category: "ai",
-        description: "Claude AI models API",
-        website: "https://anthropic.com",
-        plans: [
-            { name: "Pay as you go", price: 0, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "api_key", label: "API Key", type: "password", required: true },
-        ],
-    },
-    // Monitoring
-    {
-        id: "sentry",
-        name: "Sentry",
-        category: "monitoring",
-        description: "Error tracking and performance monitoring",
-        website: "https://sentry.io",
-        plans: [
-            { name: "Developer", price: 0, frequency: "monthly" },
-            { name: "Team", price: 26, frequency: "monthly" },
-            { name: "Business", price: 80, frequency: "monthly" },
-        ],
-        credentialFields: [
-            { key: "dsn", label: "DSN", type: "password", required: true },
-            { key: "auth_token", label: "Auth Token", type: "password", required: false },
-        ],
-    },
+    
     // Storage
     {
         id: "cloudinary",
         name: "Cloudinary",
-        category: "storage",
+        category: "infrastructure",
+        subCategory: "storage",
         description: "Image and video management",
         website: "https://cloudinary.com",
         plans: [
@@ -372,7 +185,8 @@ export const serviceRegistry: ServiceRegistryItem[] = [
     {
         id: "uploadthing",
         name: "UploadThing",
-        category: "storage",
+        category: "infrastructure",
+        subCategory: "storage",
         description: "File uploads for Next.js",
         website: "https://uploadthing.com",
         plans: [
@@ -384,11 +198,244 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "app_id", label: "App ID", type: "text", required: true },
         ],
     },
-    // Dev Tools
+    
+    // ============================================
+    // IDENTITY & ACCESS - Auth, Security
+    // ============================================
+    {
+        id: "clerk",
+        name: "Clerk",
+        category: "identity",
+        subCategory: "authentication",
+        description: "Complete user management and authentication",
+        website: "https://clerk.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Pro", price: 25, frequency: "monthly" },
+            { name: "Enterprise", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "publishable_key", label: "Publishable Key", type: "text", required: true },
+            { key: "secret_key", label: "Secret Key", type: "password", required: true },
+        ],
+    },
+    {
+        id: "auth0",
+        name: "Auth0",
+        category: "identity",
+        subCategory: "authentication",
+        description: "Identity platform for authentication",
+        website: "https://auth0.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Essential", price: 23, frequency: "monthly" },
+            { name: "Professional", price: 240, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "domain", label: "Domain", type: "text", required: true },
+            { key: "client_id", label: "Client ID", type: "text", required: true },
+            { key: "client_secret", label: "Client Secret", type: "password", required: true },
+        ],
+    },
+    
+    // ============================================
+    // PAYMENTS - Payment Processing, Subscriptions
+    // ============================================
+    {
+        id: "stripe",
+        name: "Stripe",
+        category: "payments",
+        subCategory: "payment_processing",
+        description: "Payment processing platform",
+        website: "https://stripe.com",
+        plans: [
+            { name: "Standard", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "publishable_key", label: "Publishable Key", type: "text", required: true },
+            { key: "secret_key", label: "Secret Key", type: "password", required: true },
+            { key: "webhook_secret", label: "Webhook Secret", type: "password", required: false },
+        ],
+    },
+    {
+        id: "lemonsqueezy",
+        name: "Lemon Squeezy",
+        category: "payments",
+        subCategory: "subscriptions",
+        description: "Payments, tax, and subscriptions for software",
+        website: "https://lemonsqueezy.com",
+        plans: [
+            { name: "Standard", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+            { key: "store_id", label: "Store ID", type: "text", required: true },
+        ],
+    },
+    
+    // ============================================
+    // COMMUNICATIONS - Email, SMS, Push
+    // ============================================
+    {
+        id: "resend",
+        name: "Resend",
+        category: "communications",
+        subCategory: "email",
+        description: "Email API for developers",
+        website: "https://resend.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Pro", price: 20, frequency: "monthly" },
+            { name: "Enterprise", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+        ],
+    },
+    {
+        id: "sendgrid",
+        name: "SendGrid",
+        category: "communications",
+        subCategory: "email",
+        description: "Email delivery and marketing platform",
+        website: "https://sendgrid.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Essentials", price: 20, frequency: "monthly" },
+            { name: "Pro", price: 90, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+        ],
+    },
+    
+    // ============================================
+    // ANALYTICS & MONITORING
+    // ============================================
+    {
+        id: "posthog",
+        name: "PostHog",
+        category: "analytics",
+        subCategory: "product_analytics",
+        description: "Product analytics and feature flags",
+        website: "https://posthog.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Growth", price: 0, frequency: "monthly" },
+            { name: "Enterprise", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+            { key: "host", label: "Host URL", type: "url", placeholder: "https://app.posthog.com", required: false },
+        ],
+    },
+    {
+        id: "mixpanel",
+        name: "Mixpanel",
+        category: "analytics",
+        subCategory: "product_analytics",
+        description: "Product analytics for user behavior",
+        website: "https://mixpanel.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Growth", price: 28, frequency: "monthly" },
+            { name: "Enterprise", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "token", label: "Project Token", type: "password", required: true },
+        ],
+    },
+    {
+        id: "sentry",
+        name: "Sentry",
+        category: "analytics",
+        subCategory: "error_tracking",
+        description: "Error tracking and performance monitoring",
+        website: "https://sentry.io",
+        plans: [
+            { name: "Developer", price: 0, frequency: "monthly" },
+            { name: "Team", price: 26, frequency: "monthly" },
+            { name: "Business", price: 80, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "dsn", label: "DSN", type: "password", required: true },
+            { key: "auth_token", label: "Auth Token", type: "password", required: false },
+        ],
+    },
+    
+    // ============================================
+    // DOMAINS & DNS
+    // ============================================
+    {
+        id: "namecheap",
+        name: "Namecheap",
+        category: "domains",
+        subCategory: "registrar",
+        description: "Domain registration and management",
+        website: "https://namecheap.com",
+        plans: [
+            { name: "Domain", price: 12, frequency: "yearly" },
+        ],
+        credentialFields: [
+            { key: "api_user", label: "API User", type: "text", required: true },
+            { key: "api_key", label: "API Key", type: "password", required: true },
+        ],
+    },
+    {
+        id: "cloudflare",
+        name: "Cloudflare",
+        category: "domains",
+        subCategory: "dns",
+        description: "DNS, CDN, and security services",
+        website: "https://cloudflare.com",
+        plans: [
+            { name: "Free", price: 0, frequency: "monthly" },
+            { name: "Pro", price: 20, frequency: "monthly" },
+            { name: "Business", price: 200, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_token", label: "API Token", type: "password", required: true },
+            { key: "zone_id", label: "Zone ID", type: "text", required: false },
+        ],
+    },
+    
+    // ============================================
+    // DEVELOPER TOOLS - AI, Version Control, etc.
+    // ============================================
+    {
+        id: "openai",
+        name: "OpenAI",
+        category: "devtools",
+        subCategory: "ai_ml",
+        description: "GPT and AI models API",
+        website: "https://openai.com",
+        plans: [
+            { name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+            { key: "org_id", label: "Organization ID", type: "text", required: false },
+        ],
+    },
+    {
+        id: "anthropic",
+        name: "Anthropic",
+        category: "devtools",
+        subCategory: "ai_ml",
+        description: "Claude AI models API",
+        website: "https://anthropic.com",
+        plans: [
+            { name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true },
+        ],
+    },
     {
         id: "github",
         name: "GitHub",
         category: "devtools",
+        subCategory: "version_control",
         description: "Code hosting and collaboration",
         website: "https://github.com",
         plans: [
@@ -404,6 +451,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "linear",
         name: "Linear",
         category: "devtools",
+        subCategory: "collaboration",
         description: "Issue tracking and project management",
         website: "https://linear.app",
         plans: [

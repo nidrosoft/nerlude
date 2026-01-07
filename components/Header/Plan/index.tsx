@@ -1,9 +1,9 @@
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
-import useEventsStore from "@/store/useEventsStore";
+import { useUIStore } from "@/stores";
 
 const Plan = ({}) => {
-    const isPremiumPlan = useEventsStore((state) => state.isPremiumPlan);
+    const isPremiumPlan = useUIStore((state) => state.isPremiumPlan);
 
     return (
         <div className="group absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-md:hidden">

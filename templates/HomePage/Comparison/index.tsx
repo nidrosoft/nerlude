@@ -6,24 +6,34 @@ type FeatureStatus = boolean | "partial";
 
 interface Feature {
     name: string;
+    spreadsheet: FeatureStatus;
     notion: FeatureStatus;
     onepassword: FeatureStatus;
     nelrude: FeatureStatus;
 }
 
 const features: Feature[] = [
-    { name: "Project organization", notion: false, onepassword: false, nelrude: true },
-    { name: "Renewal alerts", notion: false, onepassword: false, nelrude: true },
-    { name: "Cost tracking", notion: false, onepassword: false, nelrude: true },
-    { name: "Credential encryption", notion: false, onepassword: true, nelrude: true },
-    { name: "Team access control", notion: "partial", onepassword: true, nelrude: true },
-    { name: "Environment separation", notion: false, onepassword: false, nelrude: true },
-    { name: "Service registry", notion: false, onepassword: false, nelrude: true },
-    { name: "Per-project costs", notion: false, onepassword: false, nelrude: true },
+    { name: "Project organization", spreadsheet: "partial", notion: false, onepassword: false, nelrude: true },
+    { name: "Renewal alerts", spreadsheet: false, notion: false, onepassword: false, nelrude: true },
+    { name: "Cost tracking", spreadsheet: "partial", notion: false, onepassword: false, nelrude: true },
+    { name: "Credential encryption", spreadsheet: false, notion: false, onepassword: true, nelrude: true },
+    { name: "Team access control", spreadsheet: false, notion: "partial", onepassword: true, nelrude: true },
+    { name: "Environment separation", spreadsheet: false, notion: false, onepassword: false, nelrude: true },
+    { name: "Service registry", spreadsheet: false, notion: false, onepassword: false, nelrude: true },
+    { name: "Per-project costs", spreadsheet: "partial", notion: false, onepassword: false, nelrude: true },
 ];
 
-const StatusIcon = ({ status }: { status: boolean | "partial" }) => {
+const StatusIcon = ({ status, isNelrude = false }: { status: boolean | "partial"; isNelrude?: boolean }) => {
     if (status === true) {
+        if (isNelrude) {
+            return (
+                <div className="w-7 h-7 rounded-full bg-primary1 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+            );
+        }
         return (
             <div className="w-7 h-7 rounded-full bg-primary2/20 flex items-center justify-center">
                 <svg className="w-4 h-4 text-primary2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -77,6 +87,11 @@ const Comparison = () => {
                                                 <th className="p-6 text-left text-body-bold max-md:p-4">Feature</th>
                                                 <th className="p-6 text-center text-body-bold max-md:p-4">
                                                     <div className="flex flex-col items-center gap-1">
+                                                        <span className="text-t-secondary">Spreadsheet</span>
+                                                    </div>
+                                                </th>
+                                                <th className="p-6 text-center text-body-bold max-md:p-4">
+                                                    <div className="flex flex-col items-center gap-1">
                                                         <span className="text-t-secondary">Notion</span>
                                                     </div>
                                                 </th>
@@ -85,9 +100,9 @@ const Comparison = () => {
                                                         <span className="text-t-secondary">1Password</span>
                                                     </div>
                                                 </th>
-                                                <th className="p-6 text-center text-body-bold bg-primary1/5 max-md:p-4">
+                                                <th className="p-6 text-center text-body-bold bg-primary1/10 max-md:p-4">
                                                     <div className="flex flex-col items-center gap-1">
-                                                        <span className="text-primary1">Nelrude</span>
+                                                        <span className="text-primary1 font-bold">Nelrude</span>
                                                     </div>
                                                 </th>
                                             </tr>
@@ -101,6 +116,11 @@ const Comparison = () => {
                                                     <td className="p-6 text-body max-md:p-4">{feature.name}</td>
                                                     <td className="p-6 max-md:p-4">
                                                         <div className="flex justify-center">
+                                                            <StatusIcon status={feature.spreadsheet} />
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-6 max-md:p-4">
+                                                        <div className="flex justify-center">
                                                             <StatusIcon status={feature.notion} />
                                                         </div>
                                                     </td>
@@ -109,9 +129,9 @@ const Comparison = () => {
                                                             <StatusIcon status={feature.onepassword} />
                                                         </div>
                                                     </td>
-                                                    <td className="p-6 bg-primary1/5 max-md:p-4">
+                                                    <td className="p-6 bg-primary1/10 max-md:p-4">
                                                         <div className="flex justify-center">
-                                                            <StatusIcon status={feature.nelrude} />
+                                                            <StatusIcon status={feature.nelrude} isNelrude />
                                                         </div>
                                                     </td>
                                                 </tr>

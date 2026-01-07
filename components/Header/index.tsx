@@ -9,6 +9,13 @@ import Login from "@/components/Login";
 import Menu from "./Menu";
 import Plan from "./Plan";
 
+const navLinks = [
+    { label: "Features", href: "#features" },
+    { label: "Demo", href: "#demo" },
+    { label: "Pricing", href: "#pricing" },
+    { label: "Integrations", href: "#integrations" },
+];
+
 type HeaderProps = {
     isFixed?: boolean;
     login?: boolean;
@@ -26,33 +33,61 @@ const Header = ({
 }: HeaderProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
+    const isHomePage = pathname === "/";
+
+    const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        if (isHomePage && href.startsWith("#")) {
+            e.preventDefault();
+            const element = document.querySelector(href);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+    };
 
     return (
         <>
             <div
                 className={`relative z-50 flex items-center p-5 max-md:p-4 ${
-                    isFixed ? "fixed! top-0 left-0 right-0" : ""
+                    isFixed ? "fixed! top-0 left-0 right-0 bg-b-surface1" : ""
                 }`}
             >
-                <Link className="w-33.75 mr-auto" href="/">
+                <Link className="w-48 shrink-0" href="/">
                     <Image
                         className="w-full opacity-100 dark:hidden!"
-                        src="/images/logo-nelrude-dark.svg"
-                        width={135}
+                        src="/images/Logo-dark.svg"
+                        width={142}
                         height={36}
-                        alt="Nelrude"
+                        alt="Nerlude"
                     />
                     <Image
                         className="hidden! w-full opacity-100 dark:block!"
-                        src="/images/logo-nelrude-light.svg"
-                        width={135}
+                        src="/images/Logo-light.svg"
+                        width={142}
                         height={36}
-                        alt="Nelrude"
+                        alt="Nerlude"
                     />
                 </Link>
+                
+                {/* Navigation Links - Only show on homepage when not logged in */}
+                {!login && isHomePage && (
+                    <nav className="flex items-center gap-8 mx-auto max-lg:hidden">
+                        {navLinks.map((link) => (
+                            <a
+                                key={link.href}
+                                href={link.href}
+                                onClick={(e) => handleNavClick(e, link.href)}
+                                className="text-body text-t-secondary hover:text-t-primary transition-colors"
+                            >
+                                {link.label}
+                            </a>
+                        ))}
+                    </nav>
+                )}
+                
                 {isVisiblePlan && <Plan />}
                 {login ? (
-                    <>
+                    <div className="flex items-center ml-auto">
                         {pathname !== "/projects/new" &&
                             pathname !== "/onboarding" && (
                                 <Button
@@ -69,7 +104,7 @@ const Header = ({
                                 </Button>
                             )}
                         <Menu onLogout={onLogout} />
-                    </>
+                    </div>
                 ) : (
                     <Button
                         className="ml-3"

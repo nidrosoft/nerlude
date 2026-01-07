@@ -1,107 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
-import Field from "@/components/Field";
-import { ProjectType } from "@/types";
-
-type Step = "basics" | "template" | "services" | "confirm";
-
-interface ProjectTemplate {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-    type: ProjectType;
-    suggestedServices: string[];
-}
-
-const templates: ProjectTemplate[] = [
-    {
-        id: "saas",
-        name: "SaaS Starter",
-        description: "Full-stack SaaS with auth, payments, and database",
-        icon: "🚀",
-        type: "web",
-        suggestedServices: ["vercel", "supabase", "clerk", "stripe", "resend"],
-    },
-    {
-        id: "landing",
-        name: "Landing Page",
-        description: "Marketing site with analytics and forms",
-        icon: "📄",
-        type: "landing",
-        suggestedServices: ["vercel", "posthog", "resend"],
-    },
-    {
-        id: "mobile",
-        name: "Mobile App",
-        description: "React Native or Flutter app with backend",
-        icon: "📱",
-        type: "mobile",
-        suggestedServices: ["supabase", "clerk", "sentry", "cloudinary"],
-    },
-    {
-        id: "api",
-        name: "API / Backend",
-        description: "REST or GraphQL API service",
-        icon: "⚡",
-        type: "api",
-        suggestedServices: ["railway", "supabase", "redis", "sentry"],
-    },
-    {
-        id: "extension",
-        name: "Browser Extension",
-        description: "Chrome or Firefox extension",
-        icon: "🧩",
-        type: "extension",
-        suggestedServices: ["supabase", "posthog", "sentry"],
-    },
-    {
-        id: "blank",
-        name: "Blank Project",
-        description: "Start from scratch with no pre-selected services",
-        icon: "✨",
-        type: "web",
-        suggestedServices: [],
-    },
-];
-
-const projectTypes: { value: ProjectType; label: string; icon: string; color: string }[] = [
-    { value: "web", label: "Web App", icon: "align-right", color: "bg-blue-500/10 border-blue-500/20 fill-blue-500" },
-    { value: "mobile", label: "Mobile App", icon: "mobile", color: "bg-purple-500/10 border-purple-500/20 fill-purple-500" },
-    { value: "extension", label: "Browser Extension", icon: "cube", color: "bg-amber-500/10 border-amber-500/20 fill-amber-500" },
-    { value: "desktop", label: "Desktop App", icon: "post", color: "bg-green-500/10 border-green-500/20 fill-green-500" },
-    { value: "api", label: "API / Backend", icon: "edit", color: "bg-pink-500/10 border-pink-500/20 fill-pink-500" },
-    { value: "landing", label: "Landing Page", icon: "external-link", color: "bg-cyan-500/10 border-cyan-500/20 fill-cyan-500" },
-    { value: "embedded", label: "Embedded / IoT", icon: "bulb", color: "bg-orange-500/10 border-orange-500/20 fill-orange-500" },
-    { value: "game", label: "Game", icon: "star", color: "bg-red-500/10 border-red-500/20 fill-red-500" },
-    { value: "ai", label: "AI / ML Project", icon: "generation", color: "bg-violet-500/10 border-violet-500/20 fill-violet-500" },
-];
-
-const emojiOptions = [
-    "🚀", "💼", "🎯", "📦", "🔥", "⚡", "🎨", "🛠️", "📱", "🌐", "💡", "🎮",
-    "🤖", "🧠", "💎", "🔮", "🎵", "📸", "🛒", "💬", "📊", "🔐",
-];
+import { ProjectType, UploadedDocument, ExtractedProject } from "@/types";
+import { useToast } from "@/components/Toast";
+import MethodSelector, { ImportMethod } from "./MethodSelector";
+import DocumentUpload from "./DocumentUpload";
+import ProcessingScreen from "./ProcessingScreen";
+import ReviewProjects from "./ReviewProjects";
+import ConfirmCreate from "./ConfirmCreate";
+import SuccessScreen from "./SuccessScreen";
+import { extractProjectsFromDocuments } from "./utils/mockExtraction";
+import { Step, FlowType, ProjectTemplate } from "./types";
+import ProgressSteps from "./ProgressSteps";
+import BasicsStep from "./BasicsStep";
+import TemplateStep from "./TemplateStep";
+import ServicesStep from "./ServicesStep";
+import ConfirmStep from "./ConfirmStep";
 
 const NewProjectPage = () => {
     const router = useRouter();
-    const [currentStep, setCurrentStep] = useState<Step>("basics");
+    const toast = useToast();
+    const [currentStep, setCurrentStep] = useState<Step>("method");
+    const [flowType, setFlowType] = useState<FlowType | null>(null);
     
-    // Form state
+    // Manual flow state
     const [projectName, setProjectName] = useState("");
     const [projectType, setProjectType] = useState<ProjectType>("web");
     const [projectIcon, setProjectIcon] = useState("🚀");
+    const [customIconImage, setCustomIconImage] = useState<string | null>(null);
     const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [customTypeName, setCustomTypeName] = useState("");
     const [showCustomType, setShowCustomType] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
 
-    const hasUnsavedChanges = projectName.trim() !== "" || selectedTemplate !== null || selectedServices.length > 0;
+    // Document upload flow state
+    const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+    const [extractedProjects, setExtractedProjects] = useState<ExtractedProject[]>([]);
+
+    const hasUnsavedChanges = projectName.trim() !== "" || selectedTemplate !== null || selectedServices.length > 0 || uploadedDocuments.length > 0;
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
@@ -130,13 +71,77 @@ const NewProjectPage = () => {
         );
     };
 
+    // Method selection handler
+    const handleMethodSelect = (method: ImportMethod) => {
+        if (method === 'documents') {
+            setFlowType('documents');
+            setCurrentStep('upload');
+        } else if (method === 'manual') {
+            setFlowType('manual');
+            setCurrentStep('basics');
+        }
+    };
+
+    // Document upload flow handlers
+    const handleDocumentsChange = useCallback((docs: UploadedDocument[]) => {
+        setUploadedDocuments(docs);
+    }, []);
+
+    const handleStartProcessing = () => {
+        setCurrentStep('processing');
+    };
+
+    const handleProcessingComplete = useCallback(async () => {
+        const projects = await extractProjectsFromDocuments(uploadedDocuments);
+        setExtractedProjects(projects);
+        setCurrentStep('review');
+    }, [uploadedDocuments]);
+
+    const handleProjectsChange = useCallback((projects: ExtractedProject[]) => {
+        setExtractedProjects(projects);
+    }, []);
+
+    const handleConfirmImport = () => {
+        setCurrentStep('confirm-import');
+    };
+
+    const handleCreateImportedProjects = () => {
+        const confirmedProjects = extractedProjects.filter(p => p.isConfirmed);
+        console.log("Creating projects:", confirmedProjects);
+        toast.success("Projects imported", `${confirmedProjects.length} project(s) have been created.`);
+        setCurrentStep('success');
+    };
+
+    const handleAddMoreDocuments = () => {
+        setCurrentStep('upload');
+    };
+
+    const handleCreateAnother = () => {
+        setUploadedDocuments([]);
+        setExtractedProjects([]);
+        setFlowType(null);
+        setCurrentStep('method');
+    };
+
     const handleBack = () => {
-        if (currentStep === "template") {
+        if (currentStep === "method") {
+            router.push("/dashboard");
+        } else if (currentStep === "template") {
             setCurrentStep("basics");
         } else if (currentStep === "services") {
             setCurrentStep("template");
         } else if (currentStep === "confirm") {
             setCurrentStep("services");
+        } else if (currentStep === "basics" && flowType === "manual") {
+            setCurrentStep("method");
+            setFlowType(null);
+        } else if (currentStep === "upload") {
+            setCurrentStep("method");
+            setFlowType(null);
+        } else if (currentStep === "review") {
+            setCurrentStep("upload");
+        } else if (currentStep === "confirm-import") {
+            setCurrentStep("review");
         }
     };
 
@@ -152,7 +157,6 @@ const NewProjectPage = () => {
     };
 
     const handleCreateProject = () => {
-        // In a real app, this would save to the database
         console.log("Creating project:", {
             name: projectName,
             type: projectType,
@@ -161,29 +165,8 @@ const NewProjectPage = () => {
             template: selectedTemplate?.id,
             services: selectedServices,
         });
+        toast.success("Project created", `${projectName} has been created successfully.`);
         router.push("/dashboard");
-    };
-
-    const steps = [
-        { id: "basics", label: "Basics", number: 1 },
-        { id: "template", label: "Template", number: 2 },
-        { id: "services", label: "Services", number: 3 },
-        { id: "confirm", label: "Confirm", number: 4 },
-    ];
-
-    const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
-
-    const serviceNames: Record<string, string> = {
-        vercel: "Vercel",
-        supabase: "Supabase",
-        clerk: "Clerk",
-        stripe: "Stripe",
-        resend: "Resend",
-        posthog: "PostHog",
-        sentry: "Sentry",
-        cloudinary: "Cloudinary",
-        railway: "Railway",
-        redis: "Redis Cloud",
     };
 
     return (
@@ -242,345 +225,109 @@ const NewProjectPage = () => {
                     )}
 
                     {/* Progress Steps */}
-                    <div className="flex items-center gap-2 mb-8">
-                        {steps.map((step, index) => (
-                            <div key={step.id} className="flex items-center">
-                                <div
-                                    className={`flex items-center justify-center size-8 rounded-full text-small font-medium transition-all ${
-                                        index <= currentStepIndex
-                                            ? "bg-t-primary text-b-surface1"
-                                            : "bg-b-surface2 text-t-tertiary"
-                                    }`}
-                                >
-                                    {index < currentStepIndex ? (
-                                        <Icon className="!w-4 !h-4 fill-b-surface1" name="check" />
-                                    ) : (
-                                        step.number
-                                    )}
-                                </div>
-                                <span
-                                    className={`ml-2 text-small font-medium ${
-                                        index <= currentStepIndex ? "text-t-primary" : "text-t-tertiary"
-                                    }`}
-                                >
-                                    {step.label}
-                                </span>
-                                {index < steps.length - 1 && (
-                                    <div
-                                        className={`w-8 h-0.5 mx-3 ${
-                                            index < currentStepIndex ? "bg-t-primary" : "bg-b-surface2"
-                                        }`}
-                                    />
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                    {flowType && currentStep !== "success" && (
+                        <ProgressSteps currentStep={currentStep} flowType={flowType} />
+                    )}
 
                     {/* Step Content */}
-                    <div className="p-6 rounded-4xl bg-b-surface2">
-                        {/* Step 1: Basics */}
+                    <div className={`p-6 rounded-4xl ${currentStep === "method" || currentStep === "processing" || currentStep === "success" ? "" : "bg-b-surface2"}`}>
+                        {/* Method Selection */}
+                        {currentStep === "method" && (
+                            <MethodSelector onSelect={handleMethodSelect} />
+                        )}
+
+                        {/* Document Upload Flow */}
+                        {currentStep === "upload" && (
+                            <DocumentUpload
+                                documents={uploadedDocuments}
+                                onDocumentsChange={handleDocumentsChange}
+                                onContinue={handleStartProcessing}
+                                onBack={handleBack}
+                            />
+                        )}
+
+                        {currentStep === "processing" && (
+                            <ProcessingScreen
+                                documents={uploadedDocuments}
+                                onComplete={handleProcessingComplete}
+                            />
+                        )}
+
+                        {currentStep === "review" && (
+                            <ReviewProjects
+                                projects={extractedProjects}
+                                onProjectsChange={handleProjectsChange}
+                                onContinue={handleConfirmImport}
+                                onBack={handleBack}
+                                onAddMore={handleAddMoreDocuments}
+                            />
+                        )}
+
+                        {currentStep === "confirm-import" && (
+                            <ConfirmCreate
+                                projects={extractedProjects}
+                                onConfirm={handleCreateImportedProjects}
+                                onBack={handleBack}
+                            />
+                        )}
+
+                        {currentStep === "success" && (
+                            <SuccessScreen
+                                projects={extractedProjects.filter(p => p.isConfirmed)}
+                                onViewDashboard={() => router.push("/dashboard")}
+                                onCreateAnother={handleCreateAnother}
+                            />
+                        )}
+
+                        {/* Manual Flow Steps */}
                         {currentStep === "basics" && (
-                            <div>
-                                <h2 className="text-body-bold mb-6">Project Details</h2>
-
-                                {/* Project Name */}
-                                <div className="mb-6">
-                                    <Field
-                                        label="Project Name"
-                                        value={projectName}
-                                        onChange={(e) => setProjectName(e.target.value)}
-                                        placeholder="My Awesome Project"
-                                        required
-                                    />
-                                </div>
-
-                                {/* Project Icon */}
-                                <div className="mb-6">
-                                    <label className="block mb-2 text-small font-medium text-t-secondary">
-                                        Project Icon
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {emojiOptions.map((emoji) => (
-                                            <button
-                                                key={emoji}
-                                                onClick={() => setProjectIcon(emoji)}
-                                                className={`flex items-center justify-center size-12 rounded-2xl text-xl transition-all ${
-                                                    projectIcon === emoji
-                                                        ? "bg-primary1/10 border-2 border-primary1"
-                                                        : "bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle"
-                                                }`}
-                                            >
-                                                {emoji}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Project Type */}
-                                <div className="mb-6">
-                                    <label className="block mb-2 text-small font-medium text-t-secondary">
-                                        Project Type
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-3 max-md:grid-cols-2">
-                                        {projectTypes.map((type) => {
-                                            const colorClasses = type.color.split(" ");
-                                            return (
-                                                <button
-                                                    key={type.value}
-                                                    onClick={() => {
-                                                        setProjectType(type.value);
-                                                        setShowCustomType(false);
-                                                        setCustomTypeName("");
-                                                    }}
-                                                    className={`flex items-center p-3 rounded-2xl text-left transition-all ${
-                                                        projectType === type.value && !showCustomType
-                                                            ? "bg-primary1/10 border-2 border-primary1"
-                                                            : "bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle"
-                                                    }`}
-                                                >
-                                                    <div className={`flex items-center justify-center size-8 mr-3 rounded-xl border-[1.5px] ${colorClasses[0]} ${colorClasses[1]} ${colorClasses[2]}`}>
-                                                        <Icon className="!w-4 !h-4" name={type.icon} />
-                                                    </div>
-                                                    <span className="text-small font-medium">{type.label}</span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                    
-                                    {/* Custom Type Option */}
-                                    <button
-                                        onClick={() => {
-                                            setShowCustomType(true);
-                                            setProjectType("custom");
-                                        }}
-                                        className={`flex items-center w-full mt-3 p-3 rounded-2xl text-left transition-all ${
-                                            showCustomType
-                                                ? "bg-primary1/10 border-2 border-primary1"
-                                                : "bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle"
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-center size-8 mr-3 rounded-xl border-[1.5px] bg-gradient-to-br from-violet-500/10 to-pink-500/10 border-violet-500/20 fill-violet-500">
-                                            <Icon className="!w-4 !h-4" name="edit" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <span className="text-small font-medium">Custom Type</span>
-                                            <span className="text-xs text-t-tertiary ml-2">Define your own project type</span>
-                                        </div>
-                                        <Icon className="!w-4 !h-4 fill-t-tertiary" name="arrow-right" />
-                                    </button>
-                                    
-                                    {/* Custom Type Input */}
-                                    {showCustomType && (
-                                        <div className="mt-3 p-4 rounded-2xl bg-b-surface1 border-2 border-primary1/20">
-                                            <label className="block mb-2 text-xs text-t-tertiary">
-                                                Enter your custom project type
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={customTypeName}
-                                                onChange={(e) => setCustomTypeName(e.target.value)}
-                                                placeholder="e.g., Blockchain DApp, CLI Tool, WordPress Plugin..."
-                                                className="w-full px-4 py-3 rounded-xl bg-b-surface2 text-t-primary placeholder:text-t-tertiary focus:outline-none focus:ring-2 focus:ring-primary1/20"
-                                                autoFocus
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end pt-4 border-t border-stroke-subtle">
-                                    <Button
-                                        isPrimary
-                                        onClick={handleContinue}
-                                        disabled={!projectName.trim() || (showCustomType && !customTypeName.trim())}
-                                    >
-                                        Continue
-                                    </Button>
-                                </div>
-                            </div>
+                            <BasicsStep
+                                projectName={projectName}
+                                setProjectName={setProjectName}
+                                projectType={projectType}
+                                setProjectType={setProjectType}
+                                projectIcon={projectIcon}
+                                setProjectIcon={setProjectIcon}
+                                customIconImage={customIconImage}
+                                setCustomIconImage={setCustomIconImage}
+                                customTypeName={customTypeName}
+                                setCustomTypeName={setCustomTypeName}
+                                showCustomType={showCustomType}
+                                setShowCustomType={setShowCustomType}
+                                onContinue={handleContinue}
+                            />
                         )}
 
-                        {/* Step 2: Template */}
                         {currentStep === "template" && (
-                            <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-body-bold">Choose a Template</h2>
-                                    <button
-                                        onClick={handleBack}
-                                        className="text-small text-t-secondary hover:text-t-primary transition-colors"
-                                    >
-                                        ← Back
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 mb-6 max-md:grid-cols-1">
-                                    {templates.map((template) => (
-                                        <button
-                                            key={template.id}
-                                            onClick={() => handleTemplateSelect(template)}
-                                            className={`flex items-start p-4 rounded-3xl text-left transition-all ${
-                                                selectedTemplate?.id === template.id
-                                                    ? "bg-primary1/10 border-2 border-primary1"
-                                                    : "bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle"
-                                            }`}
-                                        >
-                                            <span className="text-2xl mr-3">{template.icon}</span>
-                                            <div>
-                                                <div className="font-medium text-t-primary">{template.name}</div>
-                                                <div className="text-small text-t-secondary mt-0.5">
-                                                    {template.description}
-                                                </div>
-                                                {template.suggestedServices.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                        {template.suggestedServices.slice(0, 3).map((s) => (
-                                                            <span
-                                                                key={s}
-                                                                className="px-2 py-0.5 text-xs rounded-full bg-b-surface2 text-t-tertiary"
-                                                            >
-                                                                {serviceNames[s] || s}
-                                                            </span>
-                                                        ))}
-                                                        {template.suggestedServices.length > 3 && (
-                                                            <span className="px-2 py-0.5 text-xs rounded-full bg-b-surface2 text-t-tertiary">
-                                                                +{template.suggestedServices.length - 3}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-4 border-t border-stroke-subtle">
-                                    <Button isStroke onClick={handleBack}>
-                                        Back
-                                    </Button>
-                                    <Button isPrimary onClick={handleContinue}>
-                                        Continue
-                                    </Button>
-                                </div>
-                            </div>
+                            <TemplateStep
+                                selectedTemplate={selectedTemplate}
+                                onTemplateSelect={handleTemplateSelect}
+                                onBack={handleBack}
+                                onContinue={handleContinue}
+                            />
                         )}
 
-                        {/* Step 3: Services */}
                         {currentStep === "services" && (
-                            <div>
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
-                                        <h2 className="text-body-bold">Select Services</h2>
-                                        <p className="text-small text-t-secondary mt-1">
-                                            Choose which services to add to your project
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={handleBack}
-                                        className="text-small text-t-secondary hover:text-t-primary transition-colors"
-                                    >
-                                        ← Back
-                                    </button>
-                                </div>
-
-                                <div className="space-y-2 mb-6">
-                                    {Object.entries(serviceNames).map(([id, name]) => (
-                                        <button
-                                            key={id}
-                                            onClick={() => toggleService(id)}
-                                            className={`flex items-center w-full p-3 rounded-2xl text-left transition-all ${
-                                                selectedServices.includes(id)
-                                                    ? "bg-primary1/10 border-2 border-primary1"
-                                                    : "bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle"
-                                            }`}
-                                        >
-                                            <div
-                                                className={`flex items-center justify-center size-6 mr-3 rounded-lg border-2 transition-all ${
-                                                    selectedServices.includes(id)
-                                                        ? "bg-primary1 border-primary1"
-                                                        : "border-stroke-subtle"
-                                                }`}
-                                            >
-                                                {selectedServices.includes(id) && (
-                                                    <Icon className="!w-4 !h-4 fill-white" name="check" />
-                                                )}
-                                            </div>
-                                            <span className="font-medium text-t-primary">{name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <p className="text-xs text-t-tertiary mb-4">
-                                    You can always add more services later from the project dashboard.
-                                </p>
-
-                                <div className="flex justify-end gap-3 pt-4 border-t border-stroke-subtle">
-                                    <Button isStroke onClick={handleBack}>
-                                        Back
-                                    </Button>
-                                    <Button isPrimary onClick={handleContinue}>
-                                        Continue
-                                    </Button>
-                                </div>
-                            </div>
+                            <ServicesStep
+                                selectedServices={selectedServices}
+                                onToggleService={toggleService}
+                                onBack={handleBack}
+                                onContinue={handleContinue}
+                            />
                         )}
 
-                        {/* Step 4: Confirm */}
                         {currentStep === "confirm" && (
-                            <div>
-                                <h2 className="text-body-bold mb-6">Review & Create</h2>
-
-                                <div className="p-4 rounded-3xl bg-b-surface1 mb-6">
-                                    <div className="flex items-center mb-4">
-                                        <div className="flex items-center justify-center size-14 mr-4 rounded-2xl bg-primary1/10 text-2xl">
-                                            {projectIcon}
-                                        </div>
-                                        <div>
-                                            <div className="text-h4 text-t-primary">{projectName}</div>
-                                            <div className="text-small text-t-secondary">
-                                                {showCustomType ? customTypeName : projectTypes.find((t) => t.value === projectType)?.label}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2 text-small">
-                                        {selectedTemplate && (
-                                            <div className="flex justify-between">
-                                                <span className="text-t-secondary">Template</span>
-                                                <span className="text-t-primary">{selectedTemplate.name}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between">
-                                            <span className="text-t-secondary">Services</span>
-                                            <span className="text-t-primary">
-                                                {selectedServices.length > 0
-                                                    ? `${selectedServices.length} selected`
-                                                    : "None selected"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {selectedServices.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mt-4 pt-4 border-t border-stroke-subtle">
-                                            {selectedServices.map((s) => (
-                                                <span
-                                                    key={s}
-                                                    className="px-2 py-1 text-xs rounded-full bg-b-surface2 text-t-secondary"
-                                                >
-                                                    {serviceNames[s] || s}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-4 border-t border-stroke-subtle">
-                                    <Button isStroke onClick={handleBack}>
-                                        Back
-                                    </Button>
-                                    <Button isPrimary onClick={handleCreateProject}>
-                                        <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                                        Create Project
-                                    </Button>
-                                </div>
-                            </div>
+                            <ConfirmStep
+                                projectName={projectName}
+                                projectType={projectType}
+                                projectIcon={projectIcon}
+                                showCustomType={showCustomType}
+                                customTypeName={customTypeName}
+                                selectedTemplate={selectedTemplate}
+                                selectedServices={selectedServices}
+                                onBack={handleBack}
+                                onCreateProject={handleCreateProject}
+                            />
                         )}
                     </div>
                 </div>

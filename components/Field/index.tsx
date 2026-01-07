@@ -10,6 +10,7 @@ type FieldProps = {
     onResetPassword?: () => void;
     isLarge?: boolean;
     currency?: string;
+    variant?: "surface1" | "surface2";
 };
 
 const Field = ({
@@ -21,6 +22,7 @@ const Field = ({
     onResetPassword,
     isLarge,
     currency,
+    variant = "surface2",
     ...inputProps
 }: FieldProps &
     React.InputHTMLAttributes<HTMLInputElement> &
@@ -36,9 +38,9 @@ const Field = ({
         >
             {label && (
                 <div
-                    className={`absolute top-0 left-6 z-2 px-1 bg-b-surface1 text-t-primary font-medium pointer-events-none ${
-                        isLarge ? "text-hairline" : "text-small"
-                    }`}
+                    className={`absolute top-0 left-6 z-2 px-1 text-t-primary font-medium pointer-events-none ${
+                        variant === "surface1" ? "bg-b-surface1" : "bg-b-surface2"
+                    } ${isLarge ? "text-hairline" : "text-small"}`}
                 >
                     {label}
                 </div>
@@ -47,8 +49,8 @@ const Field = ({
                 {isTextarea ? (
                     <textarea
                         className={`w-full px-6.5 py-4 border-[1.5px] border-stroke1 text-t-primary font-medium transition-colors resize-none outline-0 placeholder:text-t-tertiary focus:border-[#A8A8A8]/50! max-md:text-[1rem] ${
-                            error ? "border-primary3!" : ""
-                        } ${
+                            variant === "surface1" ? "bg-b-surface1" : "bg-b-surface2"
+                        } ${error ? "border-primary3!" : ""} ${
                             isLarge
                                 ? "h-77 rounded-2xl text-heading-thin tracking-normal! max-md:h-65"
                                 : "h-32 rounded-3xl text-input"
@@ -58,8 +60,8 @@ const Field = ({
                 ) : (
                     <input
                         className={`w-full px-6.5 border-[1.5px] border-stroke1 text-t-primary font-medium transition-colors outline-0 placeholder:text-t-tertiary focus:border-[#A8A8A8]/50! max-md:text-[1rem] ${
-                            error ? "!border-primary3!" : ""
-                        } ${
+                            variant === "surface1" ? "bg-b-surface1" : "bg-b-surface2"
+                        } ${error ? "!border-primary3!" : ""} ${
                             onResetPassword || type === "password"
                                 ? "pr-12"
                                 : ""

@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Project } from "@/types";
+import { Project, Service, Alert } from "@/types";
 import ProjectCard from "../ProjectCard";
 import Icon from "@/components/Icon";
 
 type Props = {
     projects: Project[];
+    services?: Service[];
+    alerts?: Alert[];
 };
 
-const ProjectsGrid = ({ projects }: Props) => {
+const ProjectsGrid = ({ projects, services = [], alerts = [] }: Props) => {
     return (
         <div className="flex flex-wrap -mt-6 -mx-3 max-md:-mt-4 max-md:mx-0">
             {projects.map((project) => (
@@ -15,7 +17,11 @@ const ProjectsGrid = ({ projects }: Props) => {
                     key={project.id}
                     className="w-[calc(25%-1.5rem)] mt-6 mx-3 max-3xl:w-[calc(33.333%-1.5rem)] max-[1179px]:w-[calc(50%-1.5rem)] max-md:w-full max-md:mt-4 max-md:mx-0"
                 >
-                    <ProjectCard project={project} />
+                    <ProjectCard 
+                        project={project} 
+                        services={services}
+                        alerts={alerts}
+                    />
                 </div>
             ))}
             <div className="w-[calc(25%-1.5rem)] mt-6 mx-3 max-3xl:w-[calc(33.333%-1.5rem)] max-[1179px]:w-[calc(50%-1.5rem)] max-md:w-full max-md:mt-4 max-md:mx-0">

@@ -1,15 +1,20 @@
 import { Service } from "@/types";
 
+// Mock user ID for development
+const MOCK_USER_ID = "user_mock_001";
+
 export const mockServices: Service[] = [
     // ============================================
     // SaaS Dashboard (project 1) - Full Stack App
     // ============================================
     
-    // HOSTING
+    // INFRASTRUCTURE - Hosting
     {
         id: "s1",
         projectId: "1",
-        categoryId: "hosting",
+        stackId: "stack-1-frontend",
+        categoryId: "infrastructure",
+        subCategoryId: "hosting",
         name: "Vercel",
         plan: "Pro",
         costAmount: 20,
@@ -17,13 +22,16 @@ export const mockServices: Service[] = [
         currency: "USD",
         renewalDate: "2025-01-15",
         status: "active",
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-06-01T00:00:00Z",
         updatedAt: "2024-12-19T00:00:00Z",
     },
     {
         id: "s1b",
         projectId: "1",
-        categoryId: "hosting",
+        stackId: "stack-1-backend",
+        categoryId: "infrastructure",
+        subCategoryId: "hosting",
         name: "Railway",
         plan: "Hobby",
         costAmount: 5,
@@ -34,11 +42,13 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // DATABASE
+    // INFRASTRUCTURE - Database
     {
         id: "s2",
         projectId: "1",
-        categoryId: "database",
+        stackId: "stack-1-backend",
+        categoryId: "infrastructure",
+        subCategoryId: "database",
         name: "Supabase",
         plan: "Pro",
         costAmount: 25,
@@ -52,7 +62,9 @@ export const mockServices: Service[] = [
     {
         id: "s2b",
         projectId: "1",
-        categoryId: "database",
+        stackId: "stack-1-backend",
+        categoryId: "infrastructure",
+        subCategoryId: "database",
         name: "Redis Cloud",
         plan: "Essentials",
         costAmount: 7,
@@ -63,11 +75,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // DOMAIN & DNS
+    // DOMAINS & DNS
     {
         id: "s3",
         projectId: "1",
-        categoryId: "domain",
+        categoryId: "domains",
+        subCategoryId: "registrar",
         name: "Namecheap",
         plan: "saas-dashboard.com",
         costAmount: 12,
@@ -81,7 +94,9 @@ export const mockServices: Service[] = [
     {
         id: "s3b",
         projectId: "1",
-        categoryId: "domain",
+        stackId: "stack-1-frontend",
+        categoryId: "domains",
+        subCategoryId: "dns",
         name: "Cloudflare",
         plan: "Free (DNS)",
         costAmount: 0,
@@ -92,11 +107,13 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // AUTHENTICATION
+    // IDENTITY & ACCESS
     {
         id: "s4",
         projectId: "1",
-        categoryId: "auth",
+        stackId: "stack-1-frontend",
+        categoryId: "identity",
+        subCategoryId: "authentication",
         name: "Clerk",
         plan: "Pro",
         costAmount: 25,
@@ -111,7 +128,9 @@ export const mockServices: Service[] = [
     {
         id: "s5",
         projectId: "1",
+        stackId: "stack-1-payments",
         categoryId: "payments",
+        subCategoryId: "payment_processing",
         name: "Stripe",
         plan: "Pay as you go",
         costAmount: 50,
@@ -125,6 +144,7 @@ export const mockServices: Service[] = [
         id: "s5b",
         projectId: "1",
         categoryId: "payments",
+        subCategoryId: "subscriptions",
         name: "Lemon Squeezy",
         plan: "Starter",
         costAmount: 0,
@@ -135,11 +155,13 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // EMAIL
+    // COMMUNICATIONS - Email
     {
         id: "s6",
         projectId: "1",
-        categoryId: "email",
+        stackId: "stack-1-payments",
+        categoryId: "communications",
+        subCategoryId: "email",
         name: "Resend",
         plan: "Pro",
         costAmount: 20,
@@ -152,7 +174,8 @@ export const mockServices: Service[] = [
     {
         id: "s6b",
         projectId: "1",
-        categoryId: "email",
+        categoryId: "communications",
+        subCategoryId: "email",
         name: "Mailchimp",
         plan: "Essentials",
         costAmount: 13,
@@ -163,11 +186,13 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // ANALYTICS
+    // ANALYTICS & MONITORING
     {
         id: "s7",
         projectId: "1",
+        stackId: "stack-1-observability",
         categoryId: "analytics",
+        subCategoryId: "product_analytics",
         name: "PostHog",
         plan: "Free",
         costAmount: 0,
@@ -180,7 +205,9 @@ export const mockServices: Service[] = [
     {
         id: "s7b",
         projectId: "1",
+        stackId: "stack-1-observability",
         categoryId: "analytics",
+        subCategoryId: "product_analytics",
         name: "Mixpanel",
         plan: "Growth",
         costAmount: 28,
@@ -193,7 +220,9 @@ export const mockServices: Service[] = [
     {
         id: "s7c",
         projectId: "1",
+        stackId: "stack-1-observability",
         categoryId: "analytics",
+        subCategoryId: "product_analytics",
         name: "Hotjar",
         plan: "Plus",
         costAmount: 39,
@@ -204,11 +233,13 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // STORAGE
+    // INFRASTRUCTURE - Storage
     {
         id: "s8",
         projectId: "1",
-        categoryId: "storage",
+        stackId: "stack-1-backend",
+        categoryId: "infrastructure",
+        subCategoryId: "storage",
         name: "Cloudflare R2",
         plan: "Pay as you go",
         costAmount: 95,
@@ -221,7 +252,9 @@ export const mockServices: Service[] = [
     {
         id: "s8b",
         projectId: "1",
-        categoryId: "storage",
+        stackId: "stack-1-backend",
+        categoryId: "infrastructure",
+        subCategoryId: "storage",
         name: "AWS S3",
         plan: "Pay as you go",
         costAmount: 23,
@@ -232,11 +265,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // AI & ML
+    // DEVTOOLS - AI & ML
     {
         id: "s13",
         projectId: "1",
-        categoryId: "ai",
+        categoryId: "devtools",
+        subCategoryId: "ai_ml",
         name: "OpenAI",
         plan: "Pay as you go",
         costAmount: 120,
@@ -249,7 +283,8 @@ export const mockServices: Service[] = [
     {
         id: "s14",
         projectId: "1",
-        categoryId: "ai",
+        categoryId: "devtools",
+        subCategoryId: "ai_ml",
         name: "Anthropic",
         plan: "Pay as you go",
         costAmount: 85,
@@ -262,7 +297,8 @@ export const mockServices: Service[] = [
     {
         id: "s15",
         projectId: "1",
-        categoryId: "ai",
+        categoryId: "devtools",
+        subCategoryId: "ai_ml",
         name: "Replicate",
         plan: "Pay as you go",
         costAmount: 45,
@@ -273,11 +309,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // MONITORING
+    // ANALYTICS - Error Tracking & Monitoring
     {
         id: "s16",
         projectId: "1",
-        categoryId: "monitoring",
+        categoryId: "analytics",
+        subCategoryId: "error_tracking",
         name: "Sentry",
         plan: "Team",
         costAmount: 26,
@@ -290,7 +327,8 @@ export const mockServices: Service[] = [
     {
         id: "s17",
         projectId: "1",
-        categoryId: "monitoring",
+        categoryId: "analytics",
+        subCategoryId: "logging",
         name: "Datadog",
         plan: "Pro",
         costAmount: 75,
@@ -303,7 +341,8 @@ export const mockServices: Service[] = [
     {
         id: "s18",
         projectId: "1",
-        categoryId: "monitoring",
+        categoryId: "analytics",
+        subCategoryId: "uptime",
         name: "Better Uptime",
         plan: "Team",
         costAmount: 20,
@@ -314,11 +353,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // COMMUNICATION
+    // COMMUNICATIONS - SMS, Chat
     {
         id: "s19",
         projectId: "1",
-        categoryId: "communication",
+        categoryId: "communications",
+        subCategoryId: "sms",
         name: "Twilio",
         plan: "Pay as you go",
         costAmount: 35,
@@ -331,7 +371,8 @@ export const mockServices: Service[] = [
     {
         id: "s20",
         projectId: "1",
-        categoryId: "communication",
+        categoryId: "communications",
+        subCategoryId: "chat",
         name: "Intercom",
         plan: "Starter",
         costAmount: 74,
@@ -344,7 +385,8 @@ export const mockServices: Service[] = [
     {
         id: "s21",
         projectId: "1",
-        categoryId: "communication",
+        categoryId: "devtools",
+        subCategoryId: "collaboration",
         name: "Slack",
         plan: "Pro",
         costAmount: 8,
@@ -355,11 +397,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // DEV TOOLS
+    // DEVTOOLS - Version Control, Collaboration
     {
         id: "s22",
         projectId: "1",
         categoryId: "devtools",
+        subCategoryId: "version_control",
         name: "GitHub",
         plan: "Team",
         costAmount: 4,
@@ -373,6 +416,7 @@ export const mockServices: Service[] = [
         id: "s23",
         projectId: "1",
         categoryId: "devtools",
+        subCategoryId: "collaboration",
         name: "Linear",
         plan: "Standard",
         costAmount: 8,
@@ -386,6 +430,7 @@ export const mockServices: Service[] = [
         id: "s24",
         projectId: "1",
         categoryId: "devtools",
+        subCategoryId: "collaboration",
         name: "Figma",
         plan: "Professional",
         costAmount: 15,
@@ -399,6 +444,7 @@ export const mockServices: Service[] = [
         id: "s25",
         projectId: "1",
         categoryId: "devtools",
+        subCategoryId: "collaboration",
         name: "Notion",
         plan: "Plus",
         costAmount: 10,
@@ -409,11 +455,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // MARKETING
+    // DISTRIBUTION - Marketing
     {
         id: "s26",
         projectId: "1",
-        categoryId: "marketing",
+        categoryId: "distribution",
+        subCategoryId: "marketing",
         name: "Google Ads",
         plan: "Pay as you go",
         costAmount: 500,
@@ -426,7 +473,8 @@ export const mockServices: Service[] = [
     {
         id: "s27",
         projectId: "1",
-        categoryId: "marketing",
+        categoryId: "distribution",
+        subCategoryId: "marketing",
         name: "Meta Ads",
         plan: "Pay as you go",
         costAmount: 300,
@@ -439,7 +487,8 @@ export const mockServices: Service[] = [
     {
         id: "s28",
         projectId: "1",
-        categoryId: "marketing",
+        categoryId: "distribution",
+        subCategoryId: "marketing",
         name: "Ahrefs",
         plan: "Lite",
         costAmount: 99,
@@ -450,11 +499,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // SECURITY
+    // IDENTITY - Security
     {
         id: "s29",
         projectId: "1",
-        categoryId: "security",
+        categoryId: "identity",
+        subCategoryId: "secrets",
         name: "1Password",
         plan: "Business",
         costAmount: 8,
@@ -467,7 +517,8 @@ export const mockServices: Service[] = [
     {
         id: "s30",
         projectId: "1",
-        categoryId: "security",
+        categoryId: "identity",
+        subCategoryId: "security",
         name: "Snyk",
         plan: "Team",
         costAmount: 52,
@@ -478,11 +529,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // CMS
+    // DEVTOOLS - CMS
     {
         id: "s31",
         projectId: "1",
-        categoryId: "cms",
+        categoryId: "devtools",
+        subCategoryId: "cms",
         name: "Sanity",
         plan: "Team",
         costAmount: 99,
@@ -495,7 +547,8 @@ export const mockServices: Service[] = [
     {
         id: "s32",
         projectId: "1",
-        categoryId: "cms",
+        categoryId: "devtools",
+        subCategoryId: "cms",
         name: "Contentful",
         plan: "Team",
         costAmount: 489,
@@ -506,11 +559,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // SEARCH
+    // DEVTOOLS - Search
     {
         id: "s33",
         projectId: "1",
-        categoryId: "search",
+        categoryId: "devtools",
+        subCategoryId: "search",
         name: "Algolia",
         plan: "Build",
         costAmount: 35,
@@ -523,7 +577,8 @@ export const mockServices: Service[] = [
     {
         id: "s34",
         projectId: "1",
-        categoryId: "search",
+        categoryId: "devtools",
+        subCategoryId: "search",
         name: "Typesense",
         plan: "Cloud",
         costAmount: 29,
@@ -534,11 +589,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // MEDIA
+    // DEVTOOLS - Media
     {
         id: "s35",
         projectId: "1",
-        categoryId: "media",
+        categoryId: "devtools",
+        subCategoryId: "media",
         name: "Cloudinary",
         plan: "Plus",
         costAmount: 89,
@@ -551,7 +607,8 @@ export const mockServices: Service[] = [
     {
         id: "s36",
         projectId: "1",
-        categoryId: "media",
+        categoryId: "devtools",
+        subCategoryId: "media",
         name: "Mux",
         plan: "Pay as you go",
         costAmount: 45,
@@ -568,7 +625,8 @@ export const mockServices: Service[] = [
     {
         id: "s9",
         projectId: "2",
-        categoryId: "appstores",
+        categoryId: "distribution",
+        subCategoryId: "app_store",
         name: "Apple Developer",
         plan: "Individual",
         costAmount: 99,
@@ -582,7 +640,8 @@ export const mockServices: Service[] = [
     {
         id: "s10",
         projectId: "2",
-        categoryId: "appstores",
+        categoryId: "distribution",
+        subCategoryId: "app_store",
         name: "Google Play",
         plan: "Developer",
         costAmount: 25,
@@ -596,6 +655,7 @@ export const mockServices: Service[] = [
         id: "s11",
         projectId: "2",
         categoryId: "analytics",
+        subCategoryId: "product_analytics",
         name: "Firebase",
         plan: "Spark (Free)",
         costAmount: 0,
@@ -608,7 +668,8 @@ export const mockServices: Service[] = [
     {
         id: "s12",
         projectId: "2",
-        categoryId: "domain",
+        categoryId: "domains",
+        subCategoryId: "registrar",
         name: "Namecheap",
         plan: "mobile-app.io",
         costAmount: 40,
@@ -623,6 +684,7 @@ export const mockServices: Service[] = [
         id: "s37",
         projectId: "2",
         categoryId: "payments",
+        subCategoryId: "subscriptions",
         name: "RevenueCat",
         plan: "Starter",
         costAmount: 0,
@@ -635,7 +697,8 @@ export const mockServices: Service[] = [
     {
         id: "s38",
         projectId: "2",
-        categoryId: "monitoring",
+        categoryId: "analytics",
+        subCategoryId: "error_tracking",
         name: "Crashlytics",
         plan: "Free",
         costAmount: 0,
@@ -647,46 +710,122 @@ export const mockServices: Service[] = [
     },
 ];
 
+// Consolidated category labels (8 primary categories + subcategories)
 export const categoryLabels: Record<string, string> = {
+    // Primary categories
+    infrastructure: "Infrastructure",
+    identity: "Identity & Access",
+    payments: "Payments",
+    communications: "Communications",
+    analytics: "Analytics & Monitoring",
+    domains: "Domains & DNS",
+    distribution: "Distribution",
+    devtools: "Developer Tools",
+    other: "Other",
+    // Sub-categories (used in service registry)
     hosting: "Hosting",
     database: "Database",
-    domain: "Domain & DNS",
-    auth: "Authentication",
-    payments: "Payments",
-    email: "Email",
-    analytics: "Analytics",
     storage: "Storage",
-    ai: "AI & ML",
-    devtools: "Dev Tools",
-    marketing: "Marketing",
-    appstores: "App Stores",
+    domain: "Domain",
+    auth: "Auth",
+    email: "Email",
     monitoring: "Monitoring",
-    communication: "Communication",
+    ai: "AI",
+    appstores: "Appstores",
+    custom: "Custom",
+};
+
+// Sub-category labels for granular display
+export const subCategoryLabels: Record<string, string> = {
+    // Infrastructure
+    hosting: "Hosting",
+    database: "Database",
+    storage: "Storage",
+    cdn: "CDN",
+    serverless: "Serverless",
+    // Identity
+    authentication: "Authentication",
     security: "Security",
+    secrets: "Secrets",
+    // Payments
+    payment_processing: "Payment Processing",
+    subscriptions: "Subscriptions",
+    invoicing: "Invoicing",
+    // Communications
+    email: "Email",
+    sms: "SMS",
+    push: "Push Notifications",
+    chat: "Chat",
+    video: "Video",
+    // Analytics
+    product_analytics: "Product Analytics",
+    error_tracking: "Error Tracking",
+    logging: "Logging",
+    uptime: "Uptime Monitoring",
+    // Domains
+    registrar: "Domain Registrar",
+    dns: "DNS",
+    ssl: "SSL/TLS",
+    // Distribution
+    app_store: "App Stores",
+    marketing: "Marketing",
+    support: "Support",
+    // Dev Tools
+    version_control: "Version Control",
+    ci_cd: "CI/CD",
+    ai_ml: "AI & ML",
     cms: "CMS",
     search: "Search",
     media: "Media",
-    other: "Other",
+    collaboration: "Collaboration",
+    // Other
+    custom: "Custom",
 };
 
 export const categoryIcons: Record<string, string> = {
-    hosting: "cube",
-    database: "post",
-    domain: "external-link",
+    // Primary categories
+    infrastructure: "cube",
+    identity: "lock",
+    payments: "wallet",
+    communications: "envelope",
+    analytics: "post",
+    domains: "globe",
+    distribution: "share",
+    devtools: "code",
+    other: "plus",
+    // Sub-categories (used in service registry)
+    hosting: "cloud-upload",
+    database: "documents",
+    storage: "cube",
+    domain: "globe",
     auth: "lock",
-    payments: "documents",
     email: "envelope",
-    analytics: "generation",
-    storage: "documents",
-    ai: "bulb",
-    devtools: "edit",
-    marketing: "share",
+    monitoring: "eye",
+    ai: "star",
     appstores: "mobile",
-    monitoring: "check",
-    communication: "chat",
-    security: "lock",
-    cms: "edit-list",
-    search: "search",
-    media: "camera",
-    other: "star",
+    custom: "plus",
+};
+
+export const categoryColors: Record<string, string> = {
+    // Primary categories
+    infrastructure: "blue",
+    identity: "purple",
+    payments: "green",
+    communications: "orange",
+    analytics: "cyan",
+    domains: "teal",
+    distribution: "pink",
+    devtools: "gray",
+    other: "slate",
+    // Sub-categories (used in service registry) - all distinct colors
+    hosting: "blue",
+    database: "emerald",
+    storage: "amber",
+    domain: "violet",
+    auth: "rose",
+    email: "orange",
+    monitoring: "cyan",
+    ai: "fuchsia",
+    appstores: "indigo",
+    custom: "slate",
 };

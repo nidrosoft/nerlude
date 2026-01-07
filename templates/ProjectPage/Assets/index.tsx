@@ -1,13 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import AssetUploadModal from "./AssetUploadModal";
+
+type AssetCategory = "logos" | "screenshots" | "documents";
 
 type Props = {
     projectId: string;
 };
 
+// Color styles for each asset category (soft bg + strong icon color)
+const categoryStyles: Record<string, { bg: string; border: string; icon: string }> = {
+    Logos: { bg: "bg-purple-500/10", border: "border-purple-500/20", icon: "fill-purple-500" },
+    Screenshots: { bg: "bg-cyan-500/10", border: "border-cyan-500/20", icon: "fill-cyan-500" },
+    Documents: { bg: "bg-amber-500/10", border: "border-amber-500/20", icon: "fill-amber-500" },
+};
+
 const Assets = ({ projectId }: Props) => {
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [uploadCategory, setUploadCategory] = useState<AssetCategory>("logos");
+
+    const handleOpenUploadModal = (category?: AssetCategory) => {
+        if (category) setUploadCategory(category);
+        setIsUploadModalOpen(true);
+    };
+
+    const handleUpload = (asset: any) => {
+        console.log("Uploaded asset:", asset);
+        // TODO: Handle actual upload logic
+    };
+
     const assetCategories = [
         {
             title: "Logos",
@@ -38,14 +62,6 @@ const Assets = ({ projectId }: Props) => {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-h3">Assets</h2>
-                <Button isSecondary>
-                    <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                    Upload Asset
-                </Button>
-            </div>
-
             <div className="space-y-6">
                 {assetCategories.map((category) => (
                     <div key={category.title}>
@@ -54,22 +70,28 @@ const Assets = ({ projectId }: Props) => {
                             <h3 className="text-body-bold">{category.title}</h3>
                         </div>
                         <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-md:grid-cols-1">
-                            {category.items.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="p-4 rounded-4xl bg-b-surface2 hover:shadow-hover transition-shadow cursor-pointer"
-                                >
-                                    <div className="flex items-center justify-center h-24 mb-3 rounded-2xl bg-b-surface1">
-                                        <Icon className="!w-8 !h-8 fill-t-tertiary" name="documents" />
+                            {category.items.map((item, index) => {
+                                const styles = categoryStyles[category.title] || { bg: "bg-gray-500/10", border: "border-gray-500/20", icon: "fill-gray-500" };
+                                return (
+                                    <div
+                                        key={index}
+                                        className="p-4 rounded-4xl bg-b-surface2 hover:shadow-hover transition-shadow cursor-pointer"
+                                    >
+                                        <div className={`flex items-center justify-center h-24 mb-3 rounded-2xl border-[1.5px] ${styles.bg} ${styles.border}`}>
+                                            <Icon className={`!w-8 !h-8 ${styles.icon}`} name="documents" />
+                                        </div>
+                                        <div className="text-small font-medium truncate">{item.name}</div>
+                                        <div className="flex items-center justify-between text-xs text-t-tertiary">
+                                            <span>{item.type}</span>
+                                            <span>{item.size}</span>
+                                        </div>
                                     </div>
-                                    <div className="text-small font-medium truncate">{item.name}</div>
-                                    <div className="flex items-center justify-between text-xs text-t-tertiary">
-                                        <span>{item.type}</span>
-                                        <span>{item.size}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            <div className="flex flex-col items-center justify-center p-4 rounded-4xl border-2 border-dashed border-stroke-subtle hover:border-primary1 hover:bg-primary1/5 transition-all cursor-pointer">
+                                );
+                            })}
+                            <div 
+                                onClick={() => handleOpenUploadModal(category.title.toLowerCase() as AssetCategory)}
+                                className="flex flex-col items-center justify-center p-4 rounded-4xl border-2 border-dashed border-stroke-subtle hover:border-primary1 hover:bg-primary1/5 transition-all cursor-pointer"
+                            >
                                 <Icon className="!w-6 !h-6 mb-2 fill-t-tertiary" name="plus" />
                                 <span className="text-small text-t-secondary">Add {category.title.toLowerCase()}</span>
                             </div>
@@ -77,6 +99,14 @@ const Assets = ({ projectId }: Props) => {
                     </div>
                 ))}
             </div>
+
+            {/* Upload Modal */}
+            <AssetUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUpload={handleUpload}
+                defaultCategory={uploadCategory}
+            />
         </div>
     );
 };

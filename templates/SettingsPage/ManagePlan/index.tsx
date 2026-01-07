@@ -5,6 +5,8 @@ import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import SettingsSidebar from "../SettingsSidebar";
+import { mockBillingHistory, mockPaymentMethods, formatDate, formatCurrency } from "@/data/mockBilling";
+import { getStatusColor } from "@/utils/categoryColors";
 
 interface Plan {
     id: string;
@@ -110,27 +112,32 @@ const ManagePlanPage = () => {
     };
 
     return (
-        <Layout isLoggedIn>
-            <div className="min-h-[calc(100vh-80px)] py-8">
-                <div className="max-w-5xl mx-auto px-6">
-                    <div className="flex gap-8 max-lg:flex-col">
-                        {/* Sidebar */}
-                        <SettingsSidebar activeTab="plan" />
-
-                        {/* Main Content */}
-                        <div className="flex-1">
-                            {/* Header */}
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-[1.5px] border-amber-500/30">
-                                    <Icon className="!w-6 !h-6 fill-amber-500" name="star-stroke" />
-                                </div>
-                                <div>
-                                    <h1 className="text-h3">Manage Plan</h1>
-                                    <p className="text-small text-t-secondary">
-                                        View and upgrade your subscription
-                                    </p>
-                                </div>
+        <Layout isLoggedIn isFixedHeader>
+            {/* Floating Sidebar */}
+            <SettingsSidebar activeTab="plan" />
+            
+            {/* Main Content - with left margin to account for collapsed sidebar */}
+            <div className="min-h-screen pl-24 pt-20 max-md:pl-4">
+                {/* Sticky Header */}
+                <div className="sticky top-20 z-20 bg-b-surface1 pb-4 -mx-4 px-4">
+                    <div className="center">
+                        <div className="flex items-center gap-4 py-4">
+                            <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-[1.5px] border-amber-500/30">
+                                <Icon className="!w-6 !h-6 fill-amber-500" name="star-stroke" />
                             </div>
+                            <div>
+                                <h1 className="text-h3">Manage Plan</h1>
+                                <p className="text-small text-t-secondary">
+                                    View and upgrade your subscription
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="center">
+                    {/* Main Content */}
+                    <div className="w-full">
 
                             {/* Current Plan */}
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
@@ -277,16 +284,96 @@ const ManagePlanPage = () => {
                                 ))}
                             </div>
 
-                            {/* Billing History */}
+                            {/* Payment Methods */}
                             <div className="mt-8 p-6 rounded-4xl bg-b-surface2">
-                                <h2 className="text-body-bold mb-4">Billing History</h2>
-                                <div className="p-4 rounded-2xl bg-b-surface1 text-center">
-                                    <p className="text-small text-t-tertiary">
-                                        No billing history yet
-                                    </p>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-body-bold">Payment Methods</h2>
+                                    <button className="text-small text-primary1 hover:underline">
+                                        Add new
+                                    </button>
+                                </div>
+                                <div className="space-y-3">
+                                    {mockPaymentMethods.map((method) => (
+                                        <div 
+                                            key={method.id}
+                                            className={`flex items-center p-4 rounded-2xl bg-b-surface1 ${method.isDefault ? "ring-2 ring-primary1" : ""}`}
+                                        >
+                                            <div className="flex items-center justify-center size-10 mr-4 rounded-xl bg-b-surface2 fill-t-secondary">
+                                                <Icon className="!w-5 !h-5" name="wallet" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-small font-medium text-t-primary">
+                                                        {method.brand} •••• {method.last4}
+                                                    </span>
+                                                    {method.isDefault && (
+                                                        <span className="px-2 py-0.5 text-xs rounded-full bg-primary1/10 text-primary1">
+                                                            Default
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-t-tertiary">
+                                                    Expires {method.expiryMonth}/{method.expiryYear}
+                                                </p>
+                                            </div>
+                                            <button className="text-small text-t-tertiary hover:text-t-primary transition-colors">
+                                                Edit
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        </div>
+
+                            {/* Billing History */}
+                            <div className="mt-8 p-6 rounded-4xl bg-b-surface2">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-body-bold">Billing History</h2>
+                                    <button className="text-small text-primary1 hover:underline">
+                                        Download all
+                                    </button>
+                                </div>
+                                <div className="overflow-hidden rounded-2xl bg-b-surface1">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-stroke-subtle">
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-t-tertiary uppercase tracking-wider">Date</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-t-tertiary uppercase tracking-wider">Description</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-t-tertiary uppercase tracking-wider">Amount</th>
+                                                <th className="px-4 py-3 text-left text-xs font-medium text-t-tertiary uppercase tracking-wider">Status</th>
+                                                <th className="px-4 py-3 text-right text-xs font-medium text-t-tertiary uppercase tracking-wider">Invoice</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-stroke-subtle">
+                                            {mockBillingHistory.map((item) => (
+                                                <tr key={item.id} className="hover:bg-b-surface2/50 transition-colors">
+                                                    <td className="px-4 py-3 text-small text-t-secondary whitespace-nowrap">
+                                                        {formatDate(item.date)}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-small text-t-primary">
+                                                        {item.description}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-small text-t-primary font-medium">
+                                                        {formatCurrency(item.amount)}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full capitalize ${getStatusColor(item.status).bg} ${getStatusColor(item.status).text}`}>
+                                                            {item.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <a 
+                                                            href={item.invoiceUrl}
+                                                            className="text-small text-primary1 hover:underline"
+                                                        >
+                                                            Download
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>

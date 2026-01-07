@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import UserType from "./UserType";
@@ -9,14 +9,53 @@ import HowFoundUs from "./HowFoundUs";
 import UseCase from "./UseCase";
 import ProductCount from "./ProductCount";
 
+const ONBOARDING_STORAGE_KEY = "nelrude-onboarding-progress";
+
+interface OnboardingProgress {
+    activeId: number;
+    userType: string;
+    companySize: string;
+    howFoundUs: string;
+    useCase: string;
+    productCount: string;
+}
+
+const getStoredProgress = (): OnboardingProgress | null => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch {
+            return null;
+        }
+    }
+    return null;
+};
+
 const OnboardingForm = () => {
     const router = useRouter();
-    const [activeId, setActiveId] = useState(0);
-    const [userType, setUserType] = useState("");
-    const [companySize, setCompanySize] = useState("");
-    const [howFoundUs, setHowFoundUs] = useState("");
-    const [useCase, setUseCase] = useState("");
-    const [productCount, setProductCount] = useState("");
+    const storedProgress = getStoredProgress();
+    
+    const [activeId, setActiveId] = useState(storedProgress?.activeId ?? 0);
+    const [userType, setUserType] = useState(storedProgress?.userType ?? "");
+    const [companySize, setCompanySize] = useState(storedProgress?.companySize ?? "");
+    const [howFoundUs, setHowFoundUs] = useState(storedProgress?.howFoundUs ?? "");
+    const [useCase, setUseCase] = useState(storedProgress?.useCase ?? "");
+    const [productCount, setProductCount] = useState(storedProgress?.productCount ?? "");
+    
+    // Save progress to localStorage whenever state changes
+    useEffect(() => {
+        const progress: OnboardingProgress = {
+            activeId,
+            userType,
+            companySize,
+            howFoundUs,
+            useCase,
+            productCount,
+        };
+        localStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(progress));
+    }, [activeId, userType, companySize, howFoundUs, useCase, productCount]);
 
     const handleNext = () => {
         if (activeId < 4) {
@@ -39,6 +78,8 @@ const OnboardingForm = () => {
             useCase,
             productCount,
         });
+        // Clear onboarding progress from localStorage
+        localStorage.removeItem(ONBOARDING_STORAGE_KEY);
         router.push("/dashboard");
     };
 
@@ -103,8 +144,8 @@ const OnboardingForm = () => {
                     <ProductCount value={productCount} onChange={setProductCount} />
                 )}
             </div>
-            <div className="flex mt-auto pt-10 max-md:-mx-1 max-md:pt-6">
-                {activeId > 0 && (
+            <div className="flex items-center mt-auto pt-10 max-md:-mx-1 max-md:pt-6">
+                {activeId > 0 ? (
                     <Button
                         className="min-w-40 max-md:min-w-[calc(50%-0.5rem)] max-md:mx-1"
                         isStroke
@@ -112,6 +153,13 @@ const OnboardingForm = () => {
                     >
                         Previous
                     </Button>
+                ) : (
+                    <button
+                        onClick={handleComplete}
+                        className="text-small text-t-tertiary hover:text-t-primary transition-colors"
+                    >
+                        Skip for now
+                    </button>
                 )}
                 {activeId === 4 ? (
                     <Button

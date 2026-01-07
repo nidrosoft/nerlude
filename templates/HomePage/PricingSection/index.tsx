@@ -13,8 +13,8 @@ const plans = [
         features: [
             "1 project",
             "1 team member",
-            "Basic renewal alerts",
-            "Credential storage",
+            "5 services",
+            "Project documentation",
             "Community support",
         ],
         cta: "Get started free",
@@ -32,9 +32,11 @@ const plans = [
             "Advanced alerts (email + Slack)",
             "Cost tracking & analytics",
             "Environment separation",
+            "Asset management",
+            "Document import (CSV/AI)",
             "Priority support",
         ],
-        cta: "Start free trial",
+        cta: "Start Pro",
         popular: true,
         color: "primary1",
     },
@@ -48,11 +50,12 @@ const plans = [
             "Unlimited team members",
             "All Pro features",
             "Role-based access control",
+            "Time-limited contractor access",
             "Audit logging",
             "API access",
             "Dedicated support",
         ],
-        cta: "Start free trial",
+        cta: "Start Team",
         popular: false,
         color: "primary2",
     },
@@ -68,7 +71,7 @@ const PricingSection = () => {
     };
 
     return (
-        <div className="section section-lines before:-top-12! before:-bottom-12! after:-top-12! after:-bottom-12! max-md:before:hidden max-md:after:hidden">
+        <div id="pricing" className="section section-lines before:-top-12! before:-bottom-12! after:-top-12! after:-bottom-12! max-md:before:hidden max-md:after:hidden scroll-mt-20">
             <div className="relative before:absolute before:top-0 before:left-0 before:right-0 before:h-[1.5px] before:bg-linear-(--gradient-horizontal) after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-linear-(--gradient-horizontal) max-md:before:hidden max-md:after:hidden">
                 <div className="center">
                     <div className="py-16 max-lg:py-12 max-md:py-10">
@@ -159,7 +162,7 @@ const PricingSection = () => {
                             ))}
                         </div>
                         <div className="mt-8 text-center text-body text-t-secondary">
-                            All plans include a 14-day free trial. No credit card required.
+                            Start with one free project forever. Upgrade anytime as you grow.
                         </div>
                     </div>
                 </div>

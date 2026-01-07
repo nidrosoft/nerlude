@@ -6,11 +6,13 @@ import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
 import SettingsSidebar from "../SettingsSidebar";
+import { useToast } from "@/components/Toast";
 
 const WorkspaceSettingsPage = () => {
+    const toast = useToast();
     const [workspaceName, setWorkspaceName] = useState("My Workspace");
-    const [currency, setCurrency] = useState("USD");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("member");
@@ -21,14 +23,6 @@ const WorkspaceSettingsPage = () => {
         { id: "3", name: "Bob Wilson", email: "bob@example.com", role: "member", avatar: "B" },
     ];
 
-    const currencies = [
-        { value: "USD", label: "USD ($)" },
-        { value: "EUR", label: "EUR (€)" },
-        { value: "GBP", label: "GBP (£)" },
-        { value: "CAD", label: "CAD ($)" },
-        { value: "AUD", label: "AUD ($)" },
-    ];
-
     const roles = [
         { value: "admin", label: "Admin" },
         { value: "member", label: "Member" },
@@ -36,7 +30,8 @@ const WorkspaceSettingsPage = () => {
     ];
 
     const handleSaveWorkspace = () => {
-        console.log("Saving workspace:", { workspaceName, currency });
+        console.log("Saving workspace:", { workspaceName });
+        toast.success("Workspace updated", "Your workspace settings have been saved.");
     };
 
     const handleInviteMember = () => {
@@ -44,15 +39,18 @@ const WorkspaceSettingsPage = () => {
         setShowInviteModal(false);
         setInviteEmail("");
         setInviteRole("member");
+        toast.success("Invitation sent", `An invite has been sent to ${inviteEmail}.`);
     };
 
     const handleRemoveMember = (memberId: string) => {
         console.log("Removing member:", memberId);
+        toast.success("Member removed", "The team member has been removed from this workspace.");
     };
 
     const handleDeleteWorkspace = () => {
         console.log("Deleting workspace");
         setShowDeleteModal(false);
+        toast.info("Workspace deleted", "Your workspace has been permanently deleted.");
     };
 
     const getRoleBadgeColor = (role: string) => {
@@ -69,59 +67,47 @@ const WorkspaceSettingsPage = () => {
     };
 
     return (
-        <Layout isLoggedIn>
-            <div className="min-h-[calc(100vh-80px)] py-8">
-                <div className="max-w-5xl mx-auto px-6">
-                    <div className="flex gap-8 max-lg:flex-col">
-                        {/* Sidebar */}
-                        <SettingsSidebar activeTab="workspace" />
-
-                        {/* Main Content */}
-                        <div className="flex-1">
-                            {/* Header */}
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-[1.5px] border-purple-500/30">
-                                    <Icon className="!w-6 !h-6 fill-purple-500" name="cube" />
-                                </div>
-                                <div>
-                                    <h1 className="text-h3">Workspace Settings</h1>
-                                    <p className="text-small text-t-secondary">
-                                        Manage your workspace and team members
-                                    </p>
-                                </div>
+        <Layout isLoggedIn isFixedHeader>
+            {/* Floating Sidebar */}
+            <SettingsSidebar activeTab="workspace" />
+            
+            {/* Main Content - with left margin to account for collapsed sidebar */}
+            <div className="min-h-screen pl-24 pt-20 max-md:pl-4">
+                {/* Sticky Header */}
+                <div className="sticky top-20 z-20 bg-b-surface1 pb-4 -mx-4 px-4">
+                    <div className="center">
+                        <div className="flex items-center gap-4 py-4">
+                            <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-[1.5px] border-purple-500/30">
+                                <Icon className="!w-6 !h-6 fill-purple-500" name="cube" />
                             </div>
+                            <div>
+                                <h1 className="text-h3">Workspace Settings</h1>
+                                <p className="text-small text-t-secondary">
+                                    Manage your workspace and team members
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="center">
+                    {/* Main Content */}
+                    <div className="w-full">
 
                             {/* General Settings */}
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
                                 <h2 className="text-body-bold mb-6">General</h2>
                                 
-                                <div className="grid grid-cols-2 gap-4 mb-6 max-md:grid-cols-1">
+                                <div className="max-w-md mx-auto mb-6">
                                     <Field
                                         label="Workspace Name"
                                         value={workspaceName}
                                         onChange={(e) => setWorkspaceName(e.target.value)}
                                         placeholder="My Workspace"
                                     />
-                                    <div>
-                                        <label className="block mb-2 text-small font-medium text-t-secondary">
-                                            Default Currency
-                                        </label>
-                                        <select
-                                            value={currency}
-                                            onChange={(e) => setCurrency(e.target.value)}
-                                            className="w-full px-4 py-3 rounded-xl bg-b-surface1 text-t-primary border-2 border-stroke-subtle focus:outline-none focus:border-primary1 appearance-none cursor-pointer"
-                                            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
-                                        >
-                                            {currencies.map((c) => (
-                                                <option key={c.value} value={c.value} className="bg-b-surface1 text-t-primary py-2">
-                                                    {c.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
                                 </div>
 
-                                <div className="flex justify-end">
+                                <div className="flex justify-center">
                                     <Button isPrimary onClick={handleSaveWorkspace}>
                                         Save Changes
                                     </Button>
@@ -195,14 +181,47 @@ const WorkspaceSettingsPage = () => {
 
                             {/* Data Export */}
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
-                                <h2 className="text-body-bold mb-4">Data Export</h2>
-                                <p className="text-small text-t-secondary mb-4">
+                                <h2 className="text-body-bold mb-2">Data Export</h2>
+                                <p className="text-small text-t-secondary mb-6">
                                     Export all your workspace data including projects, services, and credentials.
                                 </p>
-                                <Button isStroke>
-                                    <Icon className="mr-2 !w-5 !h-5" name="documents" />
-                                    Export Data
-                                </Button>
+                                
+                                <div className="grid grid-cols-2 gap-4 mb-6 max-md:grid-cols-1">
+                                    <div className="p-4 rounded-2xl bg-b-surface1 border-2 border-primary1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center justify-center size-10 rounded-xl bg-primary1/10 fill-primary1">
+                                                <Icon className="!w-5 !h-5" name="code" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-t-primary">JSON Format</p>
+                                                <p className="text-xs text-t-tertiary">Structured data format</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-t-secondary">Best for importing into other tools or programmatic access.</p>
+                                    </div>
+                                    <div className="p-4 rounded-2xl bg-b-surface1 border-2 border-transparent hover:border-stroke-subtle transition-colors cursor-pointer">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center justify-center size-10 rounded-xl bg-b-surface2 fill-t-secondary">
+                                                <Icon className="!w-5 !h-5" name="documents" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-t-primary">CSV Format</p>
+                                                <p className="text-xs text-t-tertiary">Spreadsheet compatible</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-t-secondary">Best for viewing in Excel, Google Sheets, or other spreadsheet apps.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                    <Button isSecondary>
+                                        <Icon className="mr-2 !w-5 !h-5" name="export" />
+                                        Export All Data
+                                    </Button>
+                                    <span className="text-xs text-t-tertiary">
+                                        Last export: Never
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Danger Zone */}
@@ -221,7 +240,6 @@ const WorkspaceSettingsPage = () => {
                         </div>
                     </div>
                 </div>
-            </div>
 
             {/* Invite Member Modal */}
             {showInviteModal && (
@@ -245,18 +263,21 @@ const WorkspaceSettingsPage = () => {
                                 <label className="block mb-2 text-small font-medium text-t-secondary">
                                     Role
                                 </label>
-                                <select
-                                    value={inviteRole}
-                                    onChange={(e) => setInviteRole(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-xl bg-b-surface2 text-t-primary border-2 border-stroke-subtle focus:outline-none focus:border-primary1 appearance-none cursor-pointer"
-                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
-                                >
+                                <div className="flex gap-2">
                                     {roles.map((r) => (
-                                        <option key={r.value} value={r.value} className="bg-b-surface2 text-t-primary py-2">
+                                        <button
+                                            key={r.value}
+                                            onClick={() => setInviteRole(r.value)}
+                                            className={`flex-1 px-4 py-3 rounded-xl text-small font-medium transition-all border-2 ${
+                                                inviteRole === r.value
+                                                    ? "bg-t-primary text-b-surface1 border-t-primary"
+                                                    : "bg-b-surface2 text-t-secondary border-stroke-subtle hover:border-stroke-highlight"
+                                            }`}
+                                        >
                                             {r.label}
-                                        </option>
+                                        </button>
                                     ))}
-                                </select>
+                                </div>
                             </div>
                         </div>
 
@@ -270,7 +291,7 @@ const WorkspaceSettingsPage = () => {
                             </Button>
                             <Button
                                 className="flex-1"
-                                isPrimary
+                                isSecondary
                                 onClick={handleInviteMember}
                                 disabled={!inviteEmail}
                             >
@@ -286,24 +307,43 @@ const WorkspaceSettingsPage = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
                     <div 
                         className="absolute inset-0 bg-[#282828]/90"
-                        onClick={() => setShowDeleteModal(false)}
+                        onClick={() => {
+                            setShowDeleteModal(false);
+                            setDeleteConfirmText("");
+                        }}
                     />
                     <div className="relative z-10 w-full max-w-md mx-4 p-8 rounded-4xl bg-b-surface1">
                         <h3 className="text-h4 mb-2">Delete Workspace?</h3>
-                        <p className="text-small text-t-secondary mb-6">
+                        <p className="text-small text-t-secondary mb-4">
                             This action cannot be undone. All projects, services, credentials, and team members will be permanently deleted.
                         </p>
+                        <div className="mb-6">
+                            <label className="block text-small font-medium text-t-secondary mb-2">
+                                Type <span className="font-bold text-red-500">DELETE</span> to confirm
+                            </label>
+                            <input
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="Type DELETE here"
+                                className="w-full px-4 py-3 rounded-xl bg-b-surface2 border border-stroke-subtle text-body placeholder:text-t-tertiary focus:outline-none focus:border-red-500 transition-colors"
+                            />
+                        </div>
                         <div className="flex gap-3">
                             <Button
                                 className="flex-1"
                                 isStroke
-                                onClick={() => setShowDeleteModal(false)}
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteConfirmText("");
+                                }}
                             >
                                 Cancel
                             </Button>
                             <Button
-                                className="flex-1 !bg-red-500 !text-white hover:!bg-red-600"
+                                className="flex-1 !bg-red-500 !text-white hover:!bg-red-600 disabled:!bg-red-500/50 disabled:cursor-not-allowed"
                                 onClick={handleDeleteWorkspace}
+                                disabled={deleteConfirmText !== "DELETE"}
                             >
                                 Delete Workspace
                             </Button>

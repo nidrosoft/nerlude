@@ -1,15 +1,30 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Project, Service, Alert, DashboardStats, ProjectType } from '@/types';
+import { Project, Service, Alert, DashboardStats, ProjectType, ServiceStack, ProjectEnvironment } from '@/types';
+
+// Recent service access record
+interface RecentServiceAccess {
+    serviceId: string;
+    projectId: string;
+    accessedAt: string;
+}
 
 interface ProjectState {
     // State
     projects: Project[];
     selectedProject: Project | null;
     services: Service[];
+    stacks: ServiceStack[];
     alerts: Alert[];
     stats: DashboardStats;
     isLoading: boolean;
+    
+    // Environment State
+    activeEnvironment: ProjectEnvironment;
+    
+    // Quick Access State
+    pinnedServiceIds: string[];
+    recentServiceAccesses: RecentServiceAccess[];
     
     // Filter State
     projectFilter: {
@@ -32,6 +47,18 @@ interface ProjectState {
     deleteService: (id: string) => void;
     getServicesByProject: (projectId: string) => Service[];
     
+    // Actions - Stacks
+    setStacks: (stacks: ServiceStack[]) => void;
+    addStack: (stack: ServiceStack) => void;
+    updateStack: (id: string, updates: Partial<ServiceStack>) => void;
+    deleteStack: (id: string) => void;
+    getStacksByProject: (projectId: string) => ServiceStack[];
+    getServicesByStack: (stackId: string) => Service[];
+    assignServiceToStack: (serviceId: string, stackId: string | null) => void;
+    
+    // Actions - Environment
+    setActiveEnvironment: (env: ProjectEnvironment) => void;
+    
     // Actions - Alerts
     setAlerts: (alerts: Alert[]) => void;
     addAlert: (alert: Alert) => void;
@@ -46,6 +73,15 @@ interface ProjectState {
     // Actions - Filters
     setProjectFilter: (filter: Partial<ProjectState['projectFilter']>) => void;
     resetFilters: () => void;
+    
+    // Actions - Quick Access
+    pinService: (serviceId: string) => void;
+    unpinService: (serviceId: string) => void;
+    togglePinService: (serviceId: string) => void;
+    isServicePinned: (serviceId: string) => boolean;
+    recordServiceAccess: (serviceId: string, projectId: string) => void;
+    getPinnedServices: () => Service[];
+    getRecentServices: (limit?: number) => Service[];
     
     // Loading
     setLoading: (loading: boolean) => void;
@@ -65,9 +101,13 @@ export const useProjectStore = create<ProjectState>()(
             projects: [],
             selectedProject: null,
             services: [],
+            stacks: [],
             alerts: [],
             stats: initialStats,
             isLoading: false,
+            activeEnvironment: 'production',
+            pinnedServiceIds: [],
+            recentServiceAccesses: [],
             projectFilter: {
                 status: 'all',
                 type: 'all',
@@ -121,6 +161,44 @@ export const useProjectStore = create<ProjectState>()(
             getServicesByProject: (projectId) => {
                 return get().services.filter((s) => s.projectId === projectId);
             },
+
+            // Stack Actions
+            setStacks: (stacks) => set({ stacks }),
+            
+            addStack: (stack) => set((state) => ({
+                stacks: [...state.stacks, stack]
+            })),
+            
+            updateStack: (id, updates) => set((state) => ({
+                stacks: state.stacks.map((s) =>
+                    s.id === id ? { ...s, ...updates } : s
+                )
+            })),
+            
+            deleteStack: (id) => set((state) => ({
+                stacks: state.stacks.filter((s) => s.id !== id),
+                // Remove stack assignment from services
+                services: state.services.map((s) =>
+                    s.stackId === id ? { ...s, stackId: undefined } : s
+                )
+            })),
+            
+            getStacksByProject: (projectId) => {
+                return get().stacks.filter((s) => s.projectId === projectId);
+            },
+            
+            getServicesByStack: (stackId) => {
+                return get().services.filter((s) => s.stackId === stackId);
+            },
+            
+            assignServiceToStack: (serviceId, stackId) => set((state) => ({
+                services: state.services.map((s) =>
+                    s.id === serviceId ? { ...s, stackId: stackId || undefined } : s
+                )
+            })),
+            
+            // Environment Actions
+            setActiveEnvironment: (activeEnvironment) => set({ activeEnvironment }),
 
             // Alert Actions
             setAlerts: (alerts) => set({ alerts }),
@@ -194,6 +272,60 @@ export const useProjectStore = create<ProjectState>()(
                 }
             }),
 
+            // Quick Access Actions
+            pinService: (serviceId) => set((state) => ({
+                pinnedServiceIds: state.pinnedServiceIds.includes(serviceId)
+                    ? state.pinnedServiceIds
+                    : [...state.pinnedServiceIds, serviceId]
+            })),
+            
+            unpinService: (serviceId) => set((state) => ({
+                pinnedServiceIds: state.pinnedServiceIds.filter(id => id !== serviceId)
+            })),
+            
+            togglePinService: (serviceId) => set((state) => ({
+                pinnedServiceIds: state.pinnedServiceIds.includes(serviceId)
+                    ? state.pinnedServiceIds.filter(id => id !== serviceId)
+                    : [...state.pinnedServiceIds, serviceId]
+            })),
+            
+            isServicePinned: (serviceId) => {
+                return get().pinnedServiceIds.includes(serviceId);
+            },
+            
+            recordServiceAccess: (serviceId, projectId) => set((state) => {
+                const newAccess = {
+                    serviceId,
+                    projectId,
+                    accessedAt: new Date().toISOString(),
+                };
+                
+                // Remove existing entry for this service and add new one at the front
+                const filtered = state.recentServiceAccesses.filter(
+                    r => r.serviceId !== serviceId
+                );
+                
+                // Keep only last 10 recent accesses
+                const updated = [newAccess, ...filtered].slice(0, 10);
+                
+                return { recentServiceAccesses: updated };
+            }),
+            
+            getPinnedServices: () => {
+                const state = get();
+                return state.services.filter(s => 
+                    state.pinnedServiceIds.includes(s.id)
+                );
+            },
+            
+            getRecentServices: (limit = 5) => {
+                const state = get();
+                return state.recentServiceAccesses
+                    .slice(0, limit)
+                    .map(r => state.services.find(s => s.id === r.serviceId))
+                    .filter((s): s is Service => s !== undefined);
+            },
+
             // Loading
             setLoading: (isLoading) => set({ isLoading }),
         }),
@@ -202,7 +334,11 @@ export const useProjectStore = create<ProjectState>()(
             partialize: (state) => ({
                 projects: state.projects,
                 services: state.services,
+                stacks: state.stacks,
                 alerts: state.alerts,
+                activeEnvironment: state.activeEnvironment,
+                pinnedServiceIds: state.pinnedServiceIds,
+                recentServiceAccesses: state.recentServiceAccesses,
             }),
         }
     )

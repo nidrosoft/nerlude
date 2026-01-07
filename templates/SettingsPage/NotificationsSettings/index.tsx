@@ -83,27 +83,32 @@ const NotificationsSettingsPage = () => {
     };
 
     return (
-        <Layout isLoggedIn>
-            <div className="min-h-[calc(100vh-80px)] py-8">
-                <div className="max-w-5xl mx-auto px-6">
-                    <div className="flex gap-8 max-lg:flex-col">
-                        {/* Sidebar */}
-                        <SettingsSidebar activeTab="notifications" />
-
-                        {/* Main Content */}
-                        <div className="flex-1">
-                            {/* Header */}
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-[1.5px] border-green-500/30">
-                                    <Icon className="!w-6 !h-6 fill-green-500" name="bell" />
-                                </div>
-                                <div>
-                                    <h1 className="text-h3">Notifications</h1>
-                                    <p className="text-small text-t-secondary">
-                                        Manage how and when you receive notifications
-                                    </p>
-                                </div>
+        <Layout isLoggedIn isFixedHeader>
+            {/* Floating Sidebar */}
+            <SettingsSidebar activeTab="notifications" />
+            
+            {/* Main Content - with left margin to account for collapsed sidebar */}
+            <div className="min-h-screen pl-24 pt-20 max-md:pl-4">
+                {/* Sticky Header */}
+                <div className="sticky top-20 z-20 bg-b-surface1 pb-4 -mx-4 px-4">
+                    <div className="center">
+                        <div className="flex items-center gap-4 py-4">
+                            <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-[1.5px] border-green-500/30">
+                                <Icon className="!w-6 !h-6 fill-green-500" name="bell" />
                             </div>
+                            <div>
+                                <h1 className="text-h3">Notifications</h1>
+                                <p className="text-small text-t-secondary">
+                                    Manage how and when you receive notifications
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="center">
+                    {/* Main Content */}
+                    <div className="w-full">
 
                             {/* Notification Preferences */}
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
@@ -246,7 +251,6 @@ const NotificationsSettingsPage = () => {
                                     Save Preferences
                                 </Button>
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>

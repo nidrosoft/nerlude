@@ -33,8 +33,8 @@ const faqs = [
         answer: "You set the renewal date for each service, and we'll send you alerts at 30, 14, 7, and 1 day before expiration. Alerts can be delivered via email, Slack (Pro plan), or in-app notifications. Never miss a domain expiration again.",
     },
     {
-        question: "Is there a free trial?",
-        answer: "Yes! All paid plans come with a 14-day free trial. No credit card required to start. The Free plan is also free forever—perfect for trying Nelrude with your first project before upgrading.",
+        question: "Is there a free plan?",
+        answer: "Yes! You get one project completely free, forever. No credit card required. It's the perfect way to try Nelrude with your first product. When you're ready to manage more projects, you can upgrade to Pro or Team.",
     },
 ];
 

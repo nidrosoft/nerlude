@@ -1,0 +1,67 @@
+# Nerlude - SaaS Management Platform
+
+> Nerlude is the control center for founders to manage their entire SaaS stack in one place.
+
+## What is Nerlude?
+
+Nerlude is a SaaS management platform designed for founders, indie hackers, and small teams who need to track multiple software subscriptions, store credentials securely, and never miss a renewal.
+
+## Key Features
+
+- **Project Management**: Organize services by project (web app, mobile app, API, etc.)
+- **Service Tracking**: Track 100+ SaaS tools with costs, renewal dates, and credentials
+- **Credential Storage**: AES-256 encrypted storage for API keys, passwords, and secrets
+- **Renewal Reminders**: Automated alerts 30, 14, 7, and 1 day before renewals
+- **Cost Tracking**: Monitor monthly burn rate across all projects and services
+- **Team Collaboration**: Role-based access control (Owner, Admin, Member, Viewer)
+- **Documentation**: Keep notes and setup guides for each service
+
+## Pricing
+
+- **Free**: $0/month - 1 project, 5 services, 1 team member
+- **Pro**: $12/month - Unlimited projects & services, 3 team members, credential encryption
+- **Team**: $29/month - Everything in Pro + unlimited team members, SSO, audit logs
+
+## Use Cases
+
+1. **Solo Founders**: Track all subscriptions for your side project
+2. **Startup Teams**: Collaborate on managing your tech stack
+3. **Agencies**: Manage multiple client projects separately
+4. **Freelancers**: Keep client credentials organized and secure
+
+## Common Questions
+
+Q: What problem does Nerlude solve?
+A: Nerlude prevents forgotten renewals, scattered credentials, and unclear SaaS spending by centralizing everything in one dashboard.
+
+Q: Is Nerlude free?
+A: Yes, the Free plan is free forever with 1 project and 5 services. No credit card required.
+
+Q: How secure is Nerlude?
+A: All credentials are encrypted with AES-256. We're SOC 2 ready and GDPR compliant.
+
+Q: Can I import my existing data?
+A: Yes, you can import services from CSV files or add them manually.
+
+Q: Does Nerlude have an API?
+A: Yes, we offer a REST API for programmatic access and webhooks for real-time notifications.
+
+## Links
+
+- Website: https://nerlude.com
+- Help Center: https://nerlude.com/help
+- Getting Started: https://nerlude.com/help/getting-started
+- Pricing: https://nerlude.com/#pricing
+- Contact: hello@nerlude.com
+
+## Categories
+
+- SaaS Management
+- Subscription Tracking
+- Credential Management
+- API Key Storage
+- Renewal Reminders
+- Cost Tracking
+- Team Collaboration
+- Founder Tools
+- Indie Hacker Tools

@@ -4,32 +4,46 @@ import Icon from "@/components/Icon";
 
 const painPoints = [
     {
-        icon: "cube",
-        title: "Domains scattered across 5 registrars",
-        description: "Namecheap, Cloudflare, GoDaddy... which one expires next?",
-        iconBg: "bg-primary1/10",
-        iconFill: "fill-primary1",
-    },
-    {
         icon: "wallet",
-        title: "Surprise bills from forgotten services",
-        description: "That $200 charge you didn't see coming until it hit.",
-        iconBg: "bg-primary2/10",
-        iconFill: "fill-primary2",
+        title: "$847/month bleeding on forgotten tools",
+        description: "That analytics tool from 2022. The premium plan for 2 users. Money vanishing every month.",
+        iconBg: "bg-primary3/10",
+        iconFill: "fill-primary3",
     },
     {
         icon: "lock",
-        title: "API keys buried in Slack DMs",
-        description: "Searching through months of messages to find that one key.",
+        title: "3am panic: 'Where's the API key?'",
+        description: "Digging through Slack, Notion, emails while production is down and users are leaving.",
         iconBg: "bg-accent/10",
         iconFill: "fill-accent",
     },
     {
+        icon: "cube",
+        title: "Credentials in 47 different places",
+        description: "Onboarding a new dev takes 2 days because nobody knows where anything lives.",
+        iconBg: "bg-primary1/10",
+        iconFill: "fill-primary1",
+    },
+    {
         icon: "clock",
-        title: "Renewals that sneak up and cause outages",
-        description: "Your domain expired. Your app is down. Your users are gone.",
+        title: "'Wait, that renewed yesterday?'",
+        description: "Finding out from your credit card statement, not before. Every. Single. Time.",
         iconBg: "bg-accent2/10",
         iconFill: "fill-accent2",
+    },
+    {
+        icon: "users",
+        title: "Client handoffs are a nightmare",
+        description: "Agencies: spending hours compiling credentials when a project ends. There has to be a better way.",
+        iconBg: "bg-primary2/10",
+        iconFill: "fill-primary2",
+    },
+    {
+        icon: "chart",
+        title: "No idea what you're actually spending",
+        description: "Is it $500/month? $2,000? You genuinely don't know until tax season hits.",
+        iconBg: "bg-primary1/10",
+        iconFill: "fill-primary1",
     },
 ];
 
@@ -45,10 +59,10 @@ const ProblemStatement = () => {
                                 Sound familiar?
                             </div>
                             <h2 className="mb-4 text-h1">
-                                The chaos of modern product building
+                                You&apos;re losing money on tools you forgot exist
                             </h2>
                             <p className="max-w-140 mx-auto text-body-lg text-t-secondary max-md:max-w-full">
-                                Every software product is glued together by a sprawling mess of services. Here&apos;s what founders deal with every day.
+                                Every founder and agency knows this pain. Scattered credentials, surprise charges, and the constant fear of missing a renewal.
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">

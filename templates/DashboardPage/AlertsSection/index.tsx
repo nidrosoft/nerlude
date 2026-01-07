@@ -29,18 +29,23 @@ const priorityStyles = {
 const AlertsSection = ({ alerts, onDismiss, onSnooze }: Props) => {
     const activeAlerts = alerts.filter((a) => !a.isDismissed);
 
-    if (activeAlerts.length === 0) {
-        return null;
-    }
-
     return (
-        <div className="mb-8 p-6 rounded-4xl bg-b-surface2 max-md:mb-6 max-md:p-4">
-            <div className="flex items-center justify-between mb-5">
+        <div className="h-full p-5 rounded-4xl bg-b-surface2 max-md:p-4">
+            <div className="flex items-center justify-between mb-4">
                 <h2 className="text-body-bold">Needs Attention</h2>
                 <span className="text-small text-t-tertiary">
                     {activeAlerts.length} item{activeAlerts.length !== 1 ? "s" : ""}
                 </span>
             </div>
+            {activeAlerts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="flex items-center justify-center size-12 mb-3 rounded-2xl bg-green-500/10 fill-green-500">
+                        <Icon name="check" className="!w-6 !h-6" />
+                    </div>
+                    <p className="text-small text-t-secondary">All caught up!</p>
+                    <p className="text-xs text-t-tertiary mt-1">No items need your attention</p>
+                </div>
+            ) : (
             <div className="space-y-3">
                 {activeAlerts.map((alert) => {
                     const styles = priorityStyles[alert.priority];
@@ -93,6 +98,7 @@ const AlertsSection = ({ alerts, onDismiss, onSnooze }: Props) => {
                     );
                 })}
             </div>
+            )}
         </div>
     );
 };

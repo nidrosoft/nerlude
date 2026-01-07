@@ -1,8 +1,13 @@
 import { Project, Alert, DashboardStats } from "@/types";
 
+// Mock workspace and user IDs for development
+const MOCK_WORKSPACE_ID = "ws_mock_001";
+const MOCK_USER_ID = "user_mock_001";
+
 export const mockProjects: Project[] = [
     {
         id: "1",
+        workspaceId: MOCK_WORKSPACE_ID,
         name: "SaaS Dashboard",
         description: "Main product dashboard application",
         icon: "🚀",
@@ -12,11 +17,13 @@ export const mockProjects: Project[] = [
         serviceCount: 8,
         alertCount: 2,
         nextRenewal: "2025-01-15",
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-06-01T00:00:00Z",
         updatedAt: "2024-12-19T00:00:00Z",
     },
     {
         id: "2",
+        workspaceId: MOCK_WORKSPACE_ID,
         name: "Mobile App",
         description: "iOS and Android companion app",
         icon: "📱",
@@ -26,11 +33,13 @@ export const mockProjects: Project[] = [
         serviceCount: 4,
         alertCount: 0,
         nextRenewal: "2025-02-01",
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-08-15T00:00:00Z",
         updatedAt: "2024-12-18T00:00:00Z",
     },
     {
         id: "3",
+        workspaceId: MOCK_WORKSPACE_ID,
         name: "Marketing Site",
         description: "Company landing page and blog",
         icon: "🌐",
@@ -40,11 +49,13 @@ export const mockProjects: Project[] = [
         serviceCount: 3,
         alertCount: 1,
         nextRenewal: "2025-01-20",
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-03-10T00:00:00Z",
         updatedAt: "2024-12-17T00:00:00Z",
     },
     {
         id: "4",
+        workspaceId: MOCK_WORKSPACE_ID,
         name: "API Gateway",
         description: "Public API for integrations",
         icon: "⚡",
@@ -53,11 +64,13 @@ export const mockProjects: Project[] = [
         monthlyCost: 156,
         serviceCount: 5,
         alertCount: 0,
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-09-01T00:00:00Z",
         updatedAt: "2024-12-15T00:00:00Z",
     },
     {
         id: "5",
+        workspaceId: MOCK_WORKSPACE_ID,
         name: "Chrome Extension",
         description: "Browser extension for quick access",
         icon: "🧩",
@@ -66,6 +79,7 @@ export const mockProjects: Project[] = [
         monthlyCost: 0,
         serviceCount: 2,
         alertCount: 0,
+        createdBy: MOCK_USER_ID,
         createdAt: "2024-07-20T00:00:00Z",
         updatedAt: "2024-11-01T00:00:00Z",
     },

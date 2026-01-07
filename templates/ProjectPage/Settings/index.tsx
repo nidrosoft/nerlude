@@ -25,10 +25,6 @@ const Settings = ({ project }: Props) => {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-h3">Settings</h2>
-            </div>
-
             <div className="space-y-6">
                 <div className="p-6 rounded-4xl bg-b-surface2">
                     <h3 className="text-body-bold mb-4">General</h3>

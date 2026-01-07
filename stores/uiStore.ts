@@ -34,6 +34,10 @@ interface UIState {
     theme: ThemeMode;
     setTheme: (theme: ThemeMode) => void;
     
+    // Premium Plan (migrated from useEventsStore)
+    isPremiumPlan: boolean;
+    setIsPremiumPlan: (isPremium: boolean) => void;
+    
     // Sidebar
     sidebarState: SidebarState;
     setSidebarState: (state: SidebarState) => void;
@@ -73,6 +77,10 @@ export const useUIStore = create<UIState>()(
             // Theme
             theme: 'system',
             setTheme: (theme) => set({ theme }),
+            
+            // Premium Plan (migrated from useEventsStore)
+            isPremiumPlan: false,
+            setIsPremiumPlan: (isPremiumPlan) => set({ isPremiumPlan }),
             
             // Sidebar
             sidebarState: 'expanded',
