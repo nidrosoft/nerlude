@@ -15,29 +15,29 @@ const servicePatterns: {
     category: ServiceCategory;
     logoUrl?: string;
 }[] = [
-    { keywords: ['vercel', 'zeit'], name: 'Vercel', category: 'hosting', logoUrl: '/images/services/vercel.svg' },
-    { keywords: ['netlify'], name: 'Netlify', category: 'hosting', logoUrl: '/images/services/netlify.svg' },
-    { keywords: ['aws', 'amazon'], name: 'AWS', category: 'hosting', logoUrl: '/images/services/aws.svg' },
-    { keywords: ['heroku'], name: 'Heroku', category: 'hosting', logoUrl: '/images/services/heroku.svg' },
-    { keywords: ['railway'], name: 'Railway', category: 'hosting', logoUrl: '/images/services/railway.svg' },
-    { keywords: ['supabase'], name: 'Supabase', category: 'database', logoUrl: '/images/services/supabase.svg' },
-    { keywords: ['firebase'], name: 'Firebase', category: 'database', logoUrl: '/images/services/firebase.svg' },
-    { keywords: ['mongodb', 'atlas'], name: 'MongoDB Atlas', category: 'database', logoUrl: '/images/services/mongodb.svg' },
-    { keywords: ['planetscale'], name: 'PlanetScale', category: 'database', logoUrl: '/images/services/planetscale.svg' },
+    { keywords: ['vercel', 'zeit'], name: 'Vercel', category: 'infrastructure', logoUrl: '/images/services/vercel.svg' },
+    { keywords: ['netlify'], name: 'Netlify', category: 'infrastructure', logoUrl: '/images/services/netlify.svg' },
+    { keywords: ['aws', 'amazon'], name: 'AWS', category: 'infrastructure', logoUrl: '/images/services/aws.svg' },
+    { keywords: ['heroku'], name: 'Heroku', category: 'infrastructure', logoUrl: '/images/services/heroku.svg' },
+    { keywords: ['railway'], name: 'Railway', category: 'infrastructure', logoUrl: '/images/services/railway.svg' },
+    { keywords: ['supabase'], name: 'Supabase', category: 'infrastructure', logoUrl: '/images/services/supabase.svg' },
+    { keywords: ['firebase'], name: 'Firebase', category: 'infrastructure', logoUrl: '/images/services/firebase.svg' },
+    { keywords: ['mongodb', 'atlas'], name: 'MongoDB Atlas', category: 'infrastructure', logoUrl: '/images/services/mongodb.svg' },
+    { keywords: ['planetscale'], name: 'PlanetScale', category: 'infrastructure', logoUrl: '/images/services/planetscale.svg' },
     { keywords: ['stripe'], name: 'Stripe', category: 'payments', logoUrl: '/images/services/stripe.svg' },
-    { keywords: ['clerk'], name: 'Clerk', category: 'auth', logoUrl: '/images/services/clerk.svg' },
-    { keywords: ['auth0'], name: 'Auth0', category: 'auth', logoUrl: '/images/services/auth0.svg' },
-    { keywords: ['resend'], name: 'Resend', category: 'email', logoUrl: '/images/services/resend.svg' },
-    { keywords: ['sendgrid'], name: 'SendGrid', category: 'email', logoUrl: '/images/services/sendgrid.svg' },
-    { keywords: ['mailgun'], name: 'Mailgun', category: 'email', logoUrl: '/images/services/mailgun.svg' },
+    { keywords: ['clerk'], name: 'Clerk', category: 'identity', logoUrl: '/images/services/clerk.svg' },
+    { keywords: ['auth0'], name: 'Auth0', category: 'identity', logoUrl: '/images/services/auth0.svg' },
+    { keywords: ['resend'], name: 'Resend', category: 'communications', logoUrl: '/images/services/resend.svg' },
+    { keywords: ['sendgrid'], name: 'SendGrid', category: 'communications', logoUrl: '/images/services/sendgrid.svg' },
+    { keywords: ['mailgun'], name: 'Mailgun', category: 'communications', logoUrl: '/images/services/mailgun.svg' },
     { keywords: ['posthog'], name: 'PostHog', category: 'analytics', logoUrl: '/images/services/posthog.svg' },
     { keywords: ['mixpanel'], name: 'Mixpanel', category: 'analytics', logoUrl: '/images/services/mixpanel.svg' },
-    { keywords: ['sentry'], name: 'Sentry', category: 'monitoring', logoUrl: '/images/services/sentry.svg' },
-    { keywords: ['cloudinary'], name: 'Cloudinary', category: 'media', logoUrl: '/images/services/cloudinary.svg' },
-    { keywords: ['openai', 'gpt'], name: 'OpenAI', category: 'ai', logoUrl: '/images/services/openai.svg' },
-    { keywords: ['namecheap'], name: 'Namecheap', category: 'domain', logoUrl: '/images/services/namecheap.svg' },
-    { keywords: ['godaddy'], name: 'GoDaddy', category: 'domain', logoUrl: '/images/services/godaddy.svg' },
-    { keywords: ['cloudflare'], name: 'Cloudflare', category: 'domain', logoUrl: '/images/services/cloudflare.svg' },
+    { keywords: ['sentry'], name: 'Sentry', category: 'analytics', logoUrl: '/images/services/sentry.svg' },
+    { keywords: ['cloudinary'], name: 'Cloudinary', category: 'infrastructure', logoUrl: '/images/services/cloudinary.svg' },
+    { keywords: ['openai', 'gpt'], name: 'OpenAI', category: 'devtools', logoUrl: '/images/services/openai.svg' },
+    { keywords: ['namecheap'], name: 'Namecheap', category: 'domains', logoUrl: '/images/services/namecheap.svg' },
+    { keywords: ['godaddy'], name: 'GoDaddy', category: 'domains', logoUrl: '/images/services/godaddy.svg' },
+    { keywords: ['cloudflare'], name: 'Cloudflare', category: 'domains', logoUrl: '/images/services/cloudflare.svg' },
 ];
 
 const projectIcons = ["🚀", "💼", "🎯", "📦", "🔥", "⚡", "🎨", "🛠️", "📱", "🌐", "💡", "🎮"];
@@ -83,10 +83,10 @@ const generateMockRenewalDate = (): string => {
 
 const inferProjectType = (services: ExtractedService[]): ProjectType => {
     const categories = services.map(s => s.category.value);
-    if (categories.includes('appstores')) return 'mobile';
-    if (categories.includes('hosting') && categories.includes('database')) return 'web';
-    if (categories.includes('ai')) return 'ai';
-    if (services.length === 1 && categories[0] === 'domain') return 'landing';
+    if (categories.includes('distribution')) return 'mobile';
+    if (categories.includes('infrastructure')) return 'web';
+    if (categories.includes('devtools')) return 'ai';
+    if (services.length === 1 && categories[0] === 'domains') return 'landing';
     return 'web';
 };
 

@@ -45,12 +45,12 @@ export interface ServiceRegistryItem {
 }
 
 export const serviceRegistry: ServiceRegistryItem[] = [
-    // Hosting
+    // Hosting (infrastructure)
     {
         id: "vercel",
         slug: "vercel",
         name: "Vercel",
-        category: "hosting",
+        category: "infrastructure",
         description: "Deploy web projects with zero configuration",
         website: "https://vercel.com",
         docsUrl: "https://vercel.com/docs",
@@ -73,7 +73,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "railway",
         slug: "railway",
         name: "Railway",
-        category: "hosting",
+        category: "infrastructure",
         description: "Infrastructure platform for deploying apps",
         website: "https://railway.app",
         docsUrl: "https://docs.railway.app",
@@ -90,7 +90,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "netlify",
         slug: "netlify",
         name: "Netlify",
-        category: "hosting",
+        category: "infrastructure",
         description: "Build and deploy modern web projects",
         website: "https://netlify.com",
         docsUrl: "https://docs.netlify.com",
@@ -107,7 +107,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "aws",
         slug: "aws",
         name: "AWS",
-        category: "hosting",
+        category: "infrastructure",
         description: "Amazon Web Services cloud platform",
         website: "https://aws.amazon.com",
         docsUrl: "https://docs.aws.amazon.com",
@@ -121,12 +121,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "region", label: "Region", type: "text", placeholder: "us-east-1", required: true },
         ],
     },
-    // Database
+    // Database (infrastructure)
     {
         id: "supabase",
         slug: "supabase",
         name: "Supabase",
-        category: "database",
+        category: "infrastructure",
         description: "Open source Firebase alternative with Postgres",
         website: "https://supabase.com",
         docsUrl: "https://supabase.com/docs",
@@ -146,7 +146,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "planetscale",
         slug: "planetscale",
         name: "PlanetScale",
-        category: "database",
+        category: "infrastructure",
         description: "Serverless MySQL platform",
         website: "https://planetscale.com",
         docsUrl: "https://planetscale.com/docs",
@@ -163,7 +163,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "mongodb",
         slug: "mongodb",
         name: "MongoDB Atlas",
-        category: "database",
+        category: "infrastructure",
         description: "Cloud-hosted MongoDB service",
         website: "https://mongodb.com/atlas",
         docsUrl: "https://www.mongodb.com/docs/atlas",
@@ -180,7 +180,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "neon",
         slug: "neon",
         name: "Neon",
-        category: "database",
+        category: "infrastructure",
         description: "Serverless Postgres with branching",
         website: "https://neon.tech",
         docsUrl: "https://neon.tech/docs",
@@ -197,7 +197,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "upstash",
         slug: "upstash",
         name: "Upstash",
-        category: "database",
+        category: "infrastructure",
         description: "Serverless Redis and Kafka",
         website: "https://upstash.com",
         docsUrl: "https://upstash.com/docs",
@@ -211,12 +211,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "redis_token", label: "Redis Token", type: "password", required: false, sensitive: true },
         ],
     },
-    // Domain
+    // Domain (domains)
     {
         id: "namecheap",
         slug: "namecheap",
         name: "Namecheap",
-        category: "domain",
+        category: "domains",
         description: "Domain registration and management",
         website: "https://namecheap.com",
         plans: [
@@ -231,7 +231,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "cloudflare",
         slug: "cloudflare",
         name: "Cloudflare",
-        category: "domain",
+        category: "domains",
         description: "DNS, CDN, and security services",
         website: "https://cloudflare.com",
         docsUrl: "https://developers.cloudflare.com",
@@ -250,7 +250,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "porkbun",
         slug: "porkbun",
         name: "Porkbun",
-        category: "domain",
+        category: "domains",
         description: "Domain registration with competitive pricing",
         website: "https://porkbun.com",
         plans: [
@@ -261,12 +261,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "secret_key", label: "Secret Key", type: "password", required: true, sensitive: true },
         ],
     },
-    // Auth
+    // Auth (identity)
     {
         id: "clerk",
         slug: "clerk",
         name: "Clerk",
-        category: "auth",
+        category: "identity",
         description: "Complete user management and authentication",
         website: "https://clerk.com",
         docsUrl: "https://clerk.com/docs",
@@ -284,7 +284,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "auth0",
         slug: "auth0",
         name: "Auth0",
-        category: "auth",
+        category: "identity",
         description: "Identity platform for authentication",
         website: "https://auth0.com",
         docsUrl: "https://auth0.com/docs",
@@ -351,12 +351,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "public_key", label: "Public Key", type: "password", required: false },
         ],
     },
-    // Email
+    // Email (communications)
     {
         id: "resend",
         slug: "resend",
         name: "Resend",
-        category: "email",
+        category: "communications",
         description: "Email API for developers",
         website: "https://resend.com",
         docsUrl: "https://resend.com/docs",
@@ -373,7 +373,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "sendgrid",
         slug: "sendgrid",
         name: "SendGrid",
-        category: "email",
+        category: "communications",
         description: "Email delivery and marketing platform",
         website: "https://sendgrid.com",
         docsUrl: "https://docs.sendgrid.com",
@@ -390,7 +390,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "postmark",
         slug: "postmark",
         name: "Postmark",
-        category: "email",
+        category: "communications",
         description: "Transactional email service",
         website: "https://postmarkapp.com",
         docsUrl: "https://postmarkapp.com/developer",
@@ -455,12 +455,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "token", label: "Project Token", type: "password", required: true, sensitive: true },
         ],
     },
-    // AI
+    // AI (devtools)
     {
         id: "openai",
         slug: "openai",
         name: "OpenAI",
-        category: "ai",
+        category: "devtools",
         description: "GPT and AI models API",
         website: "https://openai.com",
         docsUrl: "https://platform.openai.com/docs",
@@ -477,7 +477,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "anthropic",
         slug: "anthropic",
         name: "Anthropic",
-        category: "ai",
+        category: "devtools",
         description: "Claude AI models API",
         website: "https://anthropic.com",
         docsUrl: "https://docs.anthropic.com",
@@ -492,7 +492,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "replicate",
         slug: "replicate",
         name: "Replicate",
-        category: "ai",
+        category: "devtools",
         description: "Run ML models in the cloud",
         website: "https://replicate.com",
         docsUrl: "https://replicate.com/docs",
@@ -503,12 +503,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "api_token", label: "API Token", type: "password", required: true, sensitive: true },
         ],
     },
-    // Monitoring
+    // Monitoring (analytics)
     {
         id: "sentry",
         slug: "sentry",
         name: "Sentry",
-        category: "monitoring",
+        category: "analytics",
         description: "Error tracking and performance monitoring",
         website: "https://sentry.io",
         docsUrl: "https://docs.sentry.io",
@@ -527,7 +527,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "logrocket",
         slug: "logrocket",
         name: "LogRocket",
-        category: "monitoring",
+        category: "analytics",
         description: "Session replay and error tracking",
         website: "https://logrocket.com",
         docsUrl: "https://docs.logrocket.com",
@@ -540,12 +540,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "app_id", label: "App ID", type: "text", required: true },
         ],
     },
-    // Storage
+    // Storage (infrastructure)
     {
         id: "cloudinary",
         slug: "cloudinary",
         name: "Cloudinary",
-        category: "storage",
+        category: "infrastructure",
         description: "Image and video management",
         website: "https://cloudinary.com",
         docsUrl: "https://cloudinary.com/documentation",
@@ -564,7 +564,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "uploadthing",
         slug: "uploadthing",
         name: "UploadThing",
-        category: "storage",
+        category: "infrastructure",
         description: "File uploads for Next.js",
         website: "https://uploadthing.com",
         docsUrl: "https://docs.uploadthing.com",
@@ -613,12 +613,12 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
         ],
     },
-    // App Stores
+    // App Stores (distribution)
     {
         id: "apple-developer",
         slug: "apple-developer",
         name: "Apple Developer",
-        category: "appstores",
+        category: "distribution",
         description: "iOS and macOS app distribution",
         website: "https://developer.apple.com",
         docsUrl: "https://developer.apple.com/documentation",
@@ -637,7 +637,7 @@ export const serviceRegistry: ServiceRegistryItem[] = [
         id: "google-play",
         slug: "google-play",
         name: "Google Play Console",
-        category: "appstores",
+        category: "distribution",
         description: "Android app distribution",
         website: "https://play.google.com/console",
         docsUrl: "https://developer.android.com/distribute",

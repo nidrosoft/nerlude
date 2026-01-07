@@ -12,24 +12,14 @@ type Props = {
 };
 
 const categoryLabels: Record<ServiceCategory, string> = {
-    hosting: 'Hosting',
-    database: 'Database',
-    domain: 'Domain',
-    auth: 'Authentication',
+    infrastructure: 'Infrastructure',
+    identity: 'Identity & Access',
     payments: 'Payments',
-    email: 'Email',
-    analytics: 'Analytics',
-    storage: 'Storage',
-    ai: 'AI / ML',
-    devtools: 'Dev Tools',
-    marketing: 'Marketing',
-    appstores: 'App Stores',
-    monitoring: 'Monitoring',
-    communication: 'Communication',
-    security: 'Security',
-    cms: 'CMS',
-    search: 'Search',
-    media: 'Media',
+    communications: 'Communications',
+    analytics: 'Analytics & Monitoring',
+    domains: 'Domains & DNS',
+    distribution: 'Distribution',
+    devtools: 'Developer Tools',
     other: 'Other',
 };
 
