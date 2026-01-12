@@ -59,12 +59,12 @@ export default function HelpLayout({
                 <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
                         <img
-                            src="/images/Logo-dark.svg"
+                            src="/images/logo-dark.svg"
                             alt="Nerlude"
                             className="h-8 dark:hidden"
                         />
                         <img
-                            src="/images/Logo-light.svg"
+                            src="/images/logo-light.svg"
                             alt="Nerlude"
                             className="h-8 hidden dark:block"
                         />

@@ -66,14 +66,14 @@ const Header = ({
                 <Link className="w-48 max-md:w-28 shrink-0" href="/">
                     <img
                         className="w-full dark:hidden"
-                        src="/images/Logo-dark.svg"
+                        src="/images/logo-dark.svg"
                         width={142}
                         height={36}
                         alt="Nerlude"
                     />
                     <img
                         className="hidden w-full dark:block"
-                        src="/images/Logo-light.svg"
+                        src="/images/logo-light.svg"
                         width={142}
                         height={36}
                         alt="Nerlude"

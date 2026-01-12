@@ -312,14 +312,14 @@ export default function InvitePage() {
           <Link href="/">
             <img
               className="h-8 mx-auto dark:hidden"
-              src="/images/Logo-dark.svg"
+              src="/images/logo-dark.svg"
               width={142}
               height={36}
               alt="Nerlude"
             />
             <img
               className="hidden h-8 mx-auto dark:block"
-              src="/images/Logo-light.svg"
+              src="/images/logo-light.svg"
               width={142}
               height={36}
               alt="Nerlude"
