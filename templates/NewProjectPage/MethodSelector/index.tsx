@@ -27,14 +27,23 @@ const methods: MethodOption[] = [
         badge: 'Recommended',
     },
     {
+        id: 'manual',
+        title: 'Add Manually',
+        description: 'Create a project from scratch and add services one by one.',
+        IconComponent: Edit2,
+        iconBg: 'bg-amber-500/10',
+        iconColor: '#F59E0B',
+        isAvailable: true,
+    },
+    {
         id: 'email',
         title: 'Sync from Email',
         description: 'Connect your inbox to automatically import receipts and invoices.',
         IconComponent: Sms,
         iconBg: 'bg-blue-500/10',
         iconColor: '#3B82F6',
-        isAvailable: true,
-        badge: 'New',
+        isAvailable: false,
+        badge: 'Coming Soon',
     },
     {
         id: 'bank',
@@ -45,15 +54,6 @@ const methods: MethodOption[] = [
         iconColor: '#22C55E',
         isAvailable: false,
         badge: 'Coming Soon',
-    },
-    {
-        id: 'manual',
-        title: 'Add Manually',
-        description: 'Create a project from scratch and add services one by one.',
-        IconComponent: Edit2,
-        iconBg: 'bg-amber-500/10',
-        iconColor: '#F59E0B',
-        isAvailable: true,
     },
 ];
 
