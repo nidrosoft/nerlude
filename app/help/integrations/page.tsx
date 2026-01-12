@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "API & Integrations - Connect Your Tools with Nerlude",
     description: "Learn how to integrate Nerlude with your existing tools, use our API, set up webhooks, and automate your SaaS management workflow.",
     alternates: {
-        canonical: "https://nerlude.com/help/integrations",
+        canonical: "https://nerlude.io/help/integrations",
     },
     openGraph: {
         title: "API & Integrations - Nerlude Help Center",
@@ -106,7 +106,7 @@ export default function IntegrationsPage() {
                     <div className="bg-b-surface2 rounded-xl p-4 font-mono text-small overflow-x-auto">
                         <code>
                             curl -H "Authorization: Bearer YOUR_API_KEY" \<br/>
-                            &nbsp;&nbsp;https://api.nerlude.com/v1/projects
+                            &nbsp;&nbsp;https://api.nerlude.io/v1/projects
                         </code>
                     </div>
                     <h3 className="text-h5 mt-6 mb-3 not-prose">Available endpoints</h3>
@@ -148,7 +148,7 @@ export default function IntegrationsPage() {
                     </div>
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mt-4">
                         <p className="text-small text-blue-600 dark:text-blue-400">
-                            <strong>📚 Full documentation:</strong> Complete API documentation with examples is available at <a href="https://docs.nerlude.com/api" className="underline">docs.nerlude.com/api</a>
+                            <strong>📚 Full documentation:</strong> Complete API documentation with examples is available at <a href="https://docs.nerlude.io/api" className="underline">docs.nerlude.io/api</a>
                         </p>
                     </div>
                 </div>

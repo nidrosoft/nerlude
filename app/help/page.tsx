@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Help Center",
     description: "Get help with Nerlude - find guides, tutorials, FAQs, and answers to common questions about managing your SaaS stack.",
     alternates: {
-        canonical: "https://nerlude.com/help",
+        canonical: "https://nerlude.io/help",
     },
 };
 

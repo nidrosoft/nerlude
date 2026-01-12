@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { Project, Service, Alert } from "@/types";
 import Icon from "@/components/Icon";
+import ConfirmModal from "@/components/ConfirmModal";
 import { getProjectHealth, getHealthInfo, HealthStatus } from "@/lib/utils/healthStatus";
 import { useToast } from "@/components/Toast";
+import { useProjectLoading } from "@/components/ProjectLoadingOverlay";
 
 type Props = {
     project: Project;
     services?: Service[];
     alerts?: Alert[];
     onDuplicate?: (project: Project) => void;
+    onArchive?: (project: Project) => void;
 };
 
 const typeLabels: Record<string, string> = {
@@ -39,37 +42,77 @@ const healthStyles: Record<HealthStatus, { dot: string; ring: string }> = {
     },
 };
 
-const ProjectCard = ({ project, services = [], alerts = [], onDuplicate }: Props) => {
-    const router = useRouter();
+const ProjectCard = ({ project, services = [], alerts = [], onDuplicate, onArchive }: Props) => {
     const toast = useToast();
-    const [showMenu, setShowMenu] = useState(false);
+    const router = useRouter();
+    const { showLoading } = useProjectLoading();
+    const [showArchiveModal, setShowArchiveModal] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState(false);
     const healthStatus = getProjectHealth(project, services, alerts);
     const healthInfo = getHealthInfo(healthStatus);
     const styles = healthStyles[healthStatus];
 
-    const handleDuplicate = (e: React.MouseEvent) => {
+    const handleProjectClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        e.stopPropagation();
-        setShowMenu(false);
-        if (onDuplicate) {
-            onDuplicate(project);
-        } else {
+        showLoading(project.name);
+        router.push(`/projects/${project.id}`);
+    };
+
+    const handleDuplicate = async () => {
+        setIsDuplicating(true);
+        try {
+            const response = await fetch(`/api/projects/${project.id}/duplicate`, { method: 'POST' });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to duplicate project');
+            }
+            
+            const data = await response.json();
+            
+            if (onDuplicate) {
+                onDuplicate(data.project);
+            }
             toast.success("Project duplicated", `A copy of "${project.name}" has been created.`);
+        } catch (error) {
+            toast.error("Error", error instanceof Error ? error.message : "Failed to duplicate project. Please try again.");
+        } finally {
+            setIsDuplicating(false);
         }
     };
 
-    const handleArchive = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setShowMenu(false);
-        toast.warning("Project archived", `"${project.name}" has been moved to archives.`);
+    const handleArchiveClick = () => {
+        setShowArchiveModal(true);
+    };
+
+    const handleArchiveConfirm = async () => {
+        setIsArchiving(true);
+        try {
+            const response = await fetch(`/api/projects/${project.id}/archive`, { method: 'POST' });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to archive project');
+            }
+            
+            if (onArchive) {
+                onArchive(project);
+            }
+            toast.warning("Project archived", `"${project.name}" has been moved to archives.`);
+        } catch (error) {
+            toast.error("Error", error instanceof Error ? error.message : "Failed to archive project. Please try again.");
+        } finally {
+            setIsArchiving(false);
+            setShowArchiveModal(false);
+        }
     };
     
     return (
         <div className="group relative h-full">
-            <Link
-                href={`/projects/${project.id}`}
-                className={`block h-full p-6 rounded-4xl bg-b-surface2 cursor-pointer transition-all hover:shadow-hover max-md:p-4 ring-2 ring-transparent hover:${styles.ring}`}
+            <div
+                onClick={handleProjectClick}
+                className={`block h-full p-6 rounded-4xl bg-b-surface2 border border-stroke-subtle cursor-pointer transition-all hover:shadow-hover max-md:p-4 ring-2 ring-transparent hover:${styles.ring}`}
             >
                 <div className="flex items-start justify-between mb-10 max-md:mb-6">
                     <div className="relative">
@@ -117,45 +160,56 @@ const ProjectCard = ({ project, services = [], alerts = [], onDuplicate }: Props
                         <span>{project.serviceCount} services</span>
                     </div>
                 </div>
-            </Link>
+            </div>
             
-            {/* Quick Actions Button - Bottom Right */}
-            <button
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowMenu(!showMenu);
-                }}
-                className="absolute bottom-4 right-4 flex items-center justify-center size-8 rounded-xl bg-b-surface1/80 hover:bg-b-surface1 opacity-0 group-hover:opacity-100 transition-all fill-t-tertiary hover:fill-t-primary z-10"
-            >
-                <Icon className="!w-4 !h-4" name="more" />
-            </button>
-            
-            {/* Quick Actions Menu - Opens upward from bottom */}
-            {showMenu && (
-                <>
-                    <div 
-                        className="fixed inset-0 z-20"
-                        onClick={() => setShowMenu(false)}
-                    />
-                    <div className="absolute bottom-14 right-4 z-30 w-40 p-2 rounded-2xl bg-b-surface1 shadow-lg border border-stroke-subtle">
-                        <button
-                            onClick={handleDuplicate}
-                            className="flex items-center w-full px-3 py-2 rounded-xl text-small text-t-secondary hover:bg-b-surface2 hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary"
-                        >
-                            <Icon className="!w-4 !h-4 mr-2" name="copy" />
-                            Duplicate
-                        </button>
-                        <button
-                            onClick={handleArchive}
-                            className="flex items-center w-full px-3 py-2 rounded-xl text-small text-amber-500 hover:bg-amber-500/10 transition-colors fill-amber-500"
-                        >
-                            <Icon className="!w-4 !h-4 mr-2" name="documents" />
-                            Archive
-                        </button>
+            {/* Quick Actions Menu - Bottom Right */}
+            <Menu as="div" className="absolute bottom-4 right-4 z-10">
+                <MenuButton 
+                    className="flex items-center justify-center size-8 rounded-xl bg-b-surface1/80 hover:bg-b-surface1 opacity-0 group-hover:opacity-100 transition-all fill-t-tertiary hover:fill-t-primary"
+                    onClick={(e: React.MouseEvent) => e.preventDefault()}
+                >
+                    <Icon className="!w-4 !h-4" name="more" />
+                </MenuButton>
+                <MenuItems
+                    className="z-50 [--anchor-gap:0.5rem] w-40 shadow-hover bg-b-surface2 border border-stroke-subtle rounded-2xl outline-0 origin-bottom transition duration-200 ease-out data-closed:scale-95 data-closed:opacity-0"
+                    anchor="top end"
+                    transition
+                >
+                    <div className="p-2">
+                        <MenuItem>
+                            <button
+                                onClick={handleDuplicate}
+                                className="flex items-center w-full px-3 py-2 rounded-xl text-small text-t-secondary hover:bg-b-highlight hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary"
+                            >
+                                <Icon className="!w-4 !h-4 mr-2" name="copy" />
+                                Duplicate
+                            </button>
+                        </MenuItem>
+                        <MenuItem>
+                            <button
+                                onClick={handleArchiveClick}
+                                className="flex items-center w-full px-3 py-2 rounded-xl text-small text-amber-500 hover:bg-amber-500/10 transition-colors fill-amber-500"
+                            >
+                                <Icon className="!w-4 !h-4 mr-2" name="documents" />
+                                Archive
+                            </button>
+                        </MenuItem>
                     </div>
-                </>
-            )}
+                </MenuItems>
+            </Menu>
+
+            {/* Archive Confirmation Modal */}
+            <ConfirmModal
+                isOpen={showArchiveModal}
+                onClose={() => setShowArchiveModal(false)}
+                onConfirm={handleArchiveConfirm}
+                title="Archive Project?"
+                message={`"${project.name}" will be moved to archives. You can restore it anytime from the archived projects page.`}
+                confirmText="Archive"
+                cancelText="Cancel"
+                variant="warning"
+                isLoading={isArchiving}
+            />
         </div>
     );
 };

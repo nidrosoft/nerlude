@@ -1,37 +1,158 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Breadcrumb from "@/components/Breadcrumb";
+import Skeleton from "@/components/Skeleton";
 import { useToast } from "@/components/Toast";
-import { mockServices, categoryLabels, categoryIcons } from "@/data/mockServices";
-import { mockProjects } from "@/data/mockProjects";
-import { getCategoryColor, getStatusColor } from "@/utils/categoryColors";
-import { TabId, tabs } from "./types";
-import { mockCredentials, mockUsageStats, mockActivityLog } from "./data";
+import { categoryLabels, categoryIcons } from "@/data/mockServices";
+import { getCategoryColor } from "@/utils/categoryColors";
+import { TabId, tabs, Credential } from "./types";
 import OverviewTab from "./OverviewTab";
 import CredentialsTab from "./CredentialsTab";
-import UsageTab from "./UsageTab";
 import SettingsTab from "./SettingsTab";
+import EditServiceModal from "./EditServiceModal";
+import { CredentialTypeId } from "./credentialTypes";
+import { Service } from "@/types";
 
 type Props = {
     projectId: string;
     serviceId: string;
 };
 
+interface ProjectInfo {
+    id: string;
+    name: string;
+}
+
 const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
     const router = useRouter();
     const toast = useToast();
     const [activeTab, setActiveTab] = useState<TabId>("overview");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [visibleSecrets, setVisibleSecrets] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Real data state
+    const [project, setProject] = useState<ProjectInfo | null>(null);
+    const [service, setService] = useState<Service | null>(null);
+    const [credentials, setCredentials] = useState<Credential[]>([]);
 
-    const project = mockProjects.find((p) => p.id === projectId);
-    const service = mockServices.find((s) => s.id === serviceId);
+    // Fetch service data from API
+    const fetchServiceData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            // Fetch service and project in parallel
+            const [serviceRes, projectRes] = await Promise.all([
+                fetch(`/api/projects/${projectId}/services/${serviceId}`),
+                fetch(`/api/projects/${projectId}`),
+            ]);
 
+            if (!serviceRes.ok || !projectRes.ok) {
+                setService(null);
+                setProject(null);
+                return;
+            }
+
+            const serviceData = await serviceRes.json();
+            const projectData = await projectRes.json();
+
+            // Map service data
+            setService({
+                id: serviceData.id,
+                projectId: serviceData.project_id,
+                stackId: serviceData.stack_id,
+                registryId: serviceData.registry_id,
+                categoryId: serviceData.category_id || 'custom',
+                subCategoryId: serviceData.sub_category_id,
+                name: serviceData.name,
+                customLogoUrl: serviceData.custom_logo_url,
+                plan: serviceData.plan,
+                costAmount: serviceData.cost_amount || 0,
+                costFrequency: serviceData.cost_frequency || 'monthly',
+                currency: serviceData.currency || 'USD',
+                renewalDate: serviceData.renewal_date,
+                lastPaymentDate: serviceData.last_payment_date,
+                status: serviceData.status || 'active',
+                notes: serviceData.notes,
+                createdAt: serviceData.created_at,
+                updatedAt: serviceData.updated_at,
+            });
+
+            setProject({
+                id: projectData.id,
+                name: projectData.name,
+            });
+
+            // Map credentials if available
+            if (serviceData.credentials) {
+                setCredentials(serviceData.credentials.map((c: any) => {
+                    // Parse fields from credentials_encrypted if available
+                    let fields: Record<string, string> | undefined;
+                    try {
+                        if (c.credentials_encrypted) {
+                            fields = JSON.parse(c.credentials_encrypted);
+                        }
+                    } catch {
+                        // If parsing fails, fields will be undefined
+                    }
+                    
+                    return {
+                        id: c.id,
+                        label: c.key_name || 'Key',
+                        value: '••••••••••••••••', // Never expose actual value in list
+                        isSecret: true,
+                        environment: c.environment || 'production',
+                        credentialType: c.credential_type,
+                        description: c.description,
+                        fields, // Include parsed fields for detail modal
+                        createdAt: c.created_at,
+                    };
+                }));
+            }
+
+        } catch (error) {
+            console.error('Error fetching service:', error);
+            setService(null);
+            setProject(null);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [projectId, serviceId]);
+
+    useEffect(() => {
+        fetchServiceData();
+    }, [fetchServiceData]);
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <Layout isLoggedIn isFixedHeader>
+                <div className="min-h-screen pt-20">
+                    <div className="center">
+                        <Skeleton variant="text" height={16} className="w-64 mb-6 mt-4" />
+                        <div className="flex items-center gap-4 mb-6">
+                            <Skeleton variant="rounded" width={64} height={64} />
+                            <div>
+                                <Skeleton variant="text" height={32} className="w-48 mb-2" />
+                                <Skeleton variant="text" height={16} className="w-32" />
+                            </div>
+                        </div>
+                        <Skeleton variant="rounded" height={48} className="w-96 mb-8" />
+                        <Skeleton variant="rounded" height={200} className="w-full" />
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
+    // Not found state
     if (!project || !service) {
         return (
             <Layout>
@@ -52,7 +173,6 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
     }
 
     const categoryColor = getCategoryColor(service.categoryId);
-    const statusColor = getStatusColor(service.status);
 
     const toggleSecretVisibility = (id: string) => {
         setVisibleSecrets((prev) =>
@@ -65,14 +185,105 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
         toast.success("Copied!", `${label} copied to clipboard`);
     };
 
-    const handlePauseService = () => {
-        toast.warning("Service paused", `${service.name} has been paused`);
+    const handleDeleteService = async () => {
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/services/${serviceId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                toast.success("Service removed", `${service.name} has been removed from this project`);
+                setShowDeleteModal(false);
+                router.push(`/projects/${projectId}`);
+            } else {
+                throw new Error('Failed to delete service');
+            }
+        } catch (error) {
+            console.error('Error deleting service:', error);
+            toast.error("Error", "Failed to remove service");
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
-    const handleDeleteService = () => {
-        toast.error("Service removed", `${service.name} has been removed from this project`);
-        setShowDeleteModal(false);
-        router.push(`/projects/${projectId}`);
+    const handleUpdateService = async (updates: Partial<Service>) => {
+        if (!service) return;
+        setIsSaving(true);
+        try {
+            // Convert camelCase to snake_case for API
+            const apiUpdates: Record<string, unknown> = {};
+            if (updates.name !== undefined) apiUpdates.name = updates.name;
+            if (updates.plan !== undefined) apiUpdates.plan = updates.plan;
+            if (updates.costAmount !== undefined) apiUpdates.cost_amount = updates.costAmount;
+            if (updates.costFrequency !== undefined) apiUpdates.cost_frequency = updates.costFrequency;
+            if (updates.renewalDate !== undefined) apiUpdates.renewal_date = updates.renewalDate || null;
+            if (updates.lastPaymentDate !== undefined) apiUpdates.last_payment_date = updates.lastPaymentDate || null;
+            if (updates.notes !== undefined) apiUpdates.notes = updates.notes || null;
+            if (updates.status !== undefined) apiUpdates.status = updates.status;
+
+            const response = await fetch(`/api/projects/${projectId}/services/${serviceId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(apiUpdates),
+            });
+
+            if (response.ok) {
+                // Update local state
+                setService(prev => prev ? { ...prev, ...updates, updatedAt: new Date().toISOString() } : null);
+                toast.success("Service updated", "Your changes have been saved");
+                setShowEditModal(false);
+            } else {
+                throw new Error('Failed to update service');
+            }
+        } catch (error) {
+            console.error('Error updating service:', error);
+            toast.error("Error", "Failed to update service");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleAddCredential = async (data: {
+        type: CredentialTypeId;
+        environment: "production" | "staging" | "development";
+        fields: Record<string, string>;
+        description?: string;
+    }) => {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/services/${serviceId}/credentials`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                const newCredential = await response.json();
+                // Add to local state - get the first field as the label
+                const firstFieldKey = Object.keys(data.fields)[0];
+                const label = data.fields[firstFieldKey] || data.type;
+                
+                setCredentials(prev => [...prev, {
+                    id: newCredential.id || `temp-${Date.now()}`,
+                    label,
+                    value: '••••••••••••••••',
+                    isSecret: true,
+                    environment: data.environment,
+                    credentialType: data.type,
+                    description: data.description,
+                    fields: data.fields,
+                    createdAt: new Date().toISOString(),
+                }]);
+                
+                toast.success("Credential added", "Your credential has been securely saved");
+            } else {
+                throw new Error('Failed to save credential');
+            }
+        } catch (error) {
+            console.error('Error saving credential:', error);
+            toast.error("Error", "Failed to save credential");
+            throw error;
+        }
     };
 
     return (
@@ -100,8 +311,12 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
                                 <div>
                                     <div className="flex items-center gap-3 mb-1">
                                         <h1 className="text-h2">{service.name}</h1>
-                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${statusColor.bg} ${statusColor.text}`}>
-                                            {service.status}
+                                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                                            service.costAmount === 0 
+                                                ? "bg-green-500/10 text-green-600" 
+                                                : "bg-blue-500/10 text-blue-600"
+                                        }`}>
+                                            {service.costAmount === 0 ? "Free" : "Paid"}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-4 text-small text-t-secondary">
@@ -118,15 +333,6 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Button isStroke onClick={() => window.open("https://dashboard.stripe.com", "_blank")}>
-                                    <Icon className="mr-2 !w-4 !h-4" name="export" />
-                                    Open Dashboard
-                                </Button>
-                                <Button isPrimary onClick={handlePauseService}>
-                                    Pause
-                                </Button>
                             </div>
                         </div>
 
@@ -156,32 +362,39 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
                         {activeTab === "overview" && (
                             <OverviewTab
                                 service={service}
-                                usageStats={mockUsageStats}
-                                activityLog={mockActivityLog}
+                                onEditService={() => setShowEditModal(true)}
                             />
                         )}
 
                         {activeTab === "credentials" && (
                             <CredentialsTab
-                                credentials={mockCredentials}
+                                credentials={credentials}
                                 visibleSecrets={visibleSecrets}
                                 onToggleVisibility={toggleSecretVisibility}
                                 onCopy={copyToClipboard}
+                                onAddCredential={handleAddCredential}
                             />
-                        )}
-
-                        {activeTab === "usage" && (
-                            <UsageTab usageStats={mockUsageStats} />
                         )}
 
                         {activeTab === "settings" && (
                             <SettingsTab
                                 service={service}
                                 onDeleteClick={() => setShowDeleteModal(true)}
+                                onUpdateService={handleUpdateService}
+                                isSaving={isSaving}
                             />
                         )}
                     </div>
                 </div>
+
+                {/* Edit Service Modal */}
+                <EditServiceModal
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                    service={service}
+                    onSave={handleUpdateService}
+                    isSaving={isSaving}
+                />
 
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && (

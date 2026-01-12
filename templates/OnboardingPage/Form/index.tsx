@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import { useAuth } from "@/lib/auth";
+import { getSupabaseClient } from "@/lib/db";
 import UserType from "./UserType";
 import CompanySize from "./CompanySize";
 import HowFoundUs from "./HowFoundUs";
@@ -35,6 +37,7 @@ const getStoredProgress = (): OnboardingProgress | null => {
 
 const OnboardingForm = () => {
     const router = useRouter();
+    const { user, isLoading: authLoading } = useAuth();
     const storedProgress = getStoredProgress();
     
     const [activeId, setActiveId] = useState(storedProgress?.activeId ?? 0);
@@ -43,6 +46,14 @@ const OnboardingForm = () => {
     const [howFoundUs, setHowFoundUs] = useState(storedProgress?.howFoundUs ?? "");
     const [useCase, setUseCase] = useState(storedProgress?.useCase ?? "");
     const [productCount, setProductCount] = useState(storedProgress?.productCount ?? "");
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Redirect to home if not authenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push("/");
+        }
+    }, [user, authLoading, router]);
     
     // Save progress to localStorage whenever state changes
     useEffect(() => {
@@ -69,18 +80,42 @@ const OnboardingForm = () => {
         }
     };
 
-    const handleComplete = () => {
-        // TODO: Save onboarding data to store/database
-        console.log({
-            userType,
-            companySize,
-            howFoundUs,
-            useCase,
-            productCount,
-        });
-        // Clear onboarding progress from localStorage
-        localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-        router.push("/dashboard");
+    const handleComplete = async () => {
+        if (!user) return;
+        
+        setIsSaving(true);
+        
+        try {
+            const supabase = getSupabaseClient();
+            
+            // Save onboarding data to database
+            const { error } = await supabase
+                .from('user_onboarding')
+                .upsert({
+                    user_id: user.id,
+                    user_type: userType || null,
+                    company_size: companySize || null,
+                    how_found_us: howFoundUs || null,
+                    use_case: useCase || null,
+                    product_count: productCount || null,
+                    completed_at: new Date().toISOString(),
+                });
+
+            if (error) {
+                console.error('Error saving onboarding:', error);
+            }
+            
+            // Clear onboarding progress from localStorage
+            localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+            router.push("/dashboard");
+        } catch (error) {
+            console.error('Error saving onboarding:', error);
+            // Still redirect even if save fails
+            localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+            router.push("/dashboard");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const canProceed = () => {
@@ -168,7 +203,7 @@ const OnboardingForm = () => {
                         onClick={handleComplete}
                         disabled={!canProceed()}
                     >
-                        Get Started
+                        {isSaving ? "Saving..." : "Get Started"}
                     </Button>
                 ) : (
                     <Button

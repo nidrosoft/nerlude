@@ -48,11 +48,11 @@ A: Yes, we offer a REST API for programmatic access and webhooks for real-time n
 
 ## Links
 
-- Website: https://nerlude.com
-- Help Center: https://nerlude.com/help
-- Getting Started: https://nerlude.com/help/getting-started
-- Pricing: https://nerlude.com/#pricing
-- Contact: hello@nerlude.com
+- Website: https://nerlude.io
+- Help Center: https://nerlude.io/help
+- Getting Started: https://nerlude.io/help/getting-started
+- Pricing: https://nerlude.io/#pricing
+- Contact: hello@nerlude.io
 
 ## Categories
 

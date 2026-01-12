@@ -108,6 +108,7 @@ export interface Service {
     costFrequency: CostFrequency;
     currency: string;
     renewalDate?: string;
+    lastPaymentDate?: string; // Track when the service was last paid
     renewalReminderDays?: number[]; // e.g., [30, 14, 7]
     status: ServiceStatus;
     notes?: string;
@@ -171,11 +172,14 @@ export interface User {
     updatedAt: string;
 }
 
+export type WorkspaceType = 'personal' | 'startup' | 'agency' | 'enterprise';
+
 export interface Workspace {
     id: string;
     name: string;
     slug: string;
     ownerId: string;
+    workspaceType?: WorkspaceType;
     settings?: WorkspaceSettings;
     createdAt: string;
     updatedAt: string;

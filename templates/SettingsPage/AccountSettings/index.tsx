@@ -1,45 +1,95 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
+import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
 import { useToast } from "@/components/Toast";
+import { getSupabaseClient } from "@/lib/db";
 
 const AccountSettingsPage = () => {
     const toast = useToast();
-    const [name, setName] = useState("John Doe");
-    const [email, setEmail] = useState("john@example.com");
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSaveProfile = () => {
-        console.log("Saving profile:", { name, email });
-        toast.success("Profile updated", "Your profile information has been saved.");
+    // Fetch user profile data
+    useEffect(() => {
+        const fetchUserData = async () => {
+            setIsLoading(true);
+            try {
+                const supabase = getSupabaseClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (user) {
+                    setEmail(user.email || '');
+                    setName(user.user_metadata?.name || user.user_metadata?.full_name || '');
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchUserData();
+    }, []);
+
+    const handleSaveProfile = async () => {
+        setIsSaving(true);
+        try {
+            const supabase = getSupabaseClient();
+            const { error } = await supabase.auth.updateUser({
+                data: { name, full_name: name }
+            });
+            
+            if (error) throw error;
+            toast.success("Profile updated", "Your profile information has been saved.");
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            toast.error("Error", "Failed to update profile.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (newPassword !== confirmPassword) {
             toast.error("Passwords don't match", "Please make sure your passwords match.");
             return;
         }
-        console.log("Changing password");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-        toast.success("Password updated", "Your password has been changed successfully.");
+        
+        try {
+            const supabase = getSupabaseClient();
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+            
+            if (error) throw error;
+            
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            toast.success("Password updated", "Your password has been changed successfully.");
+        } catch (error) {
+            console.error('Error changing password:', error);
+            toast.error("Error", "Failed to change password.");
+        }
     };
 
-    const handleDeleteAccount = () => {
-        console.log("Deleting account");
+    const handleDeleteAccount = async () => {
+        // Note: Account deletion typically requires backend support
+        toast.info("Contact Support", "Please contact support to delete your account.");
         setShowDeleteModal(false);
-        toast.info("Account deleted", "Your account has been permanently deleted.");
     };
 
     return (

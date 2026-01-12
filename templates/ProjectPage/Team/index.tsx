@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Dropdown from "@/components/Dropdown";
 import Field from "@/components/Field";
+import Skeleton from "@/components/Skeleton";
 import { useToast } from "@/components/Toast";
 
 /**
@@ -44,9 +45,21 @@ type Props = {
     onCloseInviteModal?: () => void;
 };
 
+interface Member {
+    id: string;
+    userId?: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+    role: string;
+    joinedAt?: string;
+}
+
 const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModal }: Props) => {
     const toast = useToast();
     const [internalShowModal, setInternalShowModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Use external control if provided, otherwise use internal state
     const showInviteModal = externalShowModal !== undefined ? externalShowModal : internalShowModal;
@@ -55,62 +68,110 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
         : setInternalShowModal;
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState<"Admin" | "Member" | "Viewer">("Member");
-    const [members, setMembers] = useState([
-        {
-            id: "1",
-            name: "Steven Chen",
-            email: "steven@example.com",
-            role: "Owner",
-            avatar: "SC",
-        },
-        {
-            id: "2",
-            name: "Sarah Johnson",
-            email: "sarah@example.com",
-            role: "Admin",
-            avatar: "SJ",
-        },
-        {
-            id: "3",
-            name: "Mike Wilson",
-            email: "mike@example.com",
-            role: "Member",
-            avatar: "MW",
-            expiresAt: "2025-02-15",
-        },
-    ]);
+    const [members, setMembers] = useState<Member[]>([]);
 
-    const handleChangeRole = (memberId: string, newRole: string) => {
-        setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
-        toast.success("Role updated", `Member role changed to ${newRole}`);
+    // Fetch team members from API
+    const fetchMembers = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/members`);
+            if (response.ok) {
+                const data = await response.json();
+                setMembers(data.map((m: any) => ({
+                    id: m.id,
+                    userId: m.userId,
+                    name: m.name,
+                    email: m.email,
+                    avatarUrl: m.avatarUrl,
+                    role: m.role.charAt(0).toUpperCase() + m.role.slice(1), // Capitalize
+                    joinedAt: m.joinedAt,
+                })));
+            }
+        } catch (error) {
+            console.error('Error fetching members:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [projectId]);
+
+    useEffect(() => {
+        fetchMembers();
+    }, [fetchMembers]);
+
+    const handleChangeRole = async (memberId: string, userId: string, newRole: string) => {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/members/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole.toLowerCase() }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update role');
+            }
+
+            setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+            toast.success("Role updated", `Member role changed to ${newRole}`);
+        } catch (error) {
+            console.error('Error updating role:', error);
+            toast.error("Error", error instanceof Error ? error.message : "Failed to update role");
+        }
     };
 
-    const handleRemoveMember = (memberId: string, memberName: string) => {
-        setMembers(prev => prev.filter(m => m.id !== memberId));
-        toast.success("Member removed", `${memberName} has been removed from the team`);
+    const handleRemoveMember = async (memberId: string, userId: string, memberName: string) => {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/members/${userId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to remove member');
+            }
+
+            setMembers(prev => prev.filter(m => m.id !== memberId));
+            toast.success("Member removed", `${memberName} has been removed from the team`);
+        } catch (error) {
+            console.error('Error removing member:', error);
+            toast.error("Error", error instanceof Error ? error.message : "Failed to remove member");
+        }
     };
 
-    const handleInviteMember = () => {
-        if (!inviteEmail) return;
+    const handleInviteMember = async () => {
+        if (!inviteEmail || isSubmitting) return;
         
-        // Generate initials from email
-        const initials = inviteEmail.split("@")[0].slice(0, 2).toUpperCase();
-        
-        // Add new member (in real app, this would be a pending invite)
-        const newMember = {
-            id: Date.now().toString(),
-            name: inviteEmail.split("@")[0], // Use email prefix as temp name
-            email: inviteEmail,
-            role: inviteRole,
-            avatar: initials,
-            // In real implementation, this would be a pending invite until accepted
-        };
-        
-        setMembers(prev => [...prev, newMember]);
-        setShowInviteModal(false);
-        setInviteEmail("");
-        setInviteRole("Member");
-        toast.success("Invitation sent", `An invite has been sent to ${inviteEmail}`);
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: inviteEmail,
+                    role: inviteRole.toLowerCase(),
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to add member');
+            }
+
+            const newMember = await response.json();
+            setMembers(prev => [...prev, {
+                ...newMember,
+                role: newMember.role.charAt(0).toUpperCase() + newMember.role.slice(1),
+            }]);
+            setShowInviteModal(false);
+            setInviteEmail("");
+            setInviteRole("Member");
+            toast.success("Member added", `${newMember.name || inviteEmail} has been added to the team`);
+        } catch (error) {
+            console.error('Error adding member:', error);
+            toast.error("Error", error instanceof Error ? error.message : "Failed to add member");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const roles: { value: "Admin" | "Member" | "Viewer"; label: string }[] = [
@@ -126,17 +187,63 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
         Viewer: "bg-gray-500/10 text-gray-600",
     };
 
+    if (isLoading) {
+        return (
+            <div className="p-5 rounded-4xl bg-b-surface2">
+                <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center p-4 rounded-xl bg-b-surface1">
+                            <Skeleton variant="circular" width={40} height={40} className="mr-4" />
+                            <div className="flex-1">
+                                <Skeleton variant="text" height={16} className="w-32 mb-2" />
+                                <Skeleton variant="text" height={12} className="w-48" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (members.length === 0) {
+        return (
+            <div className="p-8 text-center rounded-4xl bg-b-surface2">
+                <div className="flex items-center justify-center size-12 mx-auto mb-4 rounded-full bg-primary1/5 border-[1.5px] border-primary1/15">
+                    <Icon className="!w-6 !h-6 text-primary1" name="profile" />
+                </div>
+                <div className="text-body-bold mb-2">No team members yet</div>
+                <div className="text-small text-t-secondary mb-4">
+                    Invite team members to collaborate on this project
+                </div>
+                <Button isSecondary onClick={() => setShowInviteModal(true)}>
+                    <Icon className="mr-2 !w-4 !h-4" name="plus" />
+                    Invite Member
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div>
             <div className="p-5 rounded-4xl bg-b-surface2">
                 <div className="space-y-3">
-                    {members.map((member) => (
+                    {members.map((member) => {
+                        // Generate initials from name or email
+                        const initials = member.name 
+                            ? member.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                            : member.email.slice(0, 2).toUpperCase();
+                        
+                        return (
                         <div
                             key={member.id}
                             className="flex items-center p-4 rounded-xl bg-b-surface1"
                         >
                             <div className="flex items-center justify-center size-10 mr-4 rounded-full bg-primary1/10 text-primary1 font-medium">
-                                {member.avatar}
+                                {member.avatarUrl ? (
+                                    <img src={member.avatarUrl} alt={member.name} className="size-10 rounded-full object-cover" />
+                                ) : (
+                                    initials
+                                )}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
@@ -150,43 +257,41 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
                                 <div className="text-small text-t-secondary truncate">
                                     {member.email}
                                 </div>
-                                {member.expiresAt && (
-                                    <div className="text-xs text-amber-600 mt-1">
-                                        Access expires {new Date(member.expiresAt).toLocaleDateString()}
-                                    </div>
-                                )}
                             </div>
-                            <Dropdown
-                                trigger={
-                                    <Button isStroke className="shrink-0">
-                                        <Icon className="!w-5 !h-5" name="more" />
-                                    </Button>
-                                }
-                                items={member.role !== "Owner" ? [
-                                    {
-                                        label: "Make Admin",
-                                        icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="profile" />,
-                                        onClick: () => handleChangeRole(member.id, "Admin"),
-                                    },
-                                    {
-                                        label: "Make Member",
-                                        icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="profile" />,
-                                        onClick: () => handleChangeRole(member.id, "Member"),
-                                    },
-                                    {
-                                        label: "Make Viewer",
-                                        icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="eye" />,
-                                        onClick: () => handleChangeRole(member.id, "Viewer"),
-                                    },
-                                    {
-                                        label: "Remove",
-                                        icon: <Icon className="!w-5 !h-5 fill-red-500" name="close" />,
-                                        onClick: () => handleRemoveMember(member.id, member.name),
-                                    },
-                                ] : []}
-                            />
+                            {member.role !== "Owner" && (
+                                <Dropdown
+                                    trigger={
+                                        <Button isStroke className="shrink-0">
+                                            <Icon className="!w-5 !h-5" name="more" />
+                                        </Button>
+                                    }
+                                    items={[
+                                        {
+                                            label: "Make Admin",
+                                            icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="profile" />,
+                                            onClick: () => handleChangeRole(member.id, member.userId || '', "Admin"),
+                                        },
+                                        {
+                                            label: "Make Member",
+                                            icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="profile" />,
+                                            onClick: () => handleChangeRole(member.id, member.userId || '', "Member"),
+                                        },
+                                        {
+                                            label: "Make Viewer",
+                                            icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="eye" />,
+                                            onClick: () => handleChangeRole(member.id, member.userId || '', "Viewer"),
+                                        },
+                                        {
+                                            label: "Remove",
+                                            icon: <Icon className="!w-5 !h-5 fill-red-500" name="close" />,
+                                            onClick: () => handleRemoveMember(member.id, member.userId || '', member.name),
+                                        },
+                                    ]}
+                                />
+                            )}
                         </div>
-                    ))}
+                    );
+                    })}
                 </div>
             </div>
 

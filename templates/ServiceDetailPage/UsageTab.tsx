@@ -2,13 +2,20 @@
 
 import Icon from "@/components/Icon";
 import { UsageStat } from "./types";
-import { mockBillingHistory } from "./data";
+
+interface BillingHistoryItem {
+    date: string;
+    desc: string;
+    amount: string;
+    status: string;
+}
 
 interface UsageTabProps {
     usageStats: UsageStat[];
+    billingHistory?: BillingHistoryItem[];
 }
 
-const UsageTab = ({ usageStats }: UsageTabProps) => {
+const UsageTab = ({ usageStats, billingHistory = [] }: UsageTabProps) => {
     return (
         <>
             {/* Usage Stats Grid */}
@@ -59,6 +66,13 @@ const UsageTab = ({ usageStats }: UsageTabProps) => {
             {/* Billing History */}
             <div className="p-6 rounded-4xl bg-b-surface2">
                 <h3 className="text-body-bold mb-4">Billing History</h3>
+                {billingHistory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center rounded-2xl bg-b-surface1">
+                        <Icon className="!w-10 !h-10 fill-t-tertiary mb-2" name="documents" />
+                        <p className="text-small text-t-secondary">No billing history</p>
+                        <p className="text-xs text-t-tertiary mt-1">Service billing records will appear here</p>
+                    </div>
+                ) : (
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
@@ -70,7 +84,7 @@ const UsageTab = ({ usageStats }: UsageTabProps) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {mockBillingHistory.map((item, index) => (
+                            {billingHistory.map((item: BillingHistoryItem, index: number) => (
                                 <tr key={index} className="border-b border-stroke-subtle last:border-0">
                                     <td className="py-3 px-4 text-small text-t-secondary">{item.date}</td>
                                     <td className="py-3 px-4 text-small text-t-primary">{item.desc}</td>
@@ -85,6 +99,7 @@ const UsageTab = ({ usageStats }: UsageTabProps) => {
                         </tbody>
                     </table>
                 </div>
+                )}
             </div>
         </>
     );

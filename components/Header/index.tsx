@@ -8,6 +8,10 @@ import Modal from "@/components/Modal";
 import Login from "@/components/Login";
 import Menu from "./Menu";
 import Plan from "./Plan";
+import QuickActions from "./QuickActions";
+import Notifications from "./Notifications";
+import WorkspaceSwitcher from "./WorkspaceSwitcher";
+import { Alert } from "@/types";
 
 const navLinks = [
     { label: "Features", href: "#features" },
@@ -22,6 +26,9 @@ type HeaderProps = {
     isVisiblePlan?: boolean;
     onLogin: () => void;
     onLogout: () => void;
+    alerts?: Alert[];
+    onMarkAsRead?: (id: string) => void;
+    onMarkAllAsRead?: () => void;
 };
 
 const Header = ({
@@ -30,6 +37,9 @@ const Header = ({
     isVisiblePlan,
     onLogin,
     onLogout,
+    alerts = [],
+    onMarkAsRead,
+    onMarkAllAsRead,
 }: HeaderProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -89,22 +99,17 @@ const Header = ({
                 
                 {isVisiblePlan && <Plan />}
                 {login ? (
-                    <div className="flex items-center ml-auto">
+                    <div className="flex items-center gap-3 ml-auto">
+                        <WorkspaceSwitcher />
                         {pathname !== "/projects/new" &&
                             pathname !== "/onboarding" && (
-                                <Button
-                                    className="mr-3 max-md:w-12! max-md:gap-0! max-md:p-0! max-md:text-0!"
-                                    href="/projects/new"
-                                    as="link"
-                                    isSecondary
-                                >
-                                    <Icon
-                                        className="mr-2 max-md:mr-0"
-                                        name="plus"
-                                    />
-                                    New Project
-                                </Button>
+                                <QuickActions />
                             )}
+                        <Notifications 
+                            alerts={alerts}
+                            onMarkAsRead={onMarkAsRead}
+                            onMarkAllAsRead={onMarkAllAsRead}
+                        />
                         <Menu onLogout={onLogout} />
                     </div>
                 ) : (

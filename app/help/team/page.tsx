@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Team Collaboration - Invite Members & Manage Permissions",
     description: "Learn how to invite team members, set role-based permissions, and collaborate effectively on your projects in Nerlude. Perfect for startups and small teams.",
     alternates: {
-        canonical: "https://nerlude.com/help/team",
+        canonical: "https://nerlude.io/help/team",
     },
     openGraph: {
         title: "Team Collaboration in Nerlude",

@@ -7,13 +7,16 @@ import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import { ProjectType, UploadedDocument, ExtractedProject } from "@/types";
 import { useToast } from "@/components/Toast";
+import { useWorkspaceStore } from "@/stores";
 import MethodSelector, { ImportMethod } from "./MethodSelector";
 import DocumentUpload from "./DocumentUpload";
 import ProcessingScreen from "./ProcessingScreen";
 import ReviewProjects from "./ReviewProjects";
 import ConfirmCreate from "./ConfirmCreate";
 import SuccessScreen from "./SuccessScreen";
-import { extractProjectsFromDocuments } from "./utils/mockExtraction";
+import EmailSync from "./EmailSync";
+import { extractProjectsFromDocuments, ExtractionResult } from "./utils/aiExtraction";
+import { ExtractedEmailService } from "./utils/emailSync";
 import { Step, FlowType, ProjectTemplate } from "./types";
 import ProgressSteps from "./ProgressSteps";
 import BasicsStep from "./BasicsStep";
@@ -24,8 +27,10 @@ import ConfirmStep from "./ConfirmStep";
 const NewProjectPage = () => {
     const router = useRouter();
     const toast = useToast();
+    const { currentWorkspace } = useWorkspaceStore();
     const [currentStep, setCurrentStep] = useState<Step>("method");
     const [flowType, setFlowType] = useState<FlowType | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
     
     // Manual flow state
     const [projectName, setProjectName] = useState("");
@@ -58,6 +63,9 @@ const NewProjectPage = () => {
     };
 
     const handleTemplateSelect = (template: ProjectTemplate) => {
+        console.log('=== TEMPLATE SELECTED ===');
+        console.log('Template:', template.name);
+        console.log('Suggested services:', template.suggestedServices);
         setSelectedTemplate(template);
         setSelectedServices(template.suggestedServices);
         setProjectType(template.type);
@@ -76,11 +84,64 @@ const NewProjectPage = () => {
         if (method === 'documents') {
             setFlowType('documents');
             setCurrentStep('upload');
+        } else if (method === 'email') {
+            setFlowType('email');
+            setCurrentStep('email-sync');
         } else if (method === 'manual') {
             setFlowType('manual');
             setCurrentStep('basics');
         }
     };
+
+    // Email sync handlers
+    const handleEmailServicesExtracted = useCallback((services: ExtractedEmailService[]) => {
+        // Convert email services to ExtractedProject format
+        if (services.length === 0) {
+            toast.warning(
+                "No Services Found",
+                "We couldn't detect any services in your emails. Try a longer date range or upload documents instead."
+            );
+            setCurrentStep('email-sync');
+            return;
+        }
+
+        // Helper to convert numeric confidence to ConfidenceLevel
+        const toConfidenceLevel = (conf: number): 'high' | 'medium' | 'low' => {
+            if (conf >= 0.8) return 'high';
+            if (conf >= 0.5) return 'medium';
+            return 'low';
+        };
+
+        // Calculate total monthly cost
+        const totalMonthlyCost = services.reduce((sum, service) => {
+            const amount = service.amount || 0;
+            if (service.billingCycle === 'yearly') return sum + (amount / 12);
+            return sum + amount;
+        }, 0);
+
+        // Group services into a single project
+        const extractedProject: ExtractedProject = {
+            id: `email-import-${Date.now()}`,
+            name: { value: 'Email Import', confidence: 'high', source: 'email' },
+            type: { value: 'web', confidence: 'medium', source: 'email' },
+            icon: '📧',
+            isConfirmed: true,
+            documents: [], // No documents for email import
+            totalMonthlyCost,
+            services: services.map((service, index) => ({
+                id: `email-service-${index}`,
+                name: { value: service.name, confidence: toConfidenceLevel(service.confidence), source: 'email' },
+                category: { value: 'infrastructure', confidence: 'medium' as const, source: 'email' },
+                costAmount: { value: service.amount, confidence: toConfidenceLevel(service.confidence), source: 'email' },
+                currency: { value: service.currency === 'USD' ? '$' : service.currency, confidence: 'high' as const, source: 'email' },
+                costFrequency: { value: service.billingCycle as 'monthly' | 'yearly' | 'one-time', confidence: 'medium' as const, source: 'email' },
+                renewalDate: service.billingDate ? { value: service.billingDate, confidence: 'medium' as const, source: 'email' } : undefined,
+            })),
+        };
+
+        setExtractedProjects([extractedProject]);
+        setCurrentStep('review');
+    }, [toast]);
 
     // Document upload flow handlers
     const handleDocumentsChange = useCallback((docs: UploadedDocument[]) => {
@@ -92,10 +153,38 @@ const NewProjectPage = () => {
     };
 
     const handleProcessingComplete = useCallback(async () => {
-        const projects = await extractProjectsFromDocuments(uploadedDocuments);
-        setExtractedProjects(projects);
+        const result = await extractProjectsFromDocuments(uploadedDocuments, currentWorkspace?.id);
+        
+        if (!result.success) {
+            // Show error to user instead of falling back to mock data
+            const errorMessage = result.error?.message || 'Failed to analyze documents';
+            const errorDetails = result.error?.details;
+            
+            console.error('Document analysis failed:', result.error);
+            
+            // Show toast with error
+            toast.error(
+                "Analysis Failed", 
+                errorMessage + (errorDetails ? `\n\nDetails: ${errorDetails}` : '')
+            );
+            
+            // Go back to upload step so user can retry
+            setCurrentStep('upload');
+            return;
+        }
+        
+        if (result.projects.length === 0) {
+            toast.warning(
+                "No Services Found",
+                "We couldn't detect any services in your documents. Try uploading clearer images or different documents."
+            );
+            setCurrentStep('upload');
+            return;
+        }
+        
+        setExtractedProjects(result.projects);
         setCurrentStep('review');
-    }, [uploadedDocuments]);
+    }, [uploadedDocuments, currentWorkspace?.id, toast]);
 
     const handleProjectsChange = useCallback((projects: ExtractedProject[]) => {
         setExtractedProjects(projects);
@@ -105,11 +194,79 @@ const NewProjectPage = () => {
         setCurrentStep('confirm-import');
     };
 
-    const handleCreateImportedProjects = () => {
+    const handleCreateImportedProjects = async () => {
+        if (!currentWorkspace) {
+            toast.error("Error", "No workspace selected. Please select a workspace first.");
+            return;
+        }
+
         const confirmedProjects = extractedProjects.filter(p => p.isConfirmed);
-        console.log("Creating projects:", confirmedProjects);
-        toast.success("Projects imported", `${confirmedProjects.length} project(s) have been created.`);
-        setCurrentStep('success');
+        if (confirmedProjects.length === 0) {
+            toast.error("Error", "Please confirm at least one project to import.");
+            return;
+        }
+
+        setIsCreating(true);
+
+        try {
+            // Create each project and its services
+            for (const project of confirmedProjects) {
+                // First create the project
+                const projectResponse = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: project.name.value,
+                        type: project.type.value,
+                        icon: project.icon,
+                        workspace_id: currentWorkspace.id,
+                        description: `Imported from documents on ${new Date().toLocaleDateString()}`,
+                        services: [], // We'll add services via bulk API
+                    }),
+                });
+
+                if (!projectResponse.ok) {
+                    const error = await projectResponse.json();
+                    throw new Error(error.error || `Failed to create project: ${project.name.value}`);
+                }
+
+                const createdProject = await projectResponse.json();
+
+                // Then bulk add services to the project
+                if (project.services.length > 0) {
+                    const servicesPayload = project.services.map(service => ({
+                        registryId: null, // Could be enhanced to match registry
+                        name: service.name.value,
+                        categoryId: service.category.value,
+                        billing: {
+                            amount: service.costAmount.value,
+                            currency: service.currency.value === '$' ? 'USD' : service.currency.value,
+                            frequency: service.costFrequency.value,
+                        },
+                        renewalDate: service.renewalDate?.value || null,
+                        planName: service.plan?.value || null,
+                    }));
+
+                    const servicesResponse = await fetch(`/api/projects/${createdProject.id}/services/bulk`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ services: servicesPayload }),
+                    });
+
+                    if (!servicesResponse.ok) {
+                        console.error('Failed to add services to project:', await servicesResponse.json());
+                        // Continue anyway - project was created
+                    }
+                }
+            }
+
+            toast.success("Projects imported", `${confirmedProjects.length} project(s) have been created successfully.`);
+            setCurrentStep('success');
+        } catch (error) {
+            toast.error("Error", error instanceof Error ? error.message : "Failed to import projects");
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     const handleAddMoreDocuments = () => {
@@ -138,6 +295,9 @@ const NewProjectPage = () => {
         } else if (currentStep === "upload") {
             setCurrentStep("method");
             setFlowType(null);
+        } else if (currentStep === "email-sync") {
+            setCurrentStep("method");
+            setFlowType(null);
         } else if (currentStep === "review") {
             setCurrentStep("upload");
         } else if (currentStep === "confirm-import") {
@@ -146,6 +306,10 @@ const NewProjectPage = () => {
     };
 
     const handleContinue = () => {
+        console.log('=== CONTINUE CLICKED ===');
+        console.log('Current step:', currentStep);
+        console.log('Selected services at continue:', selectedServices);
+        
         if (currentStep === "basics") {
             if (!projectName.trim()) return;
             setCurrentStep("template");
@@ -156,22 +320,53 @@ const NewProjectPage = () => {
         }
     };
 
-    const handleCreateProject = () => {
-        console.log("Creating project:", {
+    const handleCreateProject = async () => {
+        if (!currentWorkspace) {
+            toast.error("Error", "No workspace selected. Please select a workspace first.");
+            return;
+        }
+        
+        setIsCreating(true);
+        
+        const requestBody = {
             name: projectName,
-            type: projectType,
-            customTypeName: showCustomType ? customTypeName : undefined,
+            type: showCustomType ? 'custom' : projectType,
             icon: projectIcon,
-            template: selectedTemplate?.id,
+            workspace_id: currentWorkspace.id,
+            description: selectedTemplate?.description || '',
             services: selectedServices,
-        });
-        toast.success("Project created", `${projectName} has been created successfully.`);
-        router.push("/dashboard");
+            template_id: selectedTemplate?.id || null,
+        };
+        
+        console.log('=== FRONTEND: Creating project ===');
+        console.log('Selected services state:', selectedServices);
+        console.log('Request body:', JSON.stringify(requestBody, null, 2));
+        
+        try {
+            const response = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create project');
+            }
+            
+            const project = await response.json();
+            toast.success("Project created", `${projectName} has been created successfully.`);
+            router.push(`/projects/${project.id}`);
+        } catch (error) {
+            toast.error("Error", error instanceof Error ? error.message : "Failed to create project");
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     return (
-        <Layout isLoggedIn>
-            <div className="min-h-[calc(100vh-80px)] py-8">
+        <Layout isLoggedIn isFixedHeader>
+            <div className="min-h-[calc(100vh-80px)] py-8 pt-28">
                 <div className="max-w-3xl mx-auto px-6">
                     {/* Header */}
                     <div className="flex items-center gap-4 mb-8">
@@ -253,6 +448,14 @@ const NewProjectPage = () => {
                             />
                         )}
 
+                        {/* Email Sync Flow */}
+                        {currentStep === "email-sync" && (
+                            <EmailSync
+                                onServicesExtracted={handleEmailServicesExtracted}
+                                onBack={handleBack}
+                            />
+                        )}
+
                         {currentStep === "review" && (
                             <ReviewProjects
                                 projects={extractedProjects}
@@ -327,6 +530,7 @@ const NewProjectPage = () => {
                                 selectedServices={selectedServices}
                                 onBack={handleBack}
                                 onCreateProject={handleCreateProject}
+                                isCreating={isCreating}
                             />
                         )}
                     </div>

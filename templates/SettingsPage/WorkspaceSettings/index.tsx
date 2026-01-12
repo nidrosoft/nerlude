@@ -1,27 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
+import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
 import { useToast } from "@/components/Toast";
+import { useWorkspaceStore } from "@/stores";
+
+interface TeamMember {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    avatar: string;
+}
 
 const WorkspaceSettingsPage = () => {
     const toast = useToast();
-    const [workspaceName, setWorkspaceName] = useState("My Workspace");
+    const { currentWorkspace } = useWorkspaceStore();
+    const [workspaceName, setWorkspaceName] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("member");
+    const [isLoading, setIsLoading] = useState(true);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
-    const teamMembers = [
-        { id: "1", name: "John Doe", email: "john@example.com", role: "owner", avatar: "J" },
-        { id: "2", name: "Jane Smith", email: "jane@example.com", role: "admin", avatar: "J" },
-        { id: "3", name: "Bob Wilson", email: "bob@example.com", role: "member", avatar: "B" },
-    ];
+    // Fetch workspace data and members
+    const fetchWorkspaceData = useCallback(async () => {
+        if (!currentWorkspace) return;
+        
+        setIsLoading(true);
+        try {
+            // Fetch workspace details
+            const workspaceRes = await fetch(`/api/workspaces/${currentWorkspace.id}`);
+            if (workspaceRes.ok) {
+                const data = await workspaceRes.json();
+                setWorkspaceName(data.name || "My Workspace");
+            }
+
+            // Fetch workspace members
+            const membersRes = await fetch(`/api/workspaces/${currentWorkspace.id}/members`);
+            if (membersRes.ok) {
+                const members = await membersRes.json();
+                const mappedMembers: TeamMember[] = members.map((m: any) => ({
+                    id: m.user_id || m.id,
+                    name: m.user?.name || m.name || 'Unknown',
+                    email: m.user?.email || m.email || '',
+                    role: m.role || 'member',
+                    avatar: (m.user?.name || m.name || 'U').charAt(0).toUpperCase(),
+                }));
+                setTeamMembers(mappedMembers);
+            }
+        } catch (error) {
+            console.error('Error fetching workspace data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentWorkspace]);
+
+    useEffect(() => {
+        fetchWorkspaceData();
+    }, [fetchWorkspaceData]);
 
     const roles = [
         { value: "admin", label: "Admin" },
@@ -29,28 +73,92 @@ const WorkspaceSettingsPage = () => {
         { value: "viewer", label: "Viewer" },
     ];
 
-    const handleSaveWorkspace = () => {
-        console.log("Saving workspace:", { workspaceName });
-        toast.success("Workspace updated", "Your workspace settings have been saved.");
+    const handleSaveWorkspace = async () => {
+        if (!currentWorkspace) return;
+        
+        try {
+            const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: workspaceName }),
+            });
+            
+            if (response.ok) {
+                toast.success("Workspace updated", "Your workspace settings have been saved.");
+            } else {
+                toast.error("Error", "Failed to update workspace settings.");
+            }
+        } catch (error) {
+            console.error('Error saving workspace:', error);
+            toast.error("Error", "Failed to update workspace settings.");
+        }
     };
 
-    const handleInviteMember = () => {
-        console.log("Inviting:", { email: inviteEmail, role: inviteRole });
-        setShowInviteModal(false);
-        setInviteEmail("");
-        setInviteRole("member");
-        toast.success("Invitation sent", `An invite has been sent to ${inviteEmail}.`);
+    const handleInviteMember = async () => {
+        if (!currentWorkspace) return;
+        
+        try {
+            const response = await fetch(`/api/workspaces/${currentWorkspace.id}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+            });
+            
+            if (response.ok) {
+                setShowInviteModal(false);
+                setInviteEmail("");
+                setInviteRole("member");
+                toast.success("Invitation sent", `An invite has been sent to ${inviteEmail}.`);
+                fetchWorkspaceData(); // Refresh members list
+            } else {
+                const data = await response.json();
+                toast.error("Error", data.error || "Failed to send invitation.");
+            }
+        } catch (error) {
+            console.error('Error inviting member:', error);
+            toast.error("Error", "Failed to send invitation.");
+        }
     };
 
-    const handleRemoveMember = (memberId: string) => {
-        console.log("Removing member:", memberId);
-        toast.success("Member removed", "The team member has been removed from this workspace.");
+    const handleRemoveMember = async (memberId: string) => {
+        if (!currentWorkspace) return;
+        
+        try {
+            const response = await fetch(`/api/workspaces/${currentWorkspace.id}/members/${memberId}`, {
+                method: 'DELETE',
+            });
+            
+            if (response.ok) {
+                toast.success("Member removed", "The team member has been removed from this workspace.");
+                fetchWorkspaceData(); // Refresh members list
+            } else {
+                toast.error("Error", "Failed to remove team member.");
+            }
+        } catch (error) {
+            console.error('Error removing member:', error);
+            toast.error("Error", "Failed to remove team member.");
+        }
     };
 
-    const handleDeleteWorkspace = () => {
-        console.log("Deleting workspace");
-        setShowDeleteModal(false);
-        toast.info("Workspace deleted", "Your workspace has been permanently deleted.");
+    const handleDeleteWorkspace = async () => {
+        if (!currentWorkspace) return;
+        
+        try {
+            const response = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+                method: 'DELETE',
+            });
+            
+            if (response.ok) {
+                setShowDeleteModal(false);
+                toast.info("Workspace deleted", "Your workspace has been permanently deleted.");
+                window.location.href = '/dashboard';
+            } else {
+                toast.error("Error", "Failed to delete workspace.");
+            }
+        } catch (error) {
+            console.error('Error deleting workspace:', error);
+            toast.error("Error", "Failed to delete workspace.");
+        }
     };
 
     const getRoleBadgeColor = (role: string) => {
@@ -108,7 +216,7 @@ const WorkspaceSettingsPage = () => {
                                 </div>
 
                                 <div className="flex justify-center">
-                                    <Button isPrimary onClick={handleSaveWorkspace}>
+                                    <Button isStroke onClick={handleSaveWorkspace}>
                                         Save Changes
                                     </Button>
                                 </div>
@@ -118,14 +226,33 @@ const WorkspaceSettingsPage = () => {
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-body-bold">Team Members</h2>
-                                    <Button isPrimary onClick={() => setShowInviteModal(true)}>
+                                    <Button isStroke onClick={() => setShowInviteModal(true)}>
                                         <Icon className="mr-2 !w-5 !h-5" name="plus" />
                                         Invite Member
                                     </Button>
                                 </div>
                                 
                                 <div className="space-y-3">
-                                    {teamMembers.map((member) => (
+                                    {isLoading ? (
+                                        [1, 2, 3].map((i) => (
+                                            <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-b-surface1">
+                                                <div className="flex items-center gap-4">
+                                                    <Skeleton variant="circular" width={40} height={40} />
+                                                    <div>
+                                                        <Skeleton variant="text" height={18} className="w-32 mb-1" />
+                                                        <Skeleton variant="text" height={14} className="w-40" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : teamMembers.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center rounded-2xl bg-b-surface1">
+                                            <Icon className="!w-10 !h-10 fill-t-tertiary mb-2" name="users" />
+                                            <p className="text-small text-t-secondary">No team members yet</p>
+                                            <p className="text-xs text-t-tertiary">Invite team members to collaborate</p>
+                                        </div>
+                                    ) : (
+                                    teamMembers.map((member) => (
                                         <div
                                             key={member.id}
                                             className="flex items-center justify-between p-4 rounded-2xl bg-b-surface1"
@@ -153,29 +280,50 @@ const WorkspaceSettingsPage = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                    ))
+                                    )}
                                 </div>
                             </div>
 
                             {/* API Keys */}
-                            <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
+                            <div className="p-6 mb-6 rounded-4xl bg-b-surface2 opacity-75">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
                                         <h2 className="text-body-bold">API Keys</h2>
-                                        <p className="text-small text-t-secondary mt-1">
-                                            Manage API keys for integrations
-                                        </p>
+                                        <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 text-xs font-semibold">
+                                            Coming Soon
+                                        </span>
                                     </div>
-                                    <Button isStroke>
+                                    <Button isStroke disabled className="opacity-50 cursor-not-allowed">
                                         <Icon className="mr-2 !w-5 !h-5" name="plus" />
                                         Create Key
                                     </Button>
                                 </div>
                                 
-                                <div className="p-4 rounded-2xl bg-b-surface1 text-center">
-                                    <p className="text-small text-t-tertiary">
-                                        No API keys created yet
-                                    </p>
+                                <p className="text-small text-t-secondary mb-4">
+                                    Programmatic access to your Nerlude data for powerful integrations and automation.
+                                </p>
+                                
+                                <div className="p-4 rounded-2xl bg-b-surface1">
+                                    <p className="text-small text-t-primary font-medium mb-2">What you'll be able to do:</p>
+                                    <ul className="text-small text-t-secondary space-y-1.5">
+                                        <li className="flex items-start gap-2">
+                                            <Icon className="!w-4 !h-4 fill-green-500 mt-0.5 shrink-0" name="check" />
+                                            Sync service data with external tools (Zapier, n8n, custom scripts)
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Icon className="!w-4 !h-4 fill-green-500 mt-0.5 shrink-0" name="check" />
+                                            Pull cost and renewal data into your own dashboards
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Icon className="!w-4 !h-4 fill-green-500 mt-0.5 shrink-0" name="check" />
+                                            Automate service tracking in CI/CD pipelines
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <Icon className="!w-4 !h-4 fill-green-500 mt-0.5 shrink-0" name="check" />
+                                            Build custom Slack/Discord bots for renewal alerts
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 

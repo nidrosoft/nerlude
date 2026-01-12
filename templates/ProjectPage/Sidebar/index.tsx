@@ -12,13 +12,13 @@ type Props = {
 };
 
 const navItems = [
-    { id: "overview", label: "Overview", icon: "cube" },
-    { id: "services", label: "Services", icon: "post" },
-    { id: "stacks", label: "Stacks", icon: "align-right" },
-    { id: "assets", label: "Assets", icon: "documents" },
-    { id: "docs", label: "Docs & Notes", icon: "edit" },
-    { id: "team", label: "Team", icon: "profile" },
-    { id: "settings", label: "Settings", icon: "edit-list" },
+    { id: "overview", label: "Overview", icon: "cube", iconColor: "fill-primary1" },
+    { id: "services", label: "Services", icon: "post", iconColor: "fill-purple-500" },
+    { id: "stacks", label: "Stacks", icon: "align-right", iconColor: "fill-cyan-500" },
+    { id: "assets", label: "Assets", icon: "documents", iconColor: "fill-amber-500" },
+    { id: "docs", label: "Docs & Notes", icon: "edit", iconColor: "fill-green-500" },
+    { id: "team", label: "Team", icon: "profile", iconColor: "fill-blue-500" },
+    { id: "settings", label: "Settings", icon: "edit-list", iconColor: "fill-rose-500" },
 ];
 
 const statusColors: Record<string, string> = {
@@ -66,12 +66,12 @@ const Sidebar = ({ project, activeTab, onTabChange }: Props) => {
                             onClick={() => onTabChange(item.id)}
                             className={`flex items-center rounded-xl transition-colors duration-200 px-2.5 py-2.5 ${
                                 activeTab === item.id
-                                    ? "bg-t-primary text-b-surface1 fill-b-surface1"
-                                    : "text-t-secondary fill-t-secondary hover:bg-b-surface1 hover:text-t-primary hover:fill-t-primary"
+                                    ? "bg-t-primary text-b-surface1"
+                                    : "text-t-secondary hover:bg-b-surface1 hover:text-t-primary"
                             }`}
                             title={!isExpanded ? item.label : undefined}
                         >
-                            <Icon className="!w-5 !h-5 shrink-0" name={item.icon} />
+                            <Icon className={`!w-5 !h-5 shrink-0 ${activeTab === item.id ? "fill-b-surface1" : item.iconColor}`} name={item.icon} />
                             <span className={`ml-3 text-small font-medium whitespace-nowrap transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
                                 {item.label}
                             </span>

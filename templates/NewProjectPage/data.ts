@@ -95,3 +95,10 @@ export const documentSteps = [
     { id: "review", label: "Review", number: 3 },
     { id: "confirm-import", label: "Create", number: 4 },
 ];
+
+export const emailSteps = [
+    { id: "email-sync", label: "Connect", number: 1 },
+    { id: "email-processing", label: "Sync", number: 2 },
+    { id: "review", label: "Review", number: 3 },
+    { id: "confirm-import", label: "Create", number: 4 },
+];

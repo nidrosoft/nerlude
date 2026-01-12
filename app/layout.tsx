@@ -46,11 +46,11 @@ export const metadata: Metadata = {
     authors: [{ name: "Nerlude" }],
     creator: "Nerlude",
     publisher: "Nerlude",
-    metadataBase: new URL("https://nerlude.com"),
+    metadataBase: new URL("https://nerlude.io"),
     openGraph: {
         type: "website",
         locale: "en_US",
-        url: "https://nerlude.com",
+        url: "https://nerlude.io",
         siteName: "Nerlude",
         title: "Nerlude - The Control Center for Your SaaS Stack",
         description: "Stop losing money to forgotten renewals. Track services, store credentials securely, and manage costs across all your products in one beautiful dashboard.",
@@ -95,7 +95,7 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
-                <link rel="canonical" href="https://nerlude.com" />
+                <link rel="canonical" href="https://nerlude.io" />
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
@@ -122,6 +122,7 @@ export default function RootLayout({
             </head>
             <body
                 className={`${satoshi.variable} bg-b-surface1 font-satoshi text-[1rem] text-t-primary antialiased`}
+                suppressHydrationWarning
             >
                 <Providers>{children}</Providers>
             </body>

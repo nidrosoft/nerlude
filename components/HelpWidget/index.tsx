@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/Icon";
 
 interface FAQItem {
@@ -33,9 +33,18 @@ const faqs: FAQItem[] = [
 
 const HelpWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(false);
     const [activeTab, setActiveTab] = useState<"help" | "faq" | "contact">("help");
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
     const [message, setMessage] = useState("");
+
+    // Load minimized state from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem("helpWidgetMinimized");
+        if (saved === "true") {
+            setIsMinimized(true);
+        }
+    }, []);
 
     const handleSendMessage = () => {
         if (!message.trim()) return;
@@ -44,17 +53,52 @@ const HelpWidget = () => {
         setMessage("");
     };
 
+    const toggleMinimize = () => {
+        const newState = !isMinimized;
+        setIsMinimized(newState);
+        localStorage.setItem("helpWidgetMinimized", String(newState));
+        if (newState) {
+            setIsOpen(false);
+        }
+    };
+
+    // If minimized, show a small indicator on the edge
+    if (isMinimized) {
+        return (
+            <button
+                onClick={toggleMinimize}
+                className="fixed bottom-6 right-0 z-40 flex items-center gap-2 pl-3 pr-1 py-2 rounded-l-full bg-b-surface2 border border-r-0 border-stroke-subtle shadow-lg hover:bg-b-surface1 transition-all group"
+                title="Show support widget"
+            >
+                <Icon className="!w-4 !h-4 fill-t-tertiary group-hover:fill-primary1 transition-colors" name="question-circle" />
+                <Icon className="!w-3 !h-3 fill-t-tertiary group-hover:fill-t-primary transition-colors rotate-90" name="chevron" />
+            </button>
+        );
+    }
+
     return (
         <>
             {/* Floating Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`fixed bottom-6 right-6 z-40 flex items-center justify-center size-14 rounded-full shadow-lg transition-all ${
-                    isOpen ? "bg-b-surface2 fill-t-primary rotate-45" : "bg-primary1 fill-white"
-                }`}
-            >
-                <Icon className="!w-6 !h-6" name={isOpen ? "plus" : "question-circle"} />
-            </button>
+            <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2">
+                {/* Minimize Button - only show when widget is closed */}
+                {!isOpen && (
+                    <button
+                        onClick={toggleMinimize}
+                        className="flex items-center justify-center size-8 rounded-full bg-b-surface2 border border-stroke-subtle shadow-md hover:bg-b-surface1 transition-all"
+                        title="Hide support widget"
+                    >
+                        <Icon className="!w-4 !h-4 fill-t-tertiary hover:fill-t-primary -rotate-90" name="chevron" />
+                    </button>
+                )}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`flex items-center justify-center size-14 rounded-full shadow-lg transition-all ${
+                        isOpen ? "bg-b-surface2 rotate-45" : "bg-primary1"
+                    }`}
+                >
+                    <Icon className={`!w-6 !h-6 ${isOpen ? "fill-t-primary" : "fill-white"}`} name={isOpen ? "plus" : "question-circle"} />
+                </button>
+            </div>
 
             {/* Widget Panel */}
             {isOpen && (
@@ -188,8 +232,8 @@ const HelpWidget = () => {
                                     Send Message
                                 </button>
                                 <div className="flex items-center justify-center gap-4 pt-2">
-                                    <a href="mailto:hello@nerlude.com" className="text-xs text-t-tertiary hover:text-t-primary transition-colors">
-                                        hello@nerlude.com
+                                    <a href="mailto:hello@nerlude.io" className="text-xs text-t-tertiary hover:text-t-primary transition-colors">
+                                        hello@nerlude.io
                                     </a>
                                     <span className="w-1 h-1 rounded-full bg-t-tertiary" />
                                     <a href="/help" className="text-xs text-t-tertiary hover:text-t-primary transition-colors">

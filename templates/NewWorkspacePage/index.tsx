@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import { useToast } from "@/components/Toast";
+import { useWorkspaceStore } from "@/stores";
 
 const workspaceTypes = [
     {
@@ -26,14 +27,14 @@ const workspaceTypes = [
         id: "agency",
         title: "Agency",
         description: "For agencies managing multiple client projects",
-        icon: "cube",
+        icon: "briefcase",
         color: "green",
     },
     {
         id: "enterprise",
         title: "Enterprise",
         description: "For large organizations with complex needs",
-        icon: "home",
+        icon: "building",
         color: "amber",
     },
 ];
@@ -41,10 +42,12 @@ const workspaceTypes = [
 const NewWorkspacePage = () => {
     const router = useRouter();
     const toast = useToast();
+    const { addWorkspace, setCurrentWorkspace } = useWorkspaceStore();
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [workspaceName, setWorkspaceName] = useState("");
     const [workspaceType, setWorkspaceType] = useState<string | null>(null);
     const [workspaceUrl, setWorkspaceUrl] = useState("");
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleNameChange = (value: string) => {
         setWorkspaceName(value);
@@ -68,9 +71,52 @@ const NewWorkspacePage = () => {
         }
     };
 
-    const handleCreateWorkspace = () => {
-        toast.success("Workspace created!", `Welcome to ${workspaceName}`);
-        router.push("/");
+    const handleCreateWorkspace = async () => {
+        setIsCreating(true);
+        try {
+            const response = await fetch('/api/workspaces', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: workspaceName,
+                    workspace_type: workspaceType,
+                }),
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create workspace');
+            }
+            
+            const workspace = await response.json();
+            
+            // Add to store and set as current
+            addWorkspace({
+                id: workspace.id,
+                name: workspace.name,
+                slug: workspace.slug,
+                ownerId: workspace.owner_id,
+                workspaceType: workspace.workspace_type,
+                createdAt: workspace.created_at,
+                updatedAt: workspace.updated_at,
+            });
+            setCurrentWorkspace({
+                id: workspace.id,
+                name: workspace.name,
+                slug: workspace.slug,
+                ownerId: workspace.owner_id,
+                workspaceType: workspace.workspace_type,
+                createdAt: workspace.created_at,
+                updatedAt: workspace.updated_at,
+            });
+            
+            toast.success("Workspace created!", `Welcome to ${workspaceName}`);
+            router.push("/dashboard");
+        } catch (error) {
+            toast.error("Error", error instanceof Error ? error.message : "Failed to create workspace");
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     const canContinue = () => {
@@ -98,8 +144,8 @@ const NewWorkspacePage = () => {
                     {/* Step 1: Name */}
                     {step === 1 && (
                         <div className="text-center">
-                            <div className="flex items-center justify-center size-20 mx-auto mb-6 rounded-3xl bg-primary1/10 fill-primary1">
-                                <Icon className="!w-10 !h-10" name="home" />
+                            <div className="flex items-center justify-center size-20 mx-auto mb-6 rounded-3xl bg-primary1/10 text-primary1">
+                                <Icon className="!w-10 !h-10" name="cube" />
                             </div>
                             <h1 className="text-h2 mb-2">Name your workspace</h1>
                             <p className="text-body text-t-secondary mb-8">
@@ -145,10 +191,10 @@ const NewWorkspacePage = () => {
                                         }`}
                                     >
                                         <div className={`flex items-center justify-center size-12 mb-3 rounded-xl ${
-                                            type.color === "blue" ? "bg-blue-500/10 fill-blue-500" :
-                                            type.color === "purple" ? "bg-purple-500/10 fill-purple-500" :
-                                            type.color === "green" ? "bg-green-500/10 fill-green-500" :
-                                            "bg-amber-500/10 fill-amber-500"
+                                            type.color === "blue" ? "bg-blue-500/10 text-blue-500" :
+                                            type.color === "purple" ? "bg-purple-500/10 text-purple-500" :
+                                            type.color === "green" ? "bg-green-500/10 text-green-500" :
+                                            "bg-amber-500/10 text-amber-500"
                                         }`}>
                                             <Icon className="!w-6 !h-6" name={type.icon} />
                                         </div>
@@ -163,7 +209,7 @@ const NewWorkspacePage = () => {
                     {/* Step 3: Confirm */}
                     {step === 3 && (
                         <div className="text-center">
-                            <div className="flex items-center justify-center size-20 mx-auto mb-6 rounded-3xl bg-green-500/10 fill-green-500">
+                            <div className="flex items-center justify-center size-20 mx-auto mb-6 rounded-3xl bg-green-500/10 text-green-500">
                                 <Icon className="!w-10 !h-10" name="check" />
                             </div>
                             <h1 className="text-h2 mb-2">You're all set!</h1>
@@ -173,8 +219,8 @@ const NewWorkspacePage = () => {
 
                             <div className="p-6 rounded-3xl bg-b-surface2 mb-8 text-left">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="flex items-center justify-center size-14 rounded-2xl bg-primary1/10 fill-primary1">
-                                        <Icon className="!w-7 !h-7" name="home" />
+                                    <div className="flex items-center justify-center size-14 rounded-2xl bg-primary1/10 text-primary1">
+                                        <Icon className="!w-7 !h-7" name="cube" />
                                     </div>
                                     <div>
                                         <h3 className="text-h4">{workspaceName}</h3>
@@ -209,13 +255,20 @@ const NewWorkspacePage = () => {
                             isPrimary
                             className="flex-1"
                             onClick={handleContinue}
-                            disabled={!canContinue()}
+                            disabled={!canContinue() || isCreating}
                         >
                             {step === 3 ? (
-                                <>
-                                    Create Workspace
-                                    <Icon className="ml-2 !w-4 !h-4" name="arrow-right" />
-                                </>
+                                isCreating ? (
+                                    <>
+                                        <span className="animate-spin mr-2">⏳</span>
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        Create Workspace
+                                        <Icon className="ml-2 !w-4 !h-4" name="arrow-right" />
+                                    </>
+                                )
                             ) : (
                                 <>
                                     Continue

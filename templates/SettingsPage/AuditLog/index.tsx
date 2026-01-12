@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
+import { useWorkspaceStore } from "@/stores";
 
 interface AuditEvent {
     id: string;
@@ -22,109 +24,42 @@ interface AuditEvent {
     timestamp: string;
 }
 
-const mockAuditEvents: AuditEvent[] = [
-    {
-        id: "1",
-        action: "project.created",
-        category: "project",
-        description: "Created new project",
-        user: { name: "John Doe", email: "john@example.com" },
-        target: "SaaS Dashboard",
-        ipAddress: "192.168.1.1",
-        timestamp: "2025-01-06T14:30:00Z",
-    },
-    {
-        id: "2",
-        action: "service.added",
-        category: "service",
-        description: "Added service to project",
-        user: { name: "Jane Smith", email: "jane@example.com" },
-        target: "Stripe",
-        metadata: { project: "SaaS Dashboard" },
-        ipAddress: "192.168.1.2",
-        timestamp: "2025-01-06T13:15:00Z",
-    },
-    {
-        id: "3",
-        action: "team.member_invited",
-        category: "team",
-        description: "Invited team member",
-        user: { name: "John Doe", email: "john@example.com" },
-        target: "alex@example.com",
-        ipAddress: "192.168.1.1",
-        timestamp: "2025-01-06T11:00:00Z",
-    },
-    {
-        id: "4",
-        action: "settings.updated",
-        category: "settings",
-        description: "Updated workspace settings",
-        user: { name: "Jane Smith", email: "jane@example.com" },
-        metadata: { field: "Workspace name" },
-        ipAddress: "192.168.1.2",
-        timestamp: "2025-01-05T16:45:00Z",
-    },
-    {
-        id: "5",
-        action: "billing.plan_upgraded",
-        category: "billing",
-        description: "Upgraded subscription plan",
-        user: { name: "John Doe", email: "john@example.com" },
-        target: "Pro Plan",
-        ipAddress: "192.168.1.1",
-        timestamp: "2025-01-05T10:30:00Z",
-    },
-    {
-        id: "6",
-        action: "security.api_key_created",
-        category: "security",
-        description: "Created new API key",
-        user: { name: "Jane Smith", email: "jane@example.com" },
-        target: "Production API Key",
-        ipAddress: "192.168.1.2",
-        timestamp: "2025-01-04T09:00:00Z",
-    },
-    {
-        id: "7",
-        action: "project.deleted",
-        category: "project",
-        description: "Deleted project",
-        user: { name: "John Doe", email: "john@example.com" },
-        target: "Old Project",
-        ipAddress: "192.168.1.1",
-        timestamp: "2025-01-03T14:20:00Z",
-    },
-    {
-        id: "8",
-        action: "service.credentials_viewed",
-        category: "service",
-        description: "Viewed service credentials",
-        user: { name: "Jane Smith", email: "jane@example.com" },
-        target: "Supabase",
-        metadata: { project: "SaaS Dashboard" },
-        ipAddress: "192.168.1.2",
-        timestamp: "2025-01-03T11:45:00Z",
-    },
-    {
-        id: "9",
-        action: "team.member_removed",
-        category: "team",
-        description: "Removed team member",
-        user: { name: "John Doe", email: "john@example.com" },
-        target: "removed@example.com",
-        ipAddress: "192.168.1.1",
-        timestamp: "2025-01-02T15:30:00Z",
-    },
-    {
-        id: "10",
-        action: "security.password_changed",
-        category: "security",
-        description: "Changed account password",
-        user: { name: "Jane Smith", email: "jane@example.com" },
-        ipAddress: "192.168.1.2",
-        timestamp: "2025-01-01T10:00:00Z",
-    },
-];
+// Map action types to categories
+const getCategory = (action: string): AuditEvent["category"] => {
+    if (action.startsWith("project")) return "project";
+    if (action.startsWith("service")) return "service";
+    if (action.startsWith("member") || action.startsWith("team")) return "team";
+    if (action.startsWith("settings") || action.startsWith("workspace")) return "settings";
+    if (action.startsWith("billing") || action.startsWith("subscription")) return "billing";
+    if (action.startsWith("security") || action.startsWith("password") || action.startsWith("api_key")) return "security";
+    return "settings";
+};
+
+// Map action types to descriptions
+const getDescription = (action: string): string => {
+    const descriptions: Record<string, string> = {
+        project_created: "Created new project",
+        project_updated: "Updated project",
+        project_deleted: "Deleted project",
+        project_archived: "Archived project",
+        service_added: "Added service to project",
+        service_updated: "Updated service",
+        service_removed: "Removed service",
+        member_invited: "Invited team member",
+        member_joined: "Team member joined",
+        member_removed: "Removed team member",
+        member_role_changed: "Changed member role",
+        settings_updated: "Updated settings",
+        workspace_created: "Created workspace",
+        workspace_updated: "Updated workspace",
+        billing_updated: "Updated billing",
+        subscription_changed: "Changed subscription plan",
+        document_created: "Created document",
+        document_updated: "Updated document",
+        asset_uploaded: "Uploaded asset",
+    };
+    return descriptions[action] || action.replace(/_/g, " ");
+};
 
 const categoryColors: Record<string, { bg: string; text: string; icon: string }> = {
     project: { bg: "bg-blue-500/10", text: "text-blue-600", icon: "cube" },
@@ -136,11 +71,53 @@ const categoryColors: Record<string, { bg: string; text: string; icon: string }>
 };
 
 const AuditLogPage = () => {
+    const { currentWorkspace } = useWorkspaceStore();
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d" | "all">("30d");
+    const [isLoading, setIsLoading] = useState(true);
+    const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
 
-    const filteredEvents = mockAuditEvents.filter((event) => {
+    // Fetch audit events from API
+    const fetchAuditEvents = useCallback(async () => {
+        if (!currentWorkspace) return;
+        
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/activity?workspace_id=${currentWorkspace.id}&limit=50`);
+            if (response.ok) {
+                const data = await response.json();
+                const mappedEvents: AuditEvent[] = data.map((item: any) => ({
+                    id: item.id,
+                    action: item.action,
+                    category: getCategory(item.action),
+                    description: getDescription(item.action),
+                    user: {
+                        name: item.user?.name || 'Unknown User',
+                        email: item.user?.email || '',
+                        avatar: item.user?.avatar_url,
+                    },
+                    target: item.entity_name || item.project?.name,
+                    metadata: item.metadata,
+                    ipAddress: item.ip_address || '—',
+                    timestamp: item.created_at,
+                }));
+                setAuditEvents(mappedEvents);
+                setTotalCount(mappedEvents.length);
+            }
+        } catch (error) {
+            console.error('Error fetching audit events:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentWorkspace]);
+
+    useEffect(() => {
+        fetchAuditEvents();
+    }, [fetchAuditEvents]);
+
+    const filteredEvents = auditEvents.filter((event: AuditEvent) => {
         const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
         const matchesSearch =
             event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -260,8 +237,23 @@ const AuditLogPage = () => {
 
                     {/* Events List */}
                     <div className="rounded-4xl bg-b-surface2 overflow-hidden">
+                        {isLoading ? (
+                            <div className="divide-y divide-stroke-subtle">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <div key={i} className="p-5">
+                                        <div className="flex items-start gap-4">
+                                            <Skeleton variant="rounded" width={40} height={40} />
+                                            <div className="flex-1">
+                                                <Skeleton variant="text" height={18} className="w-64 mb-2" />
+                                                <Skeleton variant="text" height={14} className="w-48" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
                         <div className="divide-y divide-stroke-subtle">
-                            {filteredEvents.map((event) => {
+                            {filteredEvents.map((event: AuditEvent) => {
                                 const categoryStyle = categoryColors[event.category];
                                 return (
                                     <div key={event.id} className="p-5 hover:bg-b-surface1/50 transition-colors">
@@ -305,8 +297,9 @@ const AuditLogPage = () => {
                                 );
                             })}
                         </div>
+                        )}
 
-                        {filteredEvents.length === 0 && (
+                        {!isLoading && filteredEvents.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-16 text-center">
                                 <Icon className="!w-16 !h-16 fill-t-tertiary mb-4" name="documents" />
                                 <h3 className="text-h4 mb-2">No events found</h3>
@@ -321,7 +314,7 @@ const AuditLogPage = () => {
                     {filteredEvents.length > 0 && (
                         <div className="flex items-center justify-between mt-6 pb-8">
                             <span className="text-small text-t-secondary">
-                                Showing {filteredEvents.length} of {mockAuditEvents.length} events
+                                Showing {filteredEvents.length} of {totalCount} events
                             </span>
                             <div className="flex gap-2">
                                 <Button isStroke disabled>

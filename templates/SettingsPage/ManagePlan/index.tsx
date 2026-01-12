@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
-import { mockBillingHistory, mockPaymentMethods, formatDate, formatCurrency } from "@/data/mockBilling";
+import { BillingHistoryItem, PaymentMethod, formatDate, formatCurrency } from "@/data/mockBilling";
 import { getStatusColor } from "@/utils/categoryColors";
+import { useWorkspaceStore } from "@/stores";
+import { useToast } from "@/components/Toast";
 
 interface Plan {
     id: string;
@@ -79,10 +82,69 @@ const plans: Plan[] = [
 ];
 
 const ManagePlanPage = () => {
-    const [currentPlan] = useState("free");
+    const { currentWorkspace } = useWorkspaceStore();
+    const toast = useToast();
+    const [currentPlan, setCurrentPlan] = useState("free");
     const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isUpgrading, setIsUpgrading] = useState(false);
+    const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+    const [projectCount, setProjectCount] = useState(0);
+    const [memberCount, setMemberCount] = useState(0);
+
+    // Fetch subscription and billing data
+    const fetchBillingData = useCallback(async () => {
+        if (!currentWorkspace) return;
+        
+        setIsLoading(true);
+        try {
+            // Fetch workspace details (includes subscription)
+            const workspaceRes = await fetch(`/api/workspaces/${currentWorkspace.id}`);
+            if (workspaceRes.ok) {
+                const data = await workspaceRes.json();
+                // Map subscription plan to our plan IDs
+                const planMap: Record<string, string> = {
+                    'free': 'free',
+                    'starter': 'free',
+                    'pro': 'pro',
+                    'team': 'team',
+                    'enterprise': 'team',
+                };
+                setCurrentPlan(planMap[data.subscription?.plan_id || 'free'] || 'free');
+            }
+
+            // Fetch projects count
+            const projectsRes = await fetch(`/api/projects?workspace_id=${currentWorkspace.id}`);
+            if (projectsRes.ok) {
+                const projects = await projectsRes.json();
+                setProjectCount(projects.length);
+            }
+
+            // Fetch members count
+            const membersRes = await fetch(`/api/workspaces/${currentWorkspace.id}/members`);
+            if (membersRes.ok) {
+                const members = await membersRes.json();
+                setMemberCount(members.length);
+            }
+
+            // Note: Billing history and payment methods would typically come from Stripe
+            // For now, we show empty states until Stripe integration is complete
+            setBillingHistory([]);
+            setPaymentMethods([]);
+
+        } catch (error) {
+            console.error('Error fetching billing data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentWorkspace]);
+
+    useEffect(() => {
+        fetchBillingData();
+    }, [fetchBillingData]);
 
     const currentPlanData = plans.find((p) => p.id === currentPlan);
 
@@ -92,9 +154,20 @@ const ManagePlanPage = () => {
         setShowUpgradeModal(true);
     };
 
-    const handleConfirmUpgrade = () => {
-        console.log("Upgrading to:", selectedPlan?.name);
-        setShowUpgradeModal(false);
+    const handleConfirmUpgrade = async () => {
+        if (!selectedPlan || !currentWorkspace) return;
+        
+        setIsUpgrading(true);
+        try {
+            // In production, this would redirect to Stripe Checkout or update via Stripe API
+            toast.info("Upgrade", "Stripe integration required for plan upgrades. Contact support.");
+            setShowUpgradeModal(false);
+        } catch (error) {
+            console.error('Error upgrading plan:', error);
+            toast.error("Error", "Failed to upgrade plan");
+        } finally {
+            setIsUpgrading(false);
+        }
     };
 
     const getPrice = (plan: Plan) => {
@@ -175,24 +248,24 @@ const ManagePlanPage = () => {
                                     <div className="p-4 rounded-2xl bg-b-surface1">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-small text-t-secondary">Projects</span>
-                                            <span className="text-small font-medium">3 / {currentPlanData?.projectLimit === -1 ? "∞" : currentPlanData?.projectLimit}</span>
+                                            <span className="text-small font-medium">{projectCount} / {currentPlanData?.projectLimit === -1 ? "∞" : currentPlanData?.projectLimit}</span>
                                         </div>
                                         <div className="h-2 rounded-full bg-b-surface2 overflow-hidden">
                                             <div 
                                                 className="h-full rounded-full bg-primary1"
-                                                style={{ width: currentPlanData?.projectLimit === -1 ? "10%" : `${(3 / currentPlanData!.projectLimit) * 100}%` }}
+                                                style={{ width: currentPlanData?.projectLimit === -1 ? "10%" : `${Math.min((projectCount / currentPlanData!.projectLimit) * 100, 100)}%` }}
                                             />
                                         </div>
                                     </div>
                                     <div className="p-4 rounded-2xl bg-b-surface1">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-small text-t-secondary">Team Members</span>
-                                            <span className="text-small font-medium">1 / {currentPlanData?.teamLimit === -1 ? "∞" : currentPlanData?.teamLimit}</span>
+                                            <span className="text-small font-medium">{memberCount} / {currentPlanData?.teamLimit === -1 ? "∞" : currentPlanData?.teamLimit}</span>
                                         </div>
                                         <div className="h-2 rounded-full bg-b-surface2 overflow-hidden">
                                             <div 
                                                 className="h-full rounded-full bg-green-500"
-                                                style={{ width: currentPlanData?.teamLimit === -1 ? "10%" : `${(1 / currentPlanData!.teamLimit) * 100}%` }}
+                                                style={{ width: currentPlanData?.teamLimit === -1 ? "10%" : `${Math.min((memberCount / currentPlanData!.teamLimit) * 100, 100)}%` }}
                                             />
                                         </div>
                                     </div>
@@ -293,7 +366,14 @@ const ManagePlanPage = () => {
                                     </button>
                                 </div>
                                 <div className="space-y-3">
-                                    {mockPaymentMethods.map((method) => (
+                                    {paymentMethods.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <Icon className="!w-12 !h-12 fill-t-tertiary mb-3" name="wallet" />
+                                            <p className="text-small text-t-secondary">No payment methods added</p>
+                                            <p className="text-xs text-t-tertiary mt-1">Add a payment method to upgrade your plan</p>
+                                        </div>
+                                    ) : (
+                                    paymentMethods.map((method) => (
                                         <div 
                                             key={method.id}
                                             className={`flex items-center p-4 rounded-2xl bg-b-surface1 ${method.isDefault ? "ring-2 ring-primary1" : ""}`}
@@ -320,7 +400,8 @@ const ManagePlanPage = () => {
                                                 Edit
                                             </button>
                                         </div>
-                                    ))}
+                                    ))
+                                    )}
                                 </div>
                             </div>
 
@@ -328,10 +409,19 @@ const ManagePlanPage = () => {
                             <div className="mt-8 p-6 rounded-4xl bg-b-surface2">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="text-body-bold">Billing History</h2>
-                                    <button className="text-small text-primary1 hover:underline">
-                                        Download all
-                                    </button>
+                                    {billingHistory.length > 0 && (
+                                        <button className="text-small text-primary1 hover:underline">
+                                            Download all
+                                        </button>
+                                    )}
                                 </div>
+                                {billingHistory.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-center rounded-2xl bg-b-surface1">
+                                        <Icon className="!w-12 !h-12 fill-t-tertiary mb-3" name="documents" />
+                                        <p className="text-small text-t-secondary">No billing history</p>
+                                        <p className="text-xs text-t-tertiary mt-1">Your invoices will appear here after your first payment</p>
+                                    </div>
+                                ) : (
                                 <div className="overflow-hidden rounded-2xl bg-b-surface1">
                                     <table className="w-full">
                                         <thead>
@@ -344,7 +434,7 @@ const ManagePlanPage = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-stroke-subtle">
-                                            {mockBillingHistory.map((item) => (
+                                            {billingHistory.map((item) => (
                                                 <tr key={item.id} className="hover:bg-b-surface2/50 transition-colors">
                                                     <td className="px-4 py-3 text-small text-t-secondary whitespace-nowrap">
                                                         {formatDate(item.date)}
@@ -373,6 +463,7 @@ const ManagePlanPage = () => {
                                         </tbody>
                                     </table>
                                 </div>
+                                )}
                             </div>
                     </div>
                 </div>

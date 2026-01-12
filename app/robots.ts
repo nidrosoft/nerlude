@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: "/",
             disallow: ["/api/", "/dashboard/", "/projects/", "/settings/", "/onboarding/"],
         },
-        sitemap: "https://nerlude.com/sitemap.xml",
+        sitemap: "https://nerlude.io/sitemap.xml",
     };
 }

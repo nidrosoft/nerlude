@@ -1,7 +1,7 @@
 import { ProjectType } from "@/types";
 
-export type Step = "method" | "basics" | "template" | "services" | "confirm" | "upload" | "processing" | "review" | "confirm-import" | "success";
-export type FlowType = "manual" | "documents";
+export type Step = "method" | "basics" | "template" | "services" | "confirm" | "upload" | "processing" | "review" | "confirm-import" | "success" | "email-sync" | "email-processing";
+export type FlowType = "manual" | "documents" | "email";
 
 export interface ProjectTemplate {
     id: string;

@@ -11,9 +11,7 @@ import Docs from "./Docs";
 import Team from "./Team";
 import Settings from "./Settings";
 import EnvironmentSwitcher from "@/components/EnvironmentSwitcher";
-import { mockProjects, mockAlerts } from "@/data/mockProjects";
-import { mockServices, categoryLabels } from "@/data/mockServices";
-import { mockStacks } from "@/data/mockStacks";
+import { categoryLabels } from "@/data/mockServices";
 import Skeleton, { SkeletonText } from "@/components/Skeleton";
 import Breadcrumb from "@/components/Breadcrumb";
 import Button from "@/components/Button";
@@ -21,8 +19,9 @@ import Icon from "@/components/Icon";
 import Dropdown from "@/components/Dropdown";
 import { useToast } from "@/components/Toast";
 import { cn } from "@/lib/utils";
-import { ServiceCategory } from "@/types";
+import { ServiceCategory, Project, Service, ServiceStack, Alert } from "@/types";
 import { getCategoryColor } from "@/utils/categoryColors";
+import { useProjectLoading } from "@/components/ProjectLoadingOverlay";
 
 type Props = {
     projectId: string;
@@ -31,24 +30,232 @@ type Props = {
 const ProjectPage = ({ projectId }: Props) => {
     const [activeTab, setActiveTab] = useState("overview");
     const [isLoading, setIsLoading] = useState(true);
+    const [project, setProject] = useState<Project | null>(null);
+    const [services, setServices] = useState<Service[]>([]);
+    const [stacks, setStacks] = useState<ServiceStack[]>([]);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
     const [activeCategory, setActiveCategory] = useState<ServiceCategory | "all">("all");
     const [viewMode, setViewMode] = useState<"list" | "graph">("list");
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [showTeamInviteModal, setShowTeamInviteModal] = useState(false);
     const [showAssetUploadModal, setShowAssetUploadModal] = useState(false);
     const [showNewDocModal, setShowNewDocModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [assetFolderPath, setAssetFolderPath] = useState<{ id: string | null; name: string; onClick?: () => void }[]>([]);
     const toast = useToast();
+    const { hideLoading } = useProjectLoading();
 
-    const project = mockProjects.find((p) => p.id === projectId);
-    const projectServices = mockServices.filter((s) => s.projectId === projectId);
-    const projectStacks = mockStacks.filter((s) => s.projectId === projectId);
-    const projectAlerts = mockAlerts.filter((a) => a.projectId === projectId);
-
-    // Simulate data loading - replace with real data fetching later
+    // Hide the project loading overlay when component mounts
     useEffect(() => {
-        const timer = setTimeout(() => setIsLoading(false), 600);
-        return () => clearTimeout(timer);
-    }, [projectId]);
+        hideLoading();
+    }, [hideLoading]);
+
+    // Fetch all project data from APIs
+    useEffect(() => {
+        const fetchProjectData = async () => {
+            setIsLoading(true);
+            try {
+                // Fetch project, services, and stacks in parallel
+                const [projectRes, servicesRes, stacksRes] = await Promise.all([
+                    fetch(`/api/projects/${projectId}`),
+                    fetch(`/api/projects/${projectId}/services`),
+                    fetch(`/api/projects/${projectId}/stacks`).catch(() => ({ ok: false, json: () => [] })),
+                ]);
+
+                // Handle project response
+                if (!projectRes.ok) {
+                    if (projectRes.status === 404) {
+                        setProject(null);
+                        return;
+                    }
+                    throw new Error('Failed to fetch project');
+                }
+                const projectData = await projectRes.json();
+                setProject({
+                    id: projectData.id,
+                    workspaceId: projectData.workspace_id,
+                    name: projectData.name,
+                    description: projectData.description || '',
+                    icon: projectData.icon || '🚀',
+                    type: projectData.type,
+                    status: projectData.status || 'active',
+                    monthlyCost: 0,
+                    serviceCount: 0,
+                    alertCount: 0,
+                    createdAt: projectData.created_at,
+                    updatedAt: projectData.updated_at,
+                });
+
+                // Handle services response
+                if (servicesRes.ok) {
+                    const servicesData = await servicesRes.json();
+                    const mappedServices: Service[] = servicesData.map((s: any) => ({
+                        id: s.id,
+                        projectId: s.project_id,
+                        stackId: s.stack_id,
+                        registryId: s.registry_id,
+                        categoryId: s.category_id || 'custom',
+                        subCategoryId: s.sub_category_id,
+                        name: s.name,
+                        customLogoUrl: s.custom_logo_url,
+                        plan: s.plan,
+                        costAmount: s.cost_amount || 0,
+                        costFrequency: s.cost_frequency || 'monthly',
+                        currency: s.currency || 'USD',
+                        renewalDate: s.renewal_date,
+                        status: s.status || 'active',
+                        notes: s.notes,
+                        createdAt: s.created_at,
+                        updatedAt: s.updated_at,
+                    }));
+                    setServices(mappedServices);
+                }
+
+                // Handle stacks response
+                if (stacksRes.ok) {
+                    const stacksData = await stacksRes.json();
+                    const mappedStacks: ServiceStack[] = (stacksData || []).map((s: any) => ({
+                        id: s.id,
+                        projectId: s.project_id,
+                        name: s.name,
+                        description: s.description,
+                        color: s.color || 'slate',
+                        icon: s.icon,
+                        order: s.order || 0,
+                        createdAt: s.created_at,
+                        updatedAt: s.updated_at,
+                    }));
+                    setStacks(mappedStacks);
+                }
+
+            } catch (error) {
+                console.error('Error fetching project data:', error);
+                toast.error("Error", "Failed to load project");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchProjectData();
+    }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Project action handlers
+    const handleDuplicate = async () => {
+        setIsDuplicating(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/duplicate`, {
+                method: 'POST',
+            });
+            if (response.ok) {
+                const newProject = await response.json();
+                toast.success("Project duplicated", `"${project?.name} (Copy)" has been created.`);
+                setShowActionsMenu(false);
+                // Redirect to the new project
+                window.location.href = `/projects/${newProject.id}`;
+            } else {
+                const error = await response.json();
+                toast.error("Error", error.error || "Failed to duplicate project");
+            }
+        } catch (error) {
+            console.error('Error duplicating project:', error);
+            toast.error("Error", "Failed to duplicate project");
+        } finally {
+            setIsDuplicating(false);
+        }
+    };
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            // Gather all project data
+            const exportData = {
+                project: project,
+                services: services,
+                stacks: stacks,
+                exportedAt: new Date().toISOString(),
+            };
+            
+            // Create and download JSON file
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${project?.name?.replace(/\s+/g, '-').toLowerCase() || 'project'}-export.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            toast.success("Export complete", "Your project data has been downloaded.");
+            setShowActionsMenu(false);
+        } catch (error) {
+            console.error('Error exporting project:', error);
+            toast.error("Error", "Failed to export project");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        setIsArchiving(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/archive`, {
+                method: 'POST',
+            });
+            if (response.ok) {
+                toast.success("Project archived", "This project has been moved to archives.");
+                setShowActionsMenu(false);
+                // Redirect to dashboard
+                window.location.href = '/dashboard';
+            } else {
+                const error = await response.json();
+                toast.error("Error", error.error || "Failed to archive project");
+            }
+        } catch (error) {
+            console.error('Error archiving project:', error);
+            toast.error("Error", "Failed to archive project");
+        } finally {
+            setIsArchiving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (deleteConfirmText !== project?.name) {
+            toast.error("Error", "Please type the project name to confirm deletion");
+            return;
+        }
+        
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}`, {
+                method: 'DELETE',
+            });
+            if (response.ok) {
+                toast.success("Project deleted", "This project has been permanently deleted.");
+                setShowDeleteModal(false);
+                // Redirect to dashboard
+                window.location.href = '/dashboard';
+            } else {
+                const error = await response.json();
+                toast.error("Error", error.error || "Failed to delete project");
+            }
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            toast.error("Error", "Failed to delete project");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    // Use state data
+    const projectServices = services;
+    const projectStacks = stacks;
+    const projectAlerts = alerts;
 
     if (isLoading) {
         return (
@@ -113,7 +320,7 @@ const ProjectPage = ({ projectId }: Props) => {
             case "stacks":
                 return <Stacks services={projectServices} stacks={projectStacks} projectId={projectId} viewMode={viewMode} />;
             case "assets":
-                return <Assets projectId={projectId} showUploadModal={showAssetUploadModal} onCloseUploadModal={() => setShowAssetUploadModal(false)} />;
+                return <Assets projectId={projectId} showUploadModal={showAssetUploadModal} onCloseUploadModal={() => setShowAssetUploadModal(false)} onBreadcrumbChange={setAssetFolderPath} />;
             case "docs":
                 return <Docs projectId={projectId} showNewDocModal={showNewDocModal} onCloseNewDocModal={() => setShowNewDocModal(false)} />;
             case "team":
@@ -178,17 +385,35 @@ const ProjectPage = ({ projectId }: Props) => {
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
                                         <div className="absolute right-0 top-12 z-50 w-48 p-2 rounded-2xl bg-b-surface2 shadow-lg border border-stroke-subtle">
-                                            <button onClick={() => { toast.success("Project duplicated", "A copy of this project has been created."); setShowActionsMenu(false); }} className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-t-secondary hover:bg-b-surface1 hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary">
-                                                <Icon className="!w-4 !h-4 mr-3" name="copy" />Duplicate
+                                            <button 
+                                                onClick={handleDuplicate} 
+                                                disabled={isDuplicating}
+                                                className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-t-secondary hover:bg-b-surface1 hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary disabled:opacity-50"
+                                            >
+                                                <Icon className="!w-4 !h-4 mr-3" name="copy" />
+                                                {isDuplicating ? "Duplicating..." : "Duplicate"}
                                             </button>
-                                            <button onClick={() => { toast.success("Export started", "Your project data is being exported."); setShowActionsMenu(false); }} className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-t-secondary hover:bg-b-surface1 hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary">
-                                                <Icon className="!w-4 !h-4 mr-3" name="export" />Export
+                                            <button 
+                                                onClick={handleExport} 
+                                                disabled={isExporting}
+                                                className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-t-secondary hover:bg-b-surface1 hover:text-t-primary transition-colors fill-t-secondary hover:fill-t-primary disabled:opacity-50"
+                                            >
+                                                <Icon className="!w-4 !h-4 mr-3" name="export" />
+                                                {isExporting ? "Exporting..." : "Export"}
                                             </button>
                                             <div className="my-2 border-t border-stroke-subtle" />
-                                            <button onClick={() => { toast.warning("Project archived", "This project has been moved to archives."); setShowActionsMenu(false); }} className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-amber-500 hover:bg-amber-500/10 transition-colors fill-amber-500">
-                                                <Icon className="!w-4 !h-4 mr-3" name="documents" />Archive
+                                            <button 
+                                                onClick={handleArchive} 
+                                                disabled={isArchiving}
+                                                className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-amber-500 hover:bg-amber-500/10 transition-colors fill-amber-500 disabled:opacity-50"
+                                            >
+                                                <Icon className="!w-4 !h-4 mr-3" name="documents" />
+                                                {isArchiving ? "Archiving..." : "Archive"}
                                             </button>
-                                            <button onClick={() => { toast.error("Project deleted", "This project has been permanently deleted."); setShowActionsMenu(false); }} className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-red-500 hover:bg-red-500/10 transition-colors fill-red-500">
+                                            <button 
+                                                onClick={() => { setShowDeleteModal(true); setShowActionsMenu(false); }} 
+                                                className="flex items-center w-full px-3 py-2.5 rounded-xl text-small text-red-500 hover:bg-red-500/10 transition-colors fill-red-500"
+                                            >
                                                 <Icon className="!w-4 !h-4 mr-3" name="close" />Delete
                                             </button>
                                         </div>
@@ -315,7 +540,13 @@ const ProjectPage = ({ projectId }: Props) => {
                             items={[
                                 { label: "Dashboard", href: "/dashboard" },
                                 { label: project.name, href: `/projects/${project.id}` },
-                                { label: tabLabels[activeTab] },
+                                ...(activeTab === "assets" && assetFolderPath.length > 0
+                                    ? assetFolderPath.map((item, index) => ({
+                                        label: item.name,
+                                        onClick: item.onClick,
+                                    }))
+                                    : [{ label: tabLabels[activeTab] }]
+                                ),
                             ]}
                         />
                         {/* Tab-specific Header */}
@@ -327,6 +558,57 @@ const ProjectPage = ({ projectId }: Props) => {
                     {renderContent()}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div 
+                        className="absolute inset-0 bg-[#282828]/90"
+                        onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
+                    />
+                    <div className="relative z-10 w-full max-w-md mx-4 p-8 rounded-4xl bg-b-surface1">
+                        <div className="flex items-center justify-center size-16 rounded-full bg-red-500/10 mx-auto mb-6">
+                            <Icon className="!w-8 !h-8 fill-red-500" name="close" />
+                        </div>
+                        <h3 className="text-h4 text-center mb-2">Delete Project</h3>
+                        <p className="text-small text-t-secondary text-center mb-6">
+                            This action cannot be undone. This will permanently delete the 
+                            <strong className="text-t-primary"> {project.name} </strong> 
+                            project and all of its services, documents, and assets.
+                        </p>
+                        
+                        <div className="mb-6">
+                            <label className="block text-small text-t-secondary mb-2">
+                                Type <strong className="text-t-primary">{project.name}</strong> to confirm
+                            </label>
+                            <input
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder={project.name}
+                                className="w-full px-4 py-3 rounded-xl bg-b-surface2 border border-stroke-subtle text-t-primary placeholder:text-t-tertiary focus:outline-none focus:border-red-500 transition-colors"
+                            />
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <Button
+                                className="flex-1"
+                                isStroke
+                                onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(""); }}
+                            >
+                                Cancel
+                            </Button>
+                            <button
+                                className="flex-1 h-12 px-6 rounded-full bg-red-500 text-white font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={handleDelete}
+                                disabled={deleteConfirmText !== project.name || isDeleting}
+                            >
+                                {isDeleting ? "Deleting..." : "Delete Project"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 };

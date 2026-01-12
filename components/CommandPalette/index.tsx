@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useUIStore } from "@/stores";
+import { useUIStore, useWorkspaceStore } from "@/stores";
 import Icon from "@/components/Icon";
-import { mockProjects } from "@/data/mockProjects";
-import { mockServices } from "@/data/mockServices";
+import { Project, Service } from "@/types";
 
 interface CommandItem {
     id: string;
@@ -19,8 +18,67 @@ interface CommandItem {
 const CommandPalette = () => {
     const router = useRouter();
     const { isCommandPaletteOpen, setCommandPaletteOpen } = useUIStore();
+    const { currentWorkspace } = useWorkspaceStore();
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+
+    // Fetch projects and services when palette opens
+    useEffect(() => {
+        if (isCommandPaletteOpen && currentWorkspace) {
+            const fetchData = async () => {
+                try {
+                    const projectsRes = await fetch(`/api/projects?workspace_id=${currentWorkspace.id}`);
+                    if (projectsRes.ok) {
+                        const data = await projectsRes.json();
+                        const mappedProjects: Project[] = data.map((p: any) => ({
+                            id: p.id,
+                            workspaceId: p.workspace_id,
+                            name: p.name,
+                            description: p.description || '',
+                            icon: p.icon || '🚀',
+                            type: p.type,
+                            status: p.status || 'active',
+                            monthlyCost: 0,
+                            serviceCount: 0,
+                            alertCount: 0,
+                            createdAt: p.created_at,
+                            updatedAt: p.updated_at,
+                        }));
+                        setProjects(mappedProjects);
+
+                        // Fetch services for all projects
+                        const allServices: Service[] = [];
+                        for (const project of mappedProjects.slice(0, 5)) { // Limit to first 5 projects
+                            const servicesRes = await fetch(`/api/projects/${project.id}/services`);
+                            if (servicesRes.ok) {
+                                const servicesData = await servicesRes.json();
+                                servicesData.forEach((s: any) => {
+                                    allServices.push({
+                                        id: s.id,
+                                        projectId: s.project_id,
+                                        name: s.name,
+                                        categoryId: s.category_id || 'custom',
+                                        costAmount: s.cost_amount || 0,
+                                        costFrequency: s.cost_frequency || 'monthly',
+                                        currency: s.currency || 'USD',
+                                        status: s.status || 'active',
+                                        createdAt: s.created_at,
+                                        updatedAt: s.updated_at,
+                                    });
+                                });
+                            }
+                        }
+                        setServices(allServices);
+                    }
+                } catch (error) {
+                    console.error('Error fetching command palette data:', error);
+                }
+            };
+            fetchData();
+        }
+    }, [isCommandPaletteOpen, currentWorkspace]);
 
     // Build command items
     const commands = useMemo<CommandItem[]>(() => {
@@ -54,8 +112,8 @@ const CommandPalette = () => {
             }
         );
 
-        // Project commands
-        mockProjects.forEach((project) => {
+        // Project commands from real data
+        projects.forEach((project) => {
             items.push({
                 id: `project-${project.id}`,
                 label: project.name,
@@ -66,9 +124,9 @@ const CommandPalette = () => {
             });
         });
 
-        // Service commands (unique services)
-        const uniqueServices = new Map<string, typeof mockServices[0]>();
-        mockServices.forEach((service) => {
+        // Service commands (unique services from real data)
+        const uniqueServices = new Map<string, Service>();
+        services.forEach((service) => {
             if (!uniqueServices.has(service.name)) {
                 uniqueServices.set(service.name, service);
             }
@@ -81,9 +139,8 @@ const CommandPalette = () => {
                 icon: "post",
                 category: "service",
                 action: () => {
-                    const project = mockProjects.find(p => p.id === service.projectId);
-                    if (project) {
-                        router.push(`/projects/${project.id}`);
+                    if (service.projectId) {
+                        router.push(`/projects/${service.projectId}/services/${service.id}`);
                     }
                 },
             });
@@ -98,9 +155,11 @@ const CommandPalette = () => {
                 icon: "plus",
                 category: "action",
                 action: () => {
-                    const firstProject = mockProjects[0];
+                    const firstProject = projects[0];
                     if (firstProject) {
                         router.push(`/projects/${firstProject.id}/services/new`);
+                    } else {
+                        router.push("/projects/new");
                     }
                 },
             },
@@ -123,7 +182,7 @@ const CommandPalette = () => {
         );
 
         return items;
-    }, [router]);
+    }, [router, projects, services]);
 
     // Filter commands based on query
     const filteredCommands = useMemo(() => {

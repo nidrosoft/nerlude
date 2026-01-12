@@ -39,19 +39,34 @@ const DocsEditor = () => {
         }
     };
 
+    // Show empty state if no active document
+    if (!activeDoc) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center rounded-4xl bg-b-surface2 p-8">
+                <div className="flex items-center justify-center size-16 mb-4 rounded-2xl bg-b-surface1 fill-t-tertiary">
+                    <Icon className="!w-8 !h-8" name="edit" />
+                </div>
+                <h3 className="text-body-bold text-t-primary mb-2">No document selected</h3>
+                <p className="text-small text-t-secondary text-center">
+                    Select a document from the sidebar or create a new one to start writing.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className={`flex-1 flex flex-col rounded-4xl bg-b-surface2 ${isExpanded ? "min-h-[calc(100vh-120px)]" : ""}`}>
             {/* Editor Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-stroke-subtle">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center size-8 rounded-lg bg-b-surface1 fill-t-secondary">
-                        {activeDoc?.emoji ? (
+                        {activeDoc.emoji ? (
                             <span className="text-lg">{activeDoc.emoji}</span>
                         ) : (
-                            <Icon className="!w-4 !h-4" name={activeDoc?.icon || "edit"} />
+                            <Icon className="!w-4 !h-4" name={activeDoc.icon || "edit"} />
                         )}
                     </div>
-                    <span className="font-medium text-t-primary">{activeDoc?.title}</span>
+                    <span className="font-medium text-t-primary">{activeDoc.title}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
@@ -79,7 +94,7 @@ const DocsEditor = () => {
                     className={`w-full bg-transparent text-body text-t-primary resize-none focus:outline-none ${
                         isExpanded ? "min-h-[calc(100vh-280px)]" : "h-96"
                     }`}
-                    value={activeDoc?.content || ""}
+                    value={activeDoc.content || ""}
                     onChange={(e) => handleContentChange(e.target.value)}
                     placeholder="Start writing..."
                 />

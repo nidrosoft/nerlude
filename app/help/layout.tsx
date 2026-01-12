@@ -107,7 +107,7 @@ export default function HelpLayout({
                         ))}
                         <div className="pt-4 mt-4 border-t border-stroke-subtle">
                             <a
-                                href="mailto:hello@nerlude.com"
+                                href="mailto:hello@nerlude.io"
                                 className="block px-4 py-2 rounded-xl text-base text-t-tertiary hover:text-t-primary hover:bg-b-surface2 transition-colors"
                             >
                                 Contact Support
@@ -141,10 +141,10 @@ export default function HelpLayout({
                                 Privacy
                             </Link>
                             <a
-                                href="mailto:hello@nerlude.com"
+                                href="mailto:hello@nerlude.io"
                                 className="text-base text-t-tertiary hover:text-t-primary transition-colors"
                             >
-                                hello@nerlude.com
+                                hello@nerlude.io
                             </a>
                         </div>
                     </div>

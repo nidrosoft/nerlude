@@ -3,31 +3,31 @@
   "@graph": [
     {
       "@type": "WebSite",
-      "@id": "https://nerlude.com/#website",
-      "url": "https://nerlude.com",
+      "@id": "https://nerlude.io/#website",
+      "url": "https://nerlude.io",
       "name": "Nerlude",
       "description": "The control center for founders to manage their entire SaaS stack. Track subscriptions, store credentials securely, and never miss a renewal.",
       "publisher": {
-        "@id": "https://nerlude.com/#organization"
+        "@id": "https://nerlude.io/#organization"
       },
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://nerlude.com/help?q={search_term_string}",
+        "target": "https://nerlude.io/help?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     },
     {
       "@type": "Organization",
-      "@id": "https://nerlude.com/#organization",
+      "@id": "https://nerlude.io/#organization",
       "name": "Nerlude",
-      "url": "https://nerlude.com",
+      "url": "https://nerlude.io",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://nerlude.com/images/Logo-dark.svg"
+        "url": "https://nerlude.io/images/Logo-dark.svg"
       },
       "contactPoint": {
         "@type": "ContactPoint",
-        "email": "hello@nerlude.com",
+        "email": "hello@nerlude.io",
         "contactType": "customer support"
       },
       "sameAs": [
@@ -36,7 +36,7 @@
     },
     {
       "@type": "SoftwareApplication",
-      "@id": "https://nerlude.com/#software",
+      "@id": "https://nerlude.io/#software",
       "name": "Nerlude",
       "applicationCategory": "BusinessApplication",
       "applicationSubCategory": "SaaS Management",
@@ -89,10 +89,10 @@
         "CSV import and export",
         "Slack notifications"
       ],
-      "screenshot": "https://nerlude.com/images/twittercard.png",
+      "screenshot": "https://nerlude.io/images/twittercard.png",
       "softwareHelp": {
         "@type": "WebPage",
-        "url": "https://nerlude.com/help"
+        "url": "https://nerlude.io/help"
       },
       "aggregateRating": {
         "@type": "AggregateRating",
@@ -104,7 +104,7 @@
     },
     {
       "@type": "FAQPage",
-      "@id": "https://nerlude.com/#faq",
+      "@id": "https://nerlude.io/#faq",
       "mainEntity": [
         {
           "@type": "Question",
@@ -174,19 +174,19 @@
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "https://nerlude.com/help/#breadcrumb",
+      "@id": "https://nerlude.io/help/#breadcrumb",
       "itemListElement": [
         {
           "@type": "ListItem",
           "position": 1,
           "name": "Home",
-          "item": "https://nerlude.com"
+          "item": "https://nerlude.io"
         },
         {
           "@type": "ListItem",
           "position": 2,
           "name": "Help Center",
-          "item": "https://nerlude.com/help"
+          "item": "https://nerlude.io/help"
         }
       ]
     }

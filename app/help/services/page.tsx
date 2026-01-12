@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Managing Services - Complete Guide to SaaS Subscription Tracking",
     description: "Learn how to add, organize, and manage all your SaaS subscriptions in Nerlude. Track costs, store credentials, set renewal reminders, and keep your tech stack organized.",
     alternates: {
-        canonical: "https://nerlude.com/help/services",
+        canonical: "https://nerlude.io/help/services",
     },
     openGraph: {
         title: "Managing Services in Nerlude - Complete Guide",
@@ -340,7 +340,7 @@ export default function ServicesPage() {
                         "publisher": {
                             "@type": "Organization",
                             "name": "Nerlude",
-                            "url": "https://nerlude.com"
+                            "url": "https://nerlude.io"
                         }
                     })
                 }}

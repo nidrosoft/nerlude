@@ -1,23 +1,28 @@
+import { createBrowserClient } from '@supabase/ssr';
+import { Database } from '@/types/database';
+
 /**
- * Database Client
+ * Supabase Browser Client
  * 
- * This module will contain the Supabase client configuration
- * and database query utilities.
- * 
- * TODO: Implement when connecting to Supabase
- * - Create Supabase client (server and browser)
- * - Add typed query helpers
- * - Add connection pooling if needed
+ * Use this client for client-side operations.
+ * It uses the anon key and respects RLS policies.
  */
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-// Placeholder exports - will be replaced with actual Supabase client
-export const db = null;
+// Singleton instance for convenience
+let browserClient: ReturnType<typeof createClient> | null = null;
 
-// Example of what this will look like:
-// import { createClient } from '@supabase/supabase-js';
-// import { Database } from '@/types/database';
-// 
-// export const supabase = createClient<Database>(
-//   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-// );
+export function getSupabaseClient() {
+  if (!browserClient) {
+    browserClient = createClient();
+  }
+  return browserClient;
+}
+
+// Re-export types for convenience
+export type { Database } from '@/types/database';

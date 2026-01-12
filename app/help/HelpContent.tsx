@@ -97,7 +97,7 @@ export default function HelpContent() {
                 <h1 className="text-h1 mb-4">How can we help you?</h1>
                 <p className="text-body text-t-secondary max-w-2xl mx-auto">
                     Find guides, tutorials, and answers to help you get the most out of Nerlude.
-                    Can't find what you're looking for? <a href="mailto:hello@nerlude.com" className="text-primary1 hover:underline">Contact us</a>.
+                    Can't find what you're looking for? <a href="mailto:hello@nerlude.io" className="text-primary1 hover:underline">Contact us</a>.
                 </p>
             </div>
 
@@ -220,7 +220,7 @@ export default function HelpContent() {
                     Our support team is here to help you with any questions.
                 </p>
                 <a
-                    href="mailto:hello@nerlude.com"
+                    href="mailto:hello@nerlude.io"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary1 text-white font-medium hover:bg-primary1/90 transition-colors"
                 >
                     Contact Support

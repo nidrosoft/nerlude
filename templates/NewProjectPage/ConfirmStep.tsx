@@ -16,6 +16,7 @@ interface ConfirmStepProps {
     selectedServices: string[];
     onBack: () => void;
     onCreateProject: () => void;
+    isCreating?: boolean;
 }
 
 const ConfirmStep = ({
@@ -28,6 +29,7 @@ const ConfirmStep = ({
     selectedServices,
     onBack,
     onCreateProject,
+    isCreating = false,
 }: ConfirmStepProps) => {
     return (
         <div>
@@ -78,12 +80,21 @@ const ConfirmStep = ({
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-stroke-subtle">
-                <Button isStroke onClick={onBack}>
+                <Button isStroke onClick={onBack} disabled={isCreating}>
                     Back
                 </Button>
-                <Button isPrimary onClick={onCreateProject}>
-                    <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                    Create Project
+                <Button isPrimary onClick={onCreateProject} disabled={isCreating}>
+                    {isCreating ? (
+                        <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            Creating...
+                        </>
+                    ) : (
+                        <>
+                            <Icon className="mr-2 !w-5 !h-5" name="plus" />
+                            Create Project
+                        </>
+                    )}
                 </Button>
             </div>
         </div>

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Getting Started with Nerlude - Complete Beginner's Guide",
     description: "Learn how to set up Nerlude and start managing your SaaS stack. This comprehensive guide covers account creation, project setup, adding services, and dashboard navigation.",
     alternates: {
-        canonical: "https://nerlude.com/help/getting-started",
+        canonical: "https://nerlude.io/help/getting-started",
     },
     openGraph: {
         title: "Getting Started with Nerlude - Complete Beginner's Guide",
@@ -76,7 +76,7 @@ export default function GettingStartedPage() {
                     </p>
                     <ol className="list-decimal pl-6 space-y-3">
                         <li>
-                            <strong>Visit the signup page</strong> - Go to <Link href="/signup" className="text-primary1 hover:underline">nerlude.com/signup</Link> or click "Get Started Free" on our homepage.
+                            <strong>Visit the signup page</strong> - Go to <Link href="/signup" className="text-primary1 hover:underline">nerlude.io/signup</Link> or click "Get Started Free" on our homepage.
                         </li>
                         <li>
                             <strong>Enter your details</strong> - Provide your email address and create a secure password. We recommend using a password manager to generate a strong, unique password.
@@ -301,7 +301,7 @@ export default function GettingStartedPage() {
                             {
                                 "@type": "HowToStep",
                                 "name": "Create your account",
-                                "text": "Sign up at nerlude.com/signup with your email or use Google/GitHub authentication."
+                                "text": "Sign up at nerlude.io/signup with your email or use Google/GitHub authentication."
                             },
                             {
                                 "@type": "HowToStep",

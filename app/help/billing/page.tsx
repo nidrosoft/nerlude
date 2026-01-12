@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Billing & Pricing - Plans, Payments, and Subscription Management",
     description: "Understand Nerlude's pricing plans, manage your subscription, update payment methods, and get answers to common billing questions.",
     alternates: {
-        canonical: "https://nerlude.com/help/billing",
+        canonical: "https://nerlude.io/help/billing",
     },
     openGraph: {
         title: "Billing & Pricing - Nerlude Help Center",
@@ -298,7 +298,7 @@ export default function BillingPage() {
                         },
                         {
                             q: "Do you offer discounts for startups?",
-                            a: "Yes! We offer 50% off for the first year for early-stage startups. Contact us at hello@nerlude.com with details about your company."
+                            a: "Yes! We offer 50% off for the first year for early-stage startups. Contact us at hello@nerlude.io with details about your company."
                         },
                         {
                             q: "Is there a limit on API calls?",
@@ -328,7 +328,7 @@ export default function BillingPage() {
                     Our team is here to help with any billing or pricing questions.
                 </p>
                 <a
-                    href="mailto:hello@nerlude.com"
+                    href="mailto:hello@nerlude.io"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary1 text-white font-medium hover:bg-primary1/90 transition-colors"
                 >
                     Contact Us

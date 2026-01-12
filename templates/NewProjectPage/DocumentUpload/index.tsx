@@ -14,11 +14,28 @@ type Props = {
 };
 
 const ACCEPTED_TYPES = [
+    // PDFs
     'application/pdf',
+    // Images
     'image/png',
     'image/jpeg',
     'image/jpg',
     'image/webp',
+    'image/gif',
+    'image/bmp',
+    'image/tiff',
+    // Spreadsheets
+    'text/csv',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    // Text/Documents
+    'text/plain',
+    'text/html',
+    'text/markdown',
+    'application/json',
+    // Word documents
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -32,7 +49,7 @@ const DocumentUpload = ({ documents, onDocumentsChange, onContinue, onBack }: Pr
 
     const validateFile = (file: File): string | null => {
         if (!ACCEPTED_TYPES.includes(file.type)) {
-            return `${file.name}: Unsupported file type. Please upload PDF or image files.`;
+            return `${file.name}: Unsupported file type. Supported: PDF, images, CSV, Excel, Word, text files.`;
         }
         if (file.size > MAX_FILE_SIZE) {
             return `${file.name}: File too large. Maximum size is 10MB.`;
@@ -135,7 +152,8 @@ const DocumentUpload = ({ documents, onDocumentsChange, onContinue, onBack }: Pr
                             <li>• Upload documents from the <strong>same project</strong> for accurate grouping</li>
                             <li>• Include receipts with service names, amounts, and dates</li>
                             <li>• Screenshots of billing pages work great too</li>
-                            <li>• We support PDF, PNG, JPG, and WebP files</li>
+                            <li>• CSV/Excel spreadsheets with your services list are perfect</li>
+                            <li>• We support PDF, images, CSV, Excel, Word, and text files</li>
                         </ul>
                     </div>
                 </div>
@@ -171,7 +189,7 @@ const DocumentUpload = ({ documents, onDocumentsChange, onContinue, onBack }: Pr
                     or click to browse
                 </p>
                 <p className="text-xs text-t-tertiary">
-                    PDF, PNG, JPG, WebP • Max 10MB per file • Up to {MAX_FILES} files
+                    PDF, Images, CSV, Excel, Word, Text • Max 10MB per file • Up to {MAX_FILES} files
                 </p>
             </div>
 

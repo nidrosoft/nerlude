@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react";
 import { Document, DocumentType, SaveStatus } from "./types";
-import { initialDocs, documentTemplates } from "./data";
+import { documentTemplates } from "./data";
 
 interface DocsContextType {
     documents: Document[];
@@ -10,6 +10,7 @@ interface DocsContextType {
     activeDoc: Document | undefined;
     saveStatus: SaveStatus;
     isExpanded: boolean;
+    isLoading: boolean;
     showNewDocModal: boolean;
     showDeleteConfirm: boolean;
     
@@ -41,13 +42,47 @@ interface DocsProviderProps {
 }
 
 export const DocsProvider = ({ children, projectId, externalShowNewDocModal = false, onExternalCloseNewDocModal }: DocsProviderProps) => {
-    const [documents, setDocuments] = useState<Document[]>(initialDocs);
-    const [activeDocId, setActiveDocId] = useState<string>(initialDocs[0].id);
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [activeDocId, setActiveDocId] = useState<string>("");
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [internalShowNewDocModal, setInternalShowNewDocModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Fetch documents from API
+    const fetchDocuments = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/documents`);
+            if (response.ok) {
+                const data = await response.json();
+                const mappedDocs: Document[] = data.map((d: any) => ({
+                    id: d.id,
+                    title: d.title,
+                    icon: d.icon || 'edit',
+                    emoji: d.emoji,
+                    content: d.content || '',
+                    type: d.doc_type || 'notes',
+                    createdAt: d.created_at,
+                    updatedAt: d.updated_at,
+                }));
+                setDocuments(mappedDocs);
+                if (mappedDocs.length > 0 && !activeDocId) {
+                    setActiveDocId(mappedDocs[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [projectId, activeDocId]);
+
+    useEffect(() => {
+        fetchDocuments();
+    }, [fetchDocuments]);
 
     // Combine internal and external modal state
     const showNewDocModal = externalShowNewDocModal || internalShowNewDocModal;
@@ -76,42 +111,88 @@ export const DocsProvider = ({ children, projectId, externalShowNewDocModal = fa
             clearTimeout(saveTimeoutRef.current);
         }
 
-        saveTimeoutRef.current = setTimeout(() => {
+        // Auto-save after 1 second of no typing
+        saveTimeoutRef.current = setTimeout(async () => {
             setSaveStatus("saving");
-            setTimeout(() => {
-                setSaveStatus("saved");
-            }, 300);
-        }, 500);
-    }, [activeDocId]);
+            try {
+                const response = await fetch(`/api/projects/${projectId}/documents/${activeDocId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: newContent }),
+                });
+                if (response.ok) {
+                    setSaveStatus("saved");
+                } else {
+                    console.error('Failed to save document');
+                    setSaveStatus("unsaved");
+                }
+            } catch (error) {
+                console.error('Error saving document:', error);
+                setSaveStatus("unsaved");
+            }
+        }, 1000);
+    }, [activeDocId, projectId]);
 
-    const handleCreateDocument = useCallback((title: string, templateType: DocumentType, emoji: string | null) => {
+    const handleCreateDocument = useCallback(async (title: string, templateType: DocumentType, emoji: string | null) => {
         const template = documentTemplates.find((t) => t.type === templateType);
         if (!template) return;
 
-        const newDoc: Document = {
-            id: `doc-${Date.now()}`,
-            title: title || template.title,
-            icon: template.icon,
-            emoji: emoji || undefined,
-            type: templateType,
-            content: template.defaultContent,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
+        try {
+            const response = await fetch(`/api/projects/${projectId}/documents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title || template.title,
+                    doc_type: templateType,
+                    icon: template.icon,
+                    emoji: emoji || null,
+                    content: template.defaultContent,
+                }),
+            });
 
-        setDocuments((prev) => [...prev, newDoc]);
-        setActiveDocId(newDoc.id);
-        setShowNewDocModal(false);
-    }, []);
+            if (response.ok) {
+                const data = await response.json();
+                const newDoc: Document = {
+                    id: data.id,
+                    title: data.title,
+                    icon: data.icon || template.icon,
+                    emoji: data.emoji || undefined,
+                    type: data.doc_type,
+                    content: data.content || template.defaultContent,
+                    createdAt: data.created_at,
+                    updatedAt: data.updated_at,
+                };
+                setDocuments((prev) => [newDoc, ...prev]);
+                setActiveDocId(newDoc.id);
+                setShowNewDocModal(false);
+            } else {
+                console.error('Failed to create document');
+            }
+        } catch (error) {
+            console.error('Error creating document:', error);
+        }
+    }, [projectId]);
 
-    const handleDeleteDocument = useCallback(() => {
+    const handleDeleteDocument = useCallback(async () => {
         if (documents.length <= 1) return;
         
-        const newDocs = documents.filter((d) => d.id !== activeDocId);
-        setDocuments(newDocs);
-        setActiveDocId(newDocs[0].id);
-        setShowDeleteConfirm(false);
-    }, [documents, activeDocId]);
+        try {
+            const response = await fetch(`/api/projects/${projectId}/documents/${activeDocId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                const newDocs = documents.filter((d) => d.id !== activeDocId);
+                setDocuments(newDocs);
+                setActiveDocId(newDocs[0]?.id || "");
+                setShowDeleteConfirm(false);
+            } else {
+                console.error('Failed to delete document');
+            }
+        } catch (error) {
+            console.error('Error deleting document:', error);
+        }
+    }, [documents, activeDocId, projectId]);
 
     const getCategoryInfo = useCallback((type: DocumentType) => {
         const template = documentTemplates.find((t) => t.type === type);
@@ -144,6 +225,7 @@ export const DocsProvider = ({ children, projectId, externalShowNewDocModal = fa
         activeDoc,
         saveStatus,
         isExpanded,
+        isLoading,
         showNewDocModal,
         showDeleteConfirm,
         setActiveDocId,

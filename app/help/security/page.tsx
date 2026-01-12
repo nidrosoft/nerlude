@@ -5,7 +5,7 @@ export const metadata: Metadata = {
     title: "Security - How Nerlude Protects Your Data and Credentials",
     description: "Learn about Nerlude's security practices, encryption methods, and how we keep your API keys, passwords, and sensitive data safe. SOC 2 ready, GDPR compliant.",
     alternates: {
-        canonical: "https://nerlude.com/help/security",
+        canonical: "https://nerlude.io/help/security",
     },
     openGraph: {
         title: "Security at Nerlude - Protecting Your Data",
@@ -277,7 +277,7 @@ export default function SecurityPage() {
                     <div className="bg-b-surface2 rounded-xl p-6 mt-4 not-prose">
                         <h3 className="text-body-bold text-t-primary mb-3">How to report</h3>
                         <p className="text-small text-t-secondary mb-4">
-                            Email us at <a href="mailto:security@nerlude.com" className="text-primary1 hover:underline">security@nerlude.com</a> with:
+                            Email us at <a href="mailto:security@nerlude.io" className="text-primary1 hover:underline">security@nerlude.io</a> with:
                         </p>
                         <ul className="text-small text-t-secondary space-y-2">
                             <li>• Description of the vulnerability</li>
@@ -305,7 +305,7 @@ export default function SecurityPage() {
                     Our security team is happy to answer any questions about how we protect your data.
                 </p>
                 <a
-                    href="mailto:security@nerlude.com"
+                    href="mailto:security@nerlude.io"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
                 >
                     Contact Security Team

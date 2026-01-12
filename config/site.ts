@@ -7,7 +7,7 @@
 export const siteConfig = {
     name: "Nerlude",
     description: "Track every service, credential, and cost across all your projects in one place.",
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://nerlude.com",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://nerlude.io",
     
     // SEO
     seo: {

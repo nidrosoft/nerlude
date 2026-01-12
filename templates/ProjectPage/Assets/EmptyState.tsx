@@ -1,0 +1,40 @@
+"use client";
+
+import Icon from "@/components/Icon";
+import Button from "@/components/Button";
+
+interface EmptyStateProps {
+    onCreateFolder: () => void;
+    onUpload: () => void;
+}
+
+const EmptyState = ({ onCreateFolder, onUpload }: EmptyStateProps) => {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="flex items-center justify-center size-20 rounded-3xl bg-primary1/10 mb-6">
+                <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9.00006 10.34C10.0701 10.34 10.9401 9.47 10.9401 8.4C10.9401 7.33 10.0701 6.46 9.00006 6.46C7.93006 6.46 7.06006 7.33 7.06006 8.4C7.06006 9.47 7.93006 10.34 9.00006 10.34Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="stroke-primary1"/>
+                    <path d="M11.91 2.58H8.99996C4.14996 2.58 2.20996 4.52 2.20996 9.37V15.19C2.20996 20.04 4.14996 21.98 8.99996 21.98H14.82C19.67 21.98 21.62 20.04 21.62 15.19V11.31" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="stroke-primary1"/>
+                    <path d="M2.84985 19.03L7.63985 15.82M13.2599 16.24L17.2999 12.77C18.0599 12.12 19.2799 12.12 20.0399 12.77L21.6199 14.13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="stroke-primary1"/>
+                    <path d="M21.7099 5.34L20.5799 5.6C19.7699 5.79 19.1499 6.42 18.9599 7.22L18.6999 8.35C18.6699 8.47 18.4999 8.47 18.4699 8.35L18.2099 7.22C18.0199 6.41 17.3899 5.79 16.5899 5.6L15.4599 5.34C15.3399 5.31 15.3399 5.14 15.4599 5.11L16.5899 4.85C17.3999 4.66 18.0199 4.03 18.2099 3.23L18.4699 2.1C18.4999 1.98 18.6699 1.98 18.6999 2.1L18.9599 3.23C19.1499 4.04 19.7799 4.66 20.5799 4.85L21.7099 5.11C21.8299 5.14 21.8299 5.31 21.7099 5.34Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" className="stroke-primary1"/>
+                </svg>
+            </div>
+            <h3 className="text-h3 mb-2">No assets yet</h3>
+            <p className="text-body text-t-secondary text-center max-w-md mb-6">
+                Create folders to organize your project assets like logos, screenshots, documents, and more.
+            </p>
+            <div className="flex gap-3">
+                <Button isSecondary onClick={onCreateFolder}>
+                    <Icon className="mr-2 !w-5 !h-5" name="folder-add" />
+                    Create Folder
+                </Button>
+                <Button isPrimary onClick={onUpload}>
+                    <Icon className="mr-2 !w-5 !h-5" name="upload" />
+                    Upload Asset
+                </Button>
+            </div>
+        </div>
+    );
+};
+
+export default EmptyState;

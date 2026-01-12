@@ -15,42 +15,42 @@ const menuItems = [
         title: "Account",
         icon: "profile",
         href: "/settings/account",
-        color: "bg-blue-500/10 border-blue-500/20 fill-blue-500",
+        iconColor: "fill-blue-500",
     },
     {
         id: "workspace",
         title: "Workspace",
         icon: "cube",
         href: "/settings/workspace",
-        color: "bg-purple-500/10 border-purple-500/20 fill-purple-500",
+        iconColor: "fill-purple-500",
     },
     {
         id: "plan",
         title: "Manage Plan",
         icon: "star-stroke",
         href: "/settings/plan",
-        color: "bg-amber-500/10 border-amber-500/20 fill-amber-500",
+        iconColor: "fill-amber-500",
     },
     {
         id: "notifications",
         title: "Notifications",
         icon: "bell",
         href: "/settings/notifications",
-        color: "bg-green-500/10 border-green-500/20 fill-green-500",
+        iconColor: "fill-green-500",
     },
     {
         id: "integrations",
         title: "Integrations",
         icon: "lightning",
         href: "/settings/integrations",
-        color: "bg-cyan-500/10 border-cyan-500/20 fill-cyan-500",
+        iconColor: "fill-cyan-500",
     },
     {
         id: "audit",
         title: "Audit Log",
         icon: "clock",
         href: "/settings/audit",
-        color: "bg-rose-500/10 border-rose-500/20 fill-rose-500",
+        iconColor: "fill-rose-500",
     },
 ];
 
@@ -87,21 +87,18 @@ const SettingsSidebar = ({ activeTab }: Props) => {
                 <nav className="flex flex-col gap-1">
                     {menuItems.map((item) => {
                         const isActive = activeTab === item.id || pathname === item.href;
-                        const colorClasses = item.color.split(" ");
                         return (
                             <Link
                                 key={item.id}
                                 href={item.href}
                                 className={`flex items-center rounded-xl transition-colors duration-200 px-2.5 py-2.5 ${
                                     isActive
-                                        ? "bg-t-primary text-b-surface1 fill-b-surface1"
-                                        : "text-t-secondary fill-t-secondary hover:bg-b-surface1 hover:text-t-primary hover:fill-t-primary"
+                                        ? "bg-t-primary text-b-surface1"
+                                        : "text-t-secondary hover:bg-b-surface1 hover:text-t-primary"
                                 }`}
                                 title={!isExpanded ? item.title : undefined}
                             >
-                                <div className={`flex items-center justify-center size-5 shrink-0 ${isActive ? "" : colorClasses[2]}`}>
-                                    <Icon className="!w-5 !h-5" name={item.icon} />
-                                </div>
+                                <Icon className={`!w-5 !h-5 shrink-0 ${isActive ? "fill-b-surface1" : item.iconColor}`} name={item.icon} />
                                 <span className={`ml-3 text-small font-medium whitespace-nowrap transition-opacity duration-200 ${isExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}>
                                     {item.title}
                                 </span>

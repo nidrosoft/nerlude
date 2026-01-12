@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
@@ -9,8 +9,6 @@ import { ServiceCategory } from "@/types";
 import { serviceRegistry, ServiceRegistryItem } from "@/registry";
 import { useToast } from "@/components/Toast";
 import Breadcrumb from "@/components/Breadcrumb";
-import { mockProjects } from "@/data/mockProjects";
-import { mockServices } from "@/data/mockServices";
 import { Step, steps } from "./types";
 import CategoryStep from "./CategoryStep";
 import ServiceStep from "./ServiceStep";
@@ -36,8 +34,26 @@ const AddServicePage = ({ projectId }: Props) => {
     const [visibleCredentials, setVisibleCredentials] = useState<Record<string, boolean>>({});
     const [bulkMode, setBulkMode] = useState(false);
     const [selectedServices, setSelectedServices] = useState<ServiceRegistryItem[]>([]);
+    const [projectName, setProjectName] = useState<string>("Project");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const hasUnsavedChanges = selectedCategory !== null || selectedService !== null || Object.keys(credentials).some(k => credentials[k]);
+
+    // Fetch project name
+    useEffect(() => {
+        const fetchProject = async () => {
+            try {
+                const res = await fetch(`/api/projects/${projectId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProjectName(data.name);
+                }
+            } catch (error) {
+                console.error('Error fetching project:', error);
+            }
+        };
+        fetchProject();
+    }, [projectId]);
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
@@ -83,28 +99,77 @@ const AddServicePage = ({ projectId }: Props) => {
         }
     };
 
-    const handleAddService = () => {
-        // In a real app, this would save to the database
-        console.log("Adding service:", {
-            projectId,
-            service: selectedService,
-            plan: selectedPlan,
-            credentials,
-            customCost,
-            renewalDate,
-        });
-        toast.success("Service added", `${selectedService?.name} has been added to your project.`);
-        router.push(`/projects/${projectId}`);
+    const handleAddService = async () => {
+        if (!selectedService || isSubmitting) return;
+        
+        setIsSubmitting(true);
+        try {
+            const plan = selectedService.plans.find(p => p.name === selectedPlan);
+            const cost = customCost ? parseFloat(customCost) : (plan?.price || 0);
+            
+            const response = await fetch(`/api/projects/${projectId}/services`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    registry_id: selectedService.id,
+                    category_id: selectedService.category,
+                    name: selectedService.name,
+                    plan: selectedPlan,
+                    cost_amount: cost,
+                    cost_frequency: plan?.frequency || 'monthly',
+                    renewal_date: renewalDate || null,
+                    notes: credentials.notes || null,
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to add service');
+            }
+
+            toast.success("Service added", `${selectedService.name} has been added to your project.`);
+            router.push(`/projects/${projectId}`);
+        } catch (error) {
+            console.error('Error adding service:', error);
+            toast.error("Error", error instanceof Error ? error.message : "Failed to add service");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const handleBulkAddServices = () => {
-        // In a real app, this would save all selected services to the database
-        console.log("Adding services:", selectedServices.map(s => s.name));
-        toast.success(
-            `${selectedServices.length} services added`, 
-            `${selectedServices.map(s => s.name).join(", ")} have been added to your project.`
-        );
-        router.push(`/projects/${projectId}`);
+    const handleBulkAddServices = async () => {
+        if (selectedServices.length === 0 || isSubmitting) return;
+        
+        setIsSubmitting(true);
+        try {
+            const promises = selectedServices.map(service => 
+                fetch(`/api/projects/${projectId}/services`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        registry_id: service.id,
+                        category_id: service.category,
+                        name: service.name,
+                        plan: service.plans[0]?.name || null,
+                        cost_amount: service.plans[0]?.price || 0,
+                        cost_frequency: service.plans[0]?.frequency || 'monthly',
+                    }),
+                })
+            );
+
+            await Promise.all(promises);
+            
+            toast.success(
+                `${selectedServices.length} services added`, 
+                `${selectedServices.map(s => s.name).join(", ")} have been added to your project.`
+            );
+            router.push(`/projects/${projectId}`);
+        } catch (error) {
+            console.error('Error adding services:', error);
+            toast.error("Error", "Failed to add some services");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const toggleServiceSelection = (service: ServiceRegistryItem) => {
@@ -130,20 +195,9 @@ const AddServicePage = ({ projectId }: Props) => {
     ];
 
     const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
-
-    const project = mockProjects.find((p) => p.id === projectId);
-    const projectName = project?.name || "Project";
     
-    // Get recently used services from other projects
-    const recentlyUsedServiceIds = [...new Set(
-        mockServices
-            .filter(s => s.projectId !== projectId)
-            .map(s => s.name.toLowerCase())
-    )].slice(0, 5);
-    
-    const recentlyUsedServices = serviceRegistry.filter(s => 
-        recentlyUsedServiceIds.includes(s.name.toLowerCase())
-    );
+    // Get recently used services (popular ones from registry)
+    const recentlyUsedServices = serviceRegistry.slice(0, 5);
 
     return (
         <Layout isLoggedIn>

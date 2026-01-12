@@ -2,7 +2,7 @@
 
 import Icon from "@/components/Icon";
 import { Step, FlowType } from "./types";
-import { manualSteps, documentSteps } from "./data";
+import { manualSteps, documentSteps, emailSteps } from "./data";
 
 interface ProgressStepsProps {
     currentStep: Step;
@@ -10,7 +10,7 @@ interface ProgressStepsProps {
 }
 
 const ProgressSteps = ({ currentStep, flowType }: ProgressStepsProps) => {
-    const steps = flowType === "documents" ? documentSteps : manualSteps;
+    const steps = flowType === "email" ? emailSteps : flowType === "documents" ? documentSteps : manualSteps;
     const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
 
     return (

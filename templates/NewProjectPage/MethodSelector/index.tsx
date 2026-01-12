@@ -33,8 +33,8 @@ const methods: MethodOption[] = [
         IconComponent: Sms,
         iconBg: 'bg-blue-500/10',
         iconColor: '#3B82F6',
-        isAvailable: false,
-        badge: 'Coming Soon',
+        isAvailable: true,
+        badge: 'New',
     },
     {
         id: 'bank',
@@ -91,6 +91,8 @@ const MethodSelector = ({ onSelect }: Props) => {
                                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                                         method.badge === 'Recommended'
                                             ? 'bg-violet-500/10 text-violet-500'
+                                            : method.badge === 'New'
+                                            ? 'bg-blue-500/10 text-blue-500'
                                             : 'bg-b-surface2 text-t-tertiary'
                                     }`}>
                                         {method.badge}

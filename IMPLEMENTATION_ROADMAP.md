@@ -427,7 +427,7 @@ This document tracks all remaining work, issues, inconsistencies, and improvemen
 |------|--------|-------------|
 | Set up production Supabase | ⬜ | Separate from dev |
 | Configure Vercel project | ⬜ | Environment variables |
-| Set up domain | ⬜ | nerlude.com or nelrude.com |
+| Set up domain | ⬜ | nerlude.io or nelrude.com |
 | Configure SSL | ⬜ | HTTPS everywhere |
 | Set up monitoring | ⬜ | Uptime, performance |
 | Create backup strategy | ⬜ | Database backups |

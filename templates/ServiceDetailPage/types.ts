@@ -12,6 +12,10 @@ export interface Credential {
     value: string;
     isSecret: boolean;
     environment: "production" | "staging" | "development";
+    credentialType?: string;
+    description?: string;
+    fields?: Record<string, string>; // All credential fields (username, password, etc.)
+    createdAt?: string;
 }
 
 export interface UsageStat {
@@ -31,6 +35,5 @@ export interface ActivityLogItem {
 export const tabs: TabInfo[] = [
     { id: "overview", label: "Overview", icon: "home" },
     { id: "credentials", label: "Credentials", icon: "key" },
-    { id: "usage", label: "Usage & Stats", icon: "chart" },
     { id: "settings", label: "Settings", icon: "gear" },
 ];

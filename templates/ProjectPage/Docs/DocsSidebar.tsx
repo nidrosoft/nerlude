@@ -31,6 +31,8 @@ const DocsSidebar = () => {
         );
     };
 
+    const { setShowNewDocModal } = useDocsContext();
+
     return (
         <div className={`w-64 shrink-0 max-md:w-full ${isExpanded ? "max-md:hidden" : ""}`}>
             <div className="p-4 rounded-3xl bg-b-surface2">
@@ -38,6 +40,18 @@ const DocsSidebar = () => {
                     <span className="text-small font-medium text-t-secondary">Documents</span>
                     <span className="text-xs text-t-tertiary">{documents.length}</span>
                 </div>
+                {documents.length === 0 ? (
+                    <div className="text-center py-6">
+                        <p className="text-small text-t-tertiary mb-3">No documents yet</p>
+                        <button
+                            onClick={() => setShowNewDocModal(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-small text-primary1 hover:bg-primary1/10 transition-colors"
+                        >
+                            <Icon className="!w-4 !h-4 fill-primary1" name="plus" />
+                            Create document
+                        </button>
+                    </div>
+                ) : (
                 <div className="space-y-2">
                     {Object.entries(documentsByType).map(([type, docs]) => {
                         const categoryInfo = getCategoryInfo(type as DocumentType);
@@ -108,6 +122,7 @@ const DocsSidebar = () => {
                         );
                     })}
                 </div>
+                )}
             </div>
         </div>
     );
