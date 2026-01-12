@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "@/components/Image";
 import Button from "@/components/Button";
 import Icon from "@/components/Icon";
 import { getSupabaseClient } from "@/lib/db";
@@ -311,15 +310,15 @@ export default function InvitePage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/">
-            <Image
-              className="h-8 mx-auto opacity-100 dark:hidden!"
+            <img
+              className="h-8 mx-auto dark:hidden"
               src="/images/Logo-dark.svg"
               width={142}
               height={36}
               alt="Nerlude"
             />
-            <Image
-              className="hidden! h-8 mx-auto opacity-100 dark:block!"
+            <img
+              className="hidden h-8 mx-auto dark:block"
               src="/images/Logo-light.svg"
               width={142}
               height={36}

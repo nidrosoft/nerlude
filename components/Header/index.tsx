@@ -2,7 +2,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Button from "@/components/Button";
-import Image from "@/components/Image";
 import Icon from "@/components/Icon";
 import Modal from "@/components/Modal";
 import Login from "@/components/Login";
@@ -65,15 +64,15 @@ const Header = ({
                 }`}
             >
                 <Link className="w-48 max-md:w-28 shrink-0" href="/">
-                    <Image
-                        className="w-full opacity-100 dark:hidden!"
+                    <img
+                        className="w-full dark:hidden"
                         src="/images/Logo-dark.svg"
                         width={142}
                         height={36}
                         alt="Nerlude"
                     />
-                    <Image
-                        className="hidden! w-full opacity-100 dark:block!"
+                    <img
+                        className="hidden w-full dark:block"
                         src="/images/Logo-light.svg"
                         width={142}
                         height={36}
