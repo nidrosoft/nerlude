@@ -140,7 +140,7 @@ const ManagePlanPage = () => {
                 .from('workspace_subscriptions' as any)
                 .select('*, subscription_plans(*)')
                 .eq('workspace_id', currentWorkspace.id)
-                .single();
+                .single() as { data: Record<string, any> | null };
             
             if (subData) {
                 setCurrentPlan(subData.plan_id || 'free');
@@ -162,7 +162,7 @@ const ManagePlanPage = () => {
                 .from('workspace_usage' as any)
                 .select('*')
                 .eq('workspace_id', currentWorkspace.id)
-                .single();
+                .single() as { data: Record<string, any> | null };
             
             if (usageData) {
                 setProjectCount(usageData.project_count || 0);
