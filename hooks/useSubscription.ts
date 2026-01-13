@@ -110,7 +110,7 @@ export function useSubscription() {
                 .from("workspace_subscriptions" as any)
                 .select("plan_id")
                 .eq("workspace_id", currentWorkspace.id)
-                .single();
+                .single() as { data: { plan_id: string } | null };
 
             const currentPlanId = subData?.plan_id || "free";
             setPlanId(currentPlanId);
@@ -120,7 +120,7 @@ export function useSubscription() {
                 .from("subscription_plans" as any)
                 .select("*")
                 .eq("id", currentPlanId)
-                .single();
+                .single() as { data: Record<string, any> | null };
 
             if (planData) {
                 setPlan({
@@ -151,7 +151,7 @@ export function useSubscription() {
                 .from("workspace_usage" as any)
                 .select("*")
                 .eq("workspace_id", currentWorkspace.id)
-                .single();
+                .single() as { data: Record<string, any> | null };
 
             if (usageData) {
                 setUsage({
