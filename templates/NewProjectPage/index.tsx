@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
@@ -23,14 +23,36 @@ import BasicsStep from "./BasicsStep";
 import TemplateStep from "./TemplateStep";
 import ServicesStep from "./ServicesStep";
 import ConfirmStep from "./ConfirmStep";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 const NewProjectPage = () => {
     const router = useRouter();
     const toast = useToast();
     const { currentWorkspace } = useWorkspaceStore();
+    const { canCreateProject, hasFeature, getUpgradeMessage, isLoading: isLoadingSubscription } = useSubscription();
     const [currentStep, setCurrentStep] = useState<Step>("method");
     const [flowType, setFlowType] = useState<FlowType | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState<{ title: string; message: string; suggestedPlan: string; limitType: "projects" | "team" | "services" | "credentials" | "storage" | "integrations" | "feature" }>({ title: "", message: "", suggestedPlan: "Pro", limitType: "projects" });
+    
+    // Check project limit on mount
+    useEffect(() => {
+        if (!isLoadingSubscription) {
+            const projectCheck = canCreateProject();
+            if (!projectCheck.allowed) {
+                const upgradeMsg = getUpgradeMessage("projects");
+                setUpgradeModalConfig({
+                    title: upgradeMsg.title,
+                    message: upgradeMsg.message,
+                    suggestedPlan: upgradeMsg.suggestedPlan,
+                    limitType: "projects",
+                });
+                setShowUpgradeModal(true);
+            }
+        }
+    }, [isLoadingSubscription, canCreateProject, getUpgradeMessage]);
     
     // Manual flow state
     const [projectName, setProjectName] = useState("");
@@ -82,6 +104,19 @@ const NewProjectPage = () => {
     // Method selection handler
     const handleMethodSelect = (method: ImportMethod) => {
         if (method === 'documents') {
+            // Check if user has AI Document Import feature (Pro+ only)
+            const aiImportCheck = hasFeature("hasAiDocumentImport");
+            if (!aiImportCheck.allowed) {
+                const upgradeMsg = getUpgradeMessage("feature", "AI Document Import");
+                setUpgradeModalConfig({
+                    title: "AI Document Import - Pro Plan",
+                    message: "AI-powered document import is available on Pro and Team plans. Upgrade to automatically extract services from receipts and invoices.",
+                    suggestedPlan: upgradeMsg.suggestedPlan,
+                    limitType: "feature",
+                });
+                setShowUpgradeModal(true);
+                return;
+            }
             setFlowType('documents');
             setCurrentStep('upload');
         } else if (method === 'email') {
@@ -536,6 +571,19 @@ const NewProjectPage = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => {
+                    setShowUpgradeModal(false);
+                    router.push("/dashboard");
+                }}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType={upgradeModalConfig.limitType}
+            />
         </Layout>
     );
 };

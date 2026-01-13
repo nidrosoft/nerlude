@@ -14,6 +14,7 @@ import { useUserStore, useProjectStore, useWorkspaceStore } from "@/stores";
 import { SkeletonProjectCard, SkeletonStats } from "@/components/Skeleton";
 import Skeleton from "@/components/Skeleton";
 import WelcomeTour from "@/components/WelcomeTour";
+import * as Sentry from "@sentry/nextjs";
 
 const filterTabs = [
     { id: "all", label: "All" },
@@ -54,16 +55,36 @@ const DashboardPage = () => {
     
     // Fetch dashboard data from API
     const fetchDashboardData = useCallback(async () => {
+        return Sentry.startSpan(
+            { op: "http.client", name: "Dashboard Data Fetch" },
+            async (span) => {
         try {
             // Build query params for workspace filtering
             const workspaceParam = currentWorkspace ? `?workspace_id=${currentWorkspace.id}` : '';
+            span.setAttribute("workspace_id", currentWorkspace?.id || "all");
+            
+            // Helper to safely fetch with error handling
+            const safeFetch = async (url: string) => {
+                try {
+                    const res = await fetch(url);
+                    // Don't report 401 as errors - user just needs to log in
+                    if (res.status === 401) {
+                        return { ok: false, status: 401, json: async () => null };
+                    }
+                    return res;
+                } catch (err) {
+                    // Network error - don't spam Sentry with these
+                    console.warn(`Failed to fetch ${url}:`, err);
+                    return { ok: false, status: 0, json: async () => null };
+                }
+            };
             
             // Fetch stats, projects, alerts, and notifications in parallel
             const [statsRes, projectsRes, alertsRes, notificationsRes] = await Promise.all([
-                fetch(`/api/dashboard/stats${workspaceParam}`),
-                fetch(`/api/projects${workspaceParam}`),
-                fetch(`/api/dashboard/alerts${workspaceParam}`),
-                fetch('/api/notifications'),
+                safeFetch(`/api/dashboard/stats${workspaceParam}`),
+                safeFetch(`/api/projects${workspaceParam}`),
+                safeFetch(`/api/dashboard/alerts${workspaceParam}`),
+                safeFetch('/api/notifications'),
             ]);
             
             // Process notifications from the notifications table
@@ -174,9 +195,12 @@ const DashboardPage = () => {
             }
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
+            Sentry.captureException(error);
         } finally {
             setIsLoading(false);
         }
+        }
+      );
     }, [setServices, currentWorkspace]);
     
     // Check if first-time user (show welcome tour)

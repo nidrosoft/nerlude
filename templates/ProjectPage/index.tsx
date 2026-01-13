@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { ServiceCategory, Project, Service, ServiceStack, Alert } from "@/types";
 import { getCategoryColor } from "@/utils/categoryColors";
 import { useProjectLoading } from "@/components/ProjectLoadingOverlay";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 type Props = {
     projectId: string;
@@ -47,8 +49,18 @@ const ProjectPage = ({ projectId }: Props) => {
     const [isArchiving, setIsArchiving] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [assetFolderPath, setAssetFolderPath] = useState<{ id: string | null; name: string; onClick?: () => void }[]>([]);
+    const [showServiceUpgradeModal, setShowServiceUpgradeModal] = useState(false);
     const toast = useToast();
     const { hideLoading } = useProjectLoading();
+    const { plan, canAddService, canAddTeamMember, isDemoAccount } = useSubscription();
+
+    // Check if user can add more services
+    const serviceCheck = canAddService(services.length);
+    const canAddMoreServices = isDemoAccount || serviceCheck.allowed;
+    
+    // Check if user can add more team members
+    const teamCheck = canAddTeamMember();
+    const canAddMoreTeamMembers = isDemoAccount || teamCheck.allowed;
 
     // Hide the project loading overlay when component mounts
     useEffect(() => {
@@ -370,10 +382,22 @@ const ProjectPage = ({ projectId }: Props) => {
                     <div className="flex items-center justify-between">
                         <h2 className="text-h3">Overview</h2>
                         <div className="flex gap-2">
-                            <Button isStroke as="link" href={`/projects/${project.id}/services/new`}>
-                                <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                                Add Service
-                            </Button>
+                            {canAddMoreServices ? (
+                                <Button isStroke as="link" href={`/projects/${project.id}/services/new`}>
+                                    <Icon className="mr-2 !w-5 !h-5" name="plus" />
+                                    Add Service
+                                </Button>
+                            ) : (
+                                <Button 
+                                    isStroke 
+                                    onClick={() => setShowServiceUpgradeModal(true)}
+                                    className="!border-amber-500/30 !text-amber-600 hover:!bg-amber-500/10"
+                                >
+                                    <Icon className="mr-2 !w-5 !h-5 !fill-amber-500" name="lock" />
+                                    Add Service
+                                    <span className="ml-2 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">Upgrade</span>
+                                </Button>
+                            )}
                             <div className="relative">
                                 <button
                                     onClick={() => setShowActionsMenu(!showActionsMenu)}
@@ -433,10 +457,22 @@ const ProjectPage = ({ projectId }: Props) => {
                                     {projectServices.length} services · ${Math.round(totalMonthlyCost)}/mo total
                                 </p>
                             </div>
-                            <Button isStroke as="link" href={`/projects/${projectId}/services/new`}>
-                                <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                                Add Service
-                            </Button>
+                            {canAddMoreServices ? (
+                                <Button isStroke as="link" href={`/projects/${projectId}/services/new`}>
+                                    <Icon className="mr-2 !w-5 !h-5" name="plus" />
+                                    Add Service
+                                </Button>
+                            ) : (
+                                <Button 
+                                    isStroke 
+                                    onClick={() => setShowServiceUpgradeModal(true)}
+                                    className="!border-amber-500/30 !text-amber-600 hover:!bg-amber-500/10"
+                                >
+                                    <Icon className="mr-2 !w-5 !h-5 !fill-amber-500" name="lock" />
+                                    Add Service
+                                    <span className="ml-2 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">Upgrade</span>
+                                </Button>
+                            )}
                         </div>
                         <div className="relative pb-4 border-b border-stroke-subtle">
                             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mb-1">
@@ -473,7 +509,17 @@ const ProjectPage = ({ projectId }: Props) => {
                             </div>
                             <Dropdown trigger={<Button isCircle isStroke><Icon className="!w-5 !h-5 fill-inherit" name="plus" /></Button>} items={[
                                 { label: "New Stack", icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="align-right" />, onClick: () => {} },
-                                { label: "Add Service", icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="cube" />, onClick: () => { window.location.href = `/projects/${projectId}/services/new`; } },
+                                { 
+                                    label: canAddMoreServices ? "Add Service" : "Add Service (Upgrade)", 
+                                    icon: <Icon className={`!w-5 !h-5 ${canAddMoreServices ? 'fill-t-tertiary' : 'fill-amber-500'}`} name={canAddMoreServices ? "cube" : "lock"} />, 
+                                    onClick: () => { 
+                                        if (canAddMoreServices) {
+                                            window.location.href = `/projects/${projectId}/services/new`; 
+                                        } else {
+                                            setShowServiceUpgradeModal(true);
+                                        }
+                                    } 
+                                },
                                 { label: "Upload Asset", icon: <Icon className="!w-5 !h-5 fill-t-tertiary" name="documents" />, onClick: () => {} },
                             ]} />
                         </div>
@@ -609,6 +655,16 @@ const ProjectPage = ({ projectId }: Props) => {
                     </div>
                 </div>
             )}
+            
+            {/* Service Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showServiceUpgradeModal}
+                onClose={() => setShowServiceUpgradeModal(false)}
+                title="Service Limit Reached"
+                message={`You've reached your limit of ${plan.maxServicesPerProject} services per project on the ${plan.name} plan. Upgrade to add more services.`}
+                suggestedPlan={plan.id === "free" ? "Pro" : "Team"}
+                limitType="services"
+            />
         </Layout>
     );
 };

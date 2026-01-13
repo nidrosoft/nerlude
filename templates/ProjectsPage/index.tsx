@@ -8,6 +8,8 @@ import Button from "@/components/Button";
 import Skeleton from "@/components/Skeleton";
 import { useWorkspaceStore } from "@/stores";
 import { useToast } from "@/components/Toast";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface Project {
     id: string;
@@ -25,10 +27,16 @@ interface Project {
 const ProjectsPage = () => {
     const { currentWorkspace } = useWorkspaceStore();
     const toast = useToast();
+    const { plan, canCreateProject, isDemoAccount } = useSubscription();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<"all" | "active" | "archived">("all");
     const [searchQuery, setSearchQuery] = useState("");
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // Check if user can create more projects
+    const projectCheck = canCreateProject();
+    const canCreate = isDemoAccount || projectCheck.allowed;
 
     const fetchProjects = useCallback(async () => {
         if (!currentWorkspace) return;
@@ -79,10 +87,22 @@ const ProjectsPage = () => {
                                 Manage your projects and services
                             </p>
                         </div>
-                        <Button isPrimary as="link" href="/projects/new">
-                            <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                            New Project
-                        </Button>
+                        {canCreate ? (
+                            <Button isPrimary as="link" href="/projects/new">
+                                <Icon className="mr-2 !w-5 !h-5" name="plus" />
+                                New Project
+                            </Button>
+                        ) : (
+                            <Button 
+                                isStroke 
+                                onClick={() => setShowUpgradeModal(true)}
+                                className="!border-amber-500/30 !text-amber-600 hover:!bg-amber-500/10"
+                            >
+                                <Icon className="mr-2 !w-5 !h-5 !fill-amber-500" name="lock" />
+                                New Project
+                                <span className="ml-2 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">Upgrade</span>
+                            </Button>
+                        )}
                     </div>
 
                     {/* Filters & Search */}
@@ -140,10 +160,22 @@ const ProjectsPage = () => {
                             <p className="text-body text-t-secondary mb-6">
                                 Create your first project to start tracking services
                             </p>
-                            <Button isPrimary as="link" href="/projects/new">
-                                <Icon className="mr-2 !w-5 !h-5" name="plus" />
-                                Create Project
-                            </Button>
+                            {canCreate ? (
+                                <Button isPrimary as="link" href="/projects/new">
+                                    <Icon className="mr-2 !w-5 !h-5" name="plus" />
+                                    Create Project
+                                </Button>
+                            ) : (
+                                <Button 
+                                    isStroke 
+                                    onClick={() => setShowUpgradeModal(true)}
+                                    className="!border-amber-500/30 !text-amber-600 hover:!bg-amber-500/10"
+                                >
+                                    <Icon className="mr-2 !w-5 !h-5 !fill-amber-500" name="lock" />
+                                    Create Project
+                                    <span className="ml-2 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">Upgrade</span>
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-md:grid-cols-1">
@@ -191,6 +223,16 @@ const ProjectsPage = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Project Limit Reached"
+                message={`You've reached your limit of ${plan.maxProjects} project${plan.maxProjects === 1 ? '' : 's'} on the ${plan.name} plan. Upgrade to create more projects.`}
+                suggestedPlan={plan.id === "free" ? "Pro" : "Team"}
+                limitType="projects"
+            />
         </Layout>
     );
 };

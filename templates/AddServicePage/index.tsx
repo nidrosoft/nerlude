@@ -14,6 +14,8 @@ import CategoryStep from "./CategoryStep";
 import ServiceStep from "./ServiceStep";
 import ConfigureStep from "./ConfigureStep";
 import ConfirmStep from "./ConfirmStep";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 type Props = {
     projectId: string;
@@ -22,6 +24,7 @@ type Props = {
 const AddServicePage = ({ projectId }: Props) => {
     const router = useRouter();
     const toast = useToast();
+    const { canAddService, getUpgradeMessage, isLoading: isLoadingSubscription } = useSubscription();
     const [currentStep, setCurrentStep] = useState<Step>("category");
     const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
     const [selectedService, setSelectedService] = useState<ServiceRegistryItem | null>(null);
@@ -30,16 +33,19 @@ const AddServicePage = ({ projectId }: Props) => {
     const [customCost, setCustomCost] = useState<string>("");
     const [renewalDate, setRenewalDate] = useState<string>("");
     const [showCancelModal, setShowCancelModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     const [searchQuery, setSearchQuery] = useState("");
     const [visibleCredentials, setVisibleCredentials] = useState<Record<string, boolean>>({});
     const [bulkMode, setBulkMode] = useState(false);
     const [selectedServices, setSelectedServices] = useState<ServiceRegistryItem[]>([]);
     const [projectName, setProjectName] = useState<string>("Project");
+    const [currentServiceCount, setCurrentServiceCount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const hasUnsavedChanges = selectedCategory !== null || selectedService !== null || Object.keys(credentials).some(k => credentials[k]);
 
-    // Fetch project name
+    // Fetch project name and service count
     useEffect(() => {
         const fetchProject = async () => {
             try {
@@ -48,12 +54,35 @@ const AddServicePage = ({ projectId }: Props) => {
                     const data = await res.json();
                     setProjectName(data.name);
                 }
+                
+                // Fetch current service count
+                const servicesRes = await fetch(`/api/projects/${projectId}/services`);
+                if (servicesRes.ok) {
+                    const services = await servicesRes.json();
+                    setCurrentServiceCount(services.length || 0);
+                }
             } catch (error) {
                 console.error('Error fetching project:', error);
             }
         };
         fetchProject();
     }, [projectId]);
+
+    // Check service limit on mount
+    useEffect(() => {
+        if (!isLoadingSubscription && currentServiceCount > 0) {
+            const serviceCheck = canAddService(currentServiceCount);
+            if (!serviceCheck.allowed) {
+                const upgradeMsg = getUpgradeMessage("services");
+                setUpgradeModalConfig({
+                    title: upgradeMsg.title,
+                    message: upgradeMsg.message,
+                    suggestedPlan: upgradeMsg.suggestedPlan,
+                });
+                setShowUpgradeModal(true);
+            }
+        }
+    }, [isLoadingSubscription, currentServiceCount, canAddService, getUpgradeMessage]);
 
     const handleCancel = () => {
         if (hasUnsavedChanges) {
@@ -376,6 +405,19 @@ const AddServicePage = ({ projectId }: Props) => {
                     </div>
                 </div>
             </div>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => {
+                    setShowUpgradeModal(false);
+                    router.push(`/projects/${projectId}`);
+                }}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="services"
+            />
         </Layout>
     );
 };

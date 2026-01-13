@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import { useWorkspaceStore } from "@/stores";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 const workspaceTypes = [
     {
@@ -42,12 +44,25 @@ const workspaceTypes = [
 const NewWorkspacePage = () => {
     const router = useRouter();
     const toast = useToast();
-    const { addWorkspace, setCurrentWorkspace } = useWorkspaceStore();
+    const { addWorkspace, setCurrentWorkspace, workspaces } = useWorkspaceStore();
+    const { plan, isLoading: isLoadingSubscription, isDemoAccount } = useSubscription();
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [workspaceName, setWorkspaceName] = useState("");
     const [workspaceType, setWorkspaceType] = useState<string | null>(null);
     const [workspaceUrl, setWorkspaceUrl] = useState("");
     const [isCreating, setIsCreating] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // Check workspace limit on mount
+    useEffect(() => {
+        if (!isLoadingSubscription && !isDemoAccount) {
+            const currentWorkspaceCount = workspaces?.length || 0;
+            const maxWorkspaces = plan.maxWorkspaces;
+            if (maxWorkspaces !== -1 && currentWorkspaceCount >= maxWorkspaces) {
+                setShowUpgradeModal(true);
+            }
+        }
+    }, [isLoadingSubscription, isDemoAccount, workspaces, plan.maxWorkspaces]);
 
     const handleNameChange = (value: string) => {
         setWorkspaceName(value);
@@ -289,6 +304,19 @@ const NewWorkspacePage = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => {
+                    setShowUpgradeModal(false);
+                    router.push("/dashboard");
+                }}
+                title="Workspace Limit Reached"
+                message={`You've reached your workspace limit of ${plan.maxWorkspaces}. Upgrade to create more workspaces.`}
+                suggestedPlan={plan.id === "free" ? "Pro" : "Team"}
+                limitType="projects"
+            />
         </Layout>
     );
 };

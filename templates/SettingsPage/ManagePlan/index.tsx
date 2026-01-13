@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
@@ -10,6 +11,8 @@ import { BillingHistoryItem, PaymentMethod, formatDate, formatCurrency } from "@
 import { getStatusColor } from "@/utils/categoryColors";
 import { useWorkspaceStore } from "@/stores";
 import { useToast } from "@/components/Toast";
+import { getSupabaseClient } from "@/lib/db";
+import { formatBytes } from "@/lib/utils/subscription";
 
 interface Plan {
     id: string;
@@ -32,9 +35,12 @@ const plans: Plan[] = [
         description: "Perfect for getting started",
         features: [
             "1 project",
-            "1 team member",
-            "Basic service tracking",
-            "Email notifications",
+            "1 workspace",
+            "5 services per project",
+            "10 encrypted credentials",
+            "1 GB asset storage",
+            "Basic renewal alerts",
+            "Project documentation",
             "Community support",
         ],
         projectLimit: 1,
@@ -47,13 +53,19 @@ const plans: Plan[] = [
         frequency: "month",
         description: "For growing founders",
         features: [
-            "Up to 10 projects",
+            "10 projects",
+            "3 workspaces",
             "5 team members",
-            "Advanced service tracking",
-            "Priority notifications",
-            "Credential encryption",
-            "API access",
-            "Email support",
+            "50 services per project",
+            "Unlimited credentials",
+            "10 GB asset storage",
+            "Advanced alerts (email + Slack)",
+            "Environment separation",
+            "Service stacks & grouping",
+            "Cost tracking & analytics",
+            "AI document import",
+            "3 integrations",
+            "Priority support",
         ],
         projectLimit: 10,
         teamLimit: 5,
@@ -67,14 +79,17 @@ const plans: Plan[] = [
         description: "For agencies and teams",
         features: [
             "Unlimited projects",
+            "Unlimited workspaces",
             "Unlimited team members",
-            "Advanced service tracking",
-            "Priority notifications",
-            "Credential encryption",
-            "API access",
-            "Custom integrations",
-            "Priority support",
-            "Audit logs",
+            "Unlimited services",
+            "Unlimited credentials",
+            "100 GB asset storage",
+            "Role-based access control",
+            "Time-limited contractor access",
+            "Full audit logging & export",
+            "Unlimited integrations",
+            "Full API access",
+            "Dedicated support + SLA",
         ],
         projectLimit: -1,
         teamLimit: -1,
@@ -84,8 +99,25 @@ const plans: Plan[] = [
 const ManagePlanPage = () => {
     const { currentWorkspace } = useWorkspaceStore();
     const toast = useToast();
+    const searchParams = useSearchParams();
     const [currentPlan, setCurrentPlan] = useState("free");
     const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+    const [storageUsed, setStorageUsed] = useState(0);
+    const [storageLimit, setStorageLimit] = useState(1073741824); // 1GB default
+    const [credentialCount, setCredentialCount] = useState(0);
+    const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+    const [periodEnd, setPeriodEnd] = useState<string | null>(null);
+
+    // Handle success/cancel from Stripe checkout
+    useEffect(() => {
+        if (searchParams.get("success") === "true") {
+            toast.success("Subscription activated!", "Your plan has been upgraded successfully.");
+            // Refresh data
+            fetchBillingData();
+        } else if (searchParams.get("canceled") === "true") {
+            toast.info("Checkout canceled", "You can upgrade anytime.");
+        }
+    }, [searchParams]);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -101,38 +133,79 @@ const ManagePlanPage = () => {
         
         setIsLoading(true);
         try {
-            // Fetch workspace details (includes subscription)
-            const workspaceRes = await fetch(`/api/workspaces/${currentWorkspace.id}`);
-            if (workspaceRes.ok) {
-                const data = await workspaceRes.json();
-                // Map subscription plan to our plan IDs
-                const planMap: Record<string, string> = {
-                    'free': 'free',
-                    'starter': 'free',
-                    'pro': 'pro',
-                    'team': 'team',
-                    'enterprise': 'team',
+            const supabase = getSupabaseClient();
+            
+            // Fetch subscription from workspace_subscriptions table
+            const { data: subData } = await supabase
+                .from('workspace_subscriptions' as any)
+                .select('*, subscription_plans(*)')
+                .eq('workspace_id', currentWorkspace.id)
+                .single();
+            
+            if (subData) {
+                setCurrentPlan(subData.plan_id || 'free');
+                setSubscriptionStatus(subData.stripe_subscription_status);
+                setPeriodEnd(subData.current_period_end);
+                setBillingCycle(subData.billing_cycle || 'monthly');
+                
+                // Set storage limit based on plan
+                const planStorageLimits: Record<string, number> = {
+                    'free': 1073741824,      // 1 GB
+                    'pro': 10737418240,      // 10 GB
+                    'team': 107374182400,    // 100 GB
                 };
-                setCurrentPlan(planMap[data.subscription?.plan_id || 'free'] || 'free');
+                setStorageLimit(planStorageLimits[subData.plan_id] || 1073741824);
             }
 
-            // Fetch projects count
-            const projectsRes = await fetch(`/api/projects?workspace_id=${currentWorkspace.id}`);
-            if (projectsRes.ok) {
-                const projects = await projectsRes.json();
-                setProjectCount(projects.length);
+            // Fetch usage from workspace_usage table
+            const { data: usageData } = await supabase
+                .from('workspace_usage' as any)
+                .select('*')
+                .eq('workspace_id', currentWorkspace.id)
+                .single();
+            
+            if (usageData) {
+                setProjectCount(usageData.project_count || 0);
+                setMemberCount(usageData.team_member_count || 0);
+                setCredentialCount(usageData.credential_count || 0);
+                setStorageUsed(usageData.storage_used_bytes || 0);
+            } else {
+                // Fallback to API if usage table not populated
+                const projectsRes = await fetch(`/api/projects?workspace_id=${currentWorkspace.id}`);
+                if (projectsRes.ok) {
+                    const projects = await projectsRes.json();
+                    setProjectCount(projects.length);
+                }
+
+                const membersRes = await fetch(`/api/workspaces/${currentWorkspace.id}/members`);
+                if (membersRes.ok) {
+                    const members = await membersRes.json();
+                    setMemberCount(members.length);
+                }
             }
 
-            // Fetch members count
-            const membersRes = await fetch(`/api/workspaces/${currentWorkspace.id}/members`);
-            if (membersRes.ok) {
-                const members = await membersRes.json();
-                setMemberCount(members.length);
+            // Fetch billing history
+            const { data: historyData } = await supabase
+                .from('billing_history' as any)
+                .select('*')
+                .eq('workspace_id', currentWorkspace.id)
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (historyData && historyData.length > 0) {
+                setBillingHistory(historyData.map((h: any) => ({
+                    id: h.id,
+                    date: h.created_at,
+                    description: h.description || h.event_type,
+                    amount: h.amount_cents ? h.amount_cents / 100 : 0,
+                    status: h.event_type.includes('succeeded') ? 'paid' : 
+                            h.event_type.includes('failed') ? 'failed' : 'pending',
+                    invoiceUrl: h.stripe_invoice_id ? `https://dashboard.stripe.com/invoices/${h.stripe_invoice_id}` : undefined,
+                })));
+            } else {
+                setBillingHistory([]);
             }
-
-            // Note: Billing history and payment methods would typically come from Stripe
-            // For now, we show empty states until Stripe integration is complete
-            setBillingHistory([]);
+            
             setPaymentMethods([]);
 
         } catch (error) {
@@ -159,14 +232,100 @@ const ManagePlanPage = () => {
         
         setIsUpgrading(true);
         try {
-            // In production, this would redirect to Stripe Checkout or update via Stripe API
-            toast.info("Upgrade", "Stripe integration required for plan upgrades. Contact support.");
-            setShowUpgradeModal(false);
+            const supabase = getSupabaseClient();
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            
+            console.log('Session check:', { session: !!session, error: sessionError });
+            
+            if (!session || sessionError) {
+                toast.error("Error", "Please sign in to upgrade. You may need to log out and log back in.");
+                setIsUpgrading(false);
+                return;
+            }
+
+            console.log('Calling stripe-checkout with token:', session.access_token?.substring(0, 20) + '...');
+
+            // Call the Stripe checkout Edge Function
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/stripe-checkout`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        action: "create_checkout",
+                        workspaceId: currentWorkspace.id,
+                        planId: selectedPlan.id,
+                        billingCycle: billingCycle,
+                        successUrl: `${window.location.origin}/settings/plan?success=true`,
+                        cancelUrl: `${window.location.origin}/settings/plan?canceled=true`,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to create checkout session");
+            }
+
+            if (data.url) {
+                // Redirect to Stripe Checkout
+                window.location.href = data.url;
+            } else {
+                throw new Error("No checkout URL returned");
+            }
         } catch (error) {
             console.error('Error upgrading plan:', error);
-            toast.error("Error", "Failed to upgrade plan");
+            toast.error("Error", error instanceof Error ? error.message : "Failed to upgrade plan");
+            setShowUpgradeModal(false);
         } finally {
             setIsUpgrading(false);
+        }
+    };
+
+    const handleManageBilling = async () => {
+        if (!currentWorkspace) return;
+        
+        try {
+            const supabase = getSupabaseClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                toast.error("Error", "Please sign in");
+                return;
+            }
+
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/stripe-checkout`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        action: "create_portal",
+                        workspaceId: currentWorkspace.id,
+                        successUrl: `${window.location.origin}/settings/plan`,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to open billing portal");
+            }
+
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (error) {
+            console.error('Error opening billing portal:', error);
+            toast.error("Error", error instanceof Error ? error.message : "Failed to open billing portal");
         }
     };
 
@@ -244,7 +403,7 @@ const ManagePlanPage = () => {
                                 </div>
 
                                 {/* Usage */}
-                                <div className="mt-4 grid grid-cols-2 gap-4 max-md:grid-cols-1">
+                                <div className="mt-4 grid grid-cols-3 gap-4 max-md:grid-cols-1">
                                     <div className="p-4 rounded-2xl bg-b-surface1">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-small text-t-secondary">Projects</span>
@@ -269,7 +428,35 @@ const ManagePlanPage = () => {
                                             />
                                         </div>
                                     </div>
+                                    <div className="p-4 rounded-2xl bg-b-surface1">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-small text-t-secondary">Storage</span>
+                                            <span className="text-small font-medium">{formatBytes(storageUsed)} / {formatBytes(storageLimit)}</span>
+                                        </div>
+                                        <div className="h-2 rounded-full bg-b-surface2 overflow-hidden">
+                                            <div 
+                                                className="h-full rounded-full bg-purple-500"
+                                                style={{ width: `${Math.min((storageUsed / storageLimit) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Manage Billing Button - only show for paid plans */}
+                                {currentPlan !== "free" && (
+                                    <div className="mt-4 flex items-center justify-between p-4 rounded-2xl bg-b-surface1 border border-stroke-subtle">
+                                        <div>
+                                            <p className="text-small font-medium">Manage your subscription</p>
+                                            <p className="text-xs text-t-tertiary">
+                                                {periodEnd ? `Renews on ${new Date(periodEnd).toLocaleDateString()}` : "Update payment method, view invoices, or cancel"}
+                                            </p>
+                                        </div>
+                                        <Button isStroke onClick={handleManageBilling}>
+                                            <Icon className="mr-2 !w-4 !h-4" name="setting" />
+                                            Manage Billing
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Billing Cycle Toggle */}
@@ -346,12 +533,12 @@ const ManagePlanPage = () => {
 
                                         <Button
                                             className="w-full mt-6"
-                                            isSecondary={plan.id !== currentPlan}
-                                            isStroke={plan.id === currentPlan}
+                                            isPrimary={plan.id !== currentPlan && plan.id !== "free"}
+                                            isStroke={plan.id === currentPlan || plan.id === "free"}
                                             onClick={() => handleSelectPlan(plan)}
-                                            disabled={plan.id === currentPlan}
+                                            disabled={plan.id === currentPlan || plan.id === "free"}
                                         >
-                                            {plan.id === currentPlan ? "Current Plan" : "Upgrade"}
+                                            {plan.id === currentPlan ? "Current Plan" : plan.id === "free" ? "Free Plan" : "Upgrade"}
                                         </Button>
                                     </div>
                                 ))}

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
 import { useWorkspaceStore } from "@/stores";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface AuditEvent {
     id: string;
@@ -71,13 +74,26 @@ const categoryColors: Record<string, { bg: string; text: string; icon: string }>
 };
 
 const AuditLogPage = () => {
+    const router = useRouter();
     const { currentWorkspace } = useWorkspaceStore();
+    const { hasFeature, isLoading: isLoadingSubscription } = useSubscription();
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d" | "all">("30d");
     const [isLoading, setIsLoading] = useState(true);
     const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
     const [totalCount, setTotalCount] = useState(0);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // Check if user has audit logging feature (Team plan only)
+    useEffect(() => {
+        if (!isLoadingSubscription) {
+            const auditCheck = hasFeature("hasAuditLogging");
+            if (!auditCheck.allowed) {
+                setShowUpgradeModal(true);
+            }
+        }
+    }, [isLoadingSubscription, hasFeature]);
 
     // Fetch audit events from API
     const fetchAuditEvents = useCallback(async () => {
@@ -330,6 +346,19 @@ const AuditLogPage = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => {
+                    setShowUpgradeModal(false);
+                    router.push("/settings");
+                }}
+                title="Audit Logging - Team Plan"
+                message="Audit logging is available on the Team plan. Upgrade to track all activity in your workspace with detailed logs."
+                suggestedPlan="Team"
+                limitType="feature"
+            />
         </Layout>
     );
 };

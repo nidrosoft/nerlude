@@ -8,6 +8,8 @@ import AddCredentialModal from "./AddCredentialModal";
 import CredentialDetailModal from "./CredentialDetailModal";
 import { CredentialTypeId, getCredentialType } from "./credentialTypes";
 import { CredentialKeyIcon, credentialIconMap } from "./CredentialIcons";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 type Environment = "production" | "staging" | "development";
 
@@ -31,11 +33,30 @@ const CredentialsTab = ({
     onCopy,
     onAddCredential,
 }: CredentialsTabProps) => {
+    const { canAddCredential, getUpgradeMessage } = useSubscription();
     const [showAddModal, setShowAddModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     const [selectedCredential, setSelectedCredential] = useState<Credential | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [activeEnvironment, setActiveEnvironment] = useState<Environment | "all">("all");
+
+    // Check credential limit before showing add modal
+    const handleShowAddModal = () => {
+        const credCheck = canAddCredential();
+        if (!credCheck.allowed) {
+            const upgradeMsg = getUpgradeMessage("credentials");
+            setUpgradeModalConfig({
+                title: upgradeMsg.title,
+                message: upgradeMsg.message,
+                suggestedPlan: upgradeMsg.suggestedPlan,
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
+        setShowAddModal(true);
+    };
 
     const environments: (Environment | "all")[] = ["all", "production", "staging", "development"];
 
@@ -144,7 +165,7 @@ const CredentialsTab = ({
                             ))}
                         </div>
                     </div>
-                    <Button isStroke onClick={() => setShowAddModal(true)}>
+                    <Button isStroke onClick={handleShowAddModal}>
                         <Icon className="mr-2 !w-4 !h-4" name="plus" />
                         Add Credential
                     </Button>
@@ -247,6 +268,16 @@ const CredentialsTab = ({
                     onCopy={onCopy}
                 />
             )}
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="credentials"
+            />
         </>
     );
 };

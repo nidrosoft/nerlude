@@ -6,6 +6,8 @@ import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import SettingsSidebar from "../SettingsSidebar";
 import { useToast } from "@/components/Toast";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface Integration {
     id: string;
@@ -115,9 +117,12 @@ const categories = [
 
 const IntegrationsPage = () => {
     const toast = useToast();
+    const { canAddIntegration, getUpgradeMessage } = useSubscription();
     const [activeCategory, setActiveCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [showConfigModal, setShowConfigModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
 
     const filteredIntegrations = integrations.filter((integration) => {
@@ -130,6 +135,18 @@ const IntegrationsPage = () => {
     const connectedCount = integrations.filter((i) => i.isConnected).length;
 
     const handleConnect = (integration: Integration) => {
+        // Check integration limit before connecting
+        const integrationCheck = canAddIntegration();
+        if (!integrationCheck.allowed) {
+            const upgradeMsg = getUpgradeMessage("integrations");
+            setUpgradeModalConfig({
+                title: upgradeMsg.title,
+                message: upgradeMsg.message,
+                suggestedPlan: upgradeMsg.suggestedPlan,
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
         setSelectedIntegration(integration);
         setShowConfigModal(true);
     };
@@ -410,6 +427,16 @@ const IntegrationsPage = () => {
                     </div>
                 </div>
             )}
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="integrations"
+            />
         </Layout>
     );
 };

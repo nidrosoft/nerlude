@@ -6,6 +6,8 @@ import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import Icon from "@/components/Icon";
 import { useWorkspaceStore } from "@/stores";
 import { Workspace } from "@/types";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 const workspaceTypeIcons: Record<string, string> = {
     personal: "profile",
@@ -23,7 +25,14 @@ const workspaceTypeColors: Record<string, string> = {
 
 const WorkspaceSwitcher = () => {
     const { currentWorkspace, workspaces, setCurrentWorkspace, isLoading, setLoading } = useWorkspaceStore();
+    const { plan, isDemoAccount } = useSubscription();
     const [isOpen, setIsOpen] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    // Check if user can create more workspaces
+    const currentWorkspaceCount = workspaces?.length || 0;
+    const maxWorkspaces = plan.maxWorkspaces;
+    const canCreateWorkspace = isDemoAccount || maxWorkspaces === -1 || currentWorkspaceCount < maxWorkspaces;
 
     if (!currentWorkspace) return null;
 
@@ -109,21 +118,50 @@ const WorkspaceSwitcher = () => {
                     
                     <div className="border-t border-stroke-subtle mt-2 pt-2">
                         <MenuItem>
-                            <Link
-                                href="/workspace/new"
-                                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border-[1.5px] border-stroke1 bg-b-surface1 text-t-secondary fill-t-secondary hover:border-stroke-highlight hover:bg-b-highlight hover:text-t-primary hover:fill-t-primary transition-all"
-                            >
-                                <div className="flex items-center justify-center size-8 rounded-lg bg-primary1/10">
-                                    <Icon className="!w-4 !h-4 fill-primary1" name="plus" />
-                                </div>
-                                <span className="text-small font-medium">
-                                    Create Workspace
-                                </span>
-                            </Link>
+                            {canCreateWorkspace ? (
+                                <Link
+                                    href="/workspace/new"
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border-[1.5px] border-stroke1 bg-b-surface1 text-t-secondary fill-t-secondary hover:border-stroke-highlight hover:bg-b-highlight hover:text-t-primary hover:fill-t-primary transition-all"
+                                >
+                                    <div className="flex items-center justify-center size-8 rounded-lg bg-primary1/10">
+                                        <Icon className="!w-4 !h-4 fill-primary1" name="plus" />
+                                    </div>
+                                    <span className="text-small font-medium">
+                                        Create Workspace
+                                    </span>
+                                </Link>
+                            ) : (
+                                <button
+                                    onClick={() => setShowUpgradeModal(true)}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border-[1.5px] border-stroke1 bg-b-surface1/50 text-t-tertiary fill-t-tertiary transition-all cursor-pointer hover:border-amber-500/30"
+                                >
+                                    <div className="flex items-center justify-center size-8 rounded-lg bg-amber-500/10">
+                                        <Icon className="!w-4 !h-4 fill-amber-500" name="lock" />
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                        <span className="text-small font-medium block">
+                                            Create Workspace
+                                        </span>
+                                        <span className="text-xs text-amber-600">
+                                            Upgrade to create more
+                                        </span>
+                                    </div>
+                                </button>
+                            )}
                         </MenuItem>
                     </div>
                 </div>
             </MenuItems>
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Workspace Limit Reached"
+                message={`You've reached your limit of ${maxWorkspaces} workspace${maxWorkspaces === 1 ? '' : 's'} on the ${plan.name} plan. Upgrade to create more workspaces.`}
+                suggestedPlan={plan.id === "free" ? "Pro" : "Team"}
+                limitType="projects"
+            />
         </Menu>
     );
 };

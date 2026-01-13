@@ -7,6 +7,8 @@ import Dropdown from "@/components/Dropdown";
 import Field from "@/components/Field";
 import Skeleton from "@/components/Skeleton";
 import { useToast } from "@/components/Toast";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 /**
  * BACKEND IMPLEMENTATION NOTES:
@@ -57,9 +59,12 @@ interface Member {
 
 const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModal }: Props) => {
     const toast = useToast();
+    const { canAddTeamMember, getUpgradeMessage } = useSubscription();
     const [internalShowModal, setInternalShowModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     
     // Use external control if provided, otherwise use internal state
     const showInviteModal = externalShowModal !== undefined ? externalShowModal : internalShowModal;
@@ -69,6 +74,22 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState<"Admin" | "Member" | "Viewer">("Member");
     const [members, setMembers] = useState<Member[]>([]);
+
+    // Check team member limit before showing invite modal
+    const handleShowInviteModal = () => {
+        const teamCheck = canAddTeamMember();
+        if (!teamCheck.allowed) {
+            const upgradeMsg = getUpgradeMessage("team");
+            setUpgradeModalConfig({
+                title: upgradeMsg.title,
+                message: upgradeMsg.message,
+                suggestedPlan: upgradeMsg.suggestedPlan,
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
+        setShowInviteModal(true);
+    };
 
     // Fetch team members from API
     const fetchMembers = useCallback(async () => {
@@ -215,10 +236,20 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
                 <div className="text-small text-t-secondary mb-4">
                     Invite team members to collaborate on this project
                 </div>
-                <Button isSecondary onClick={() => setShowInviteModal(true)}>
+                <Button isSecondary onClick={handleShowInviteModal}>
                     <Icon className="mr-2 !w-4 !h-4" name="plus" />
                     Invite Member
                 </Button>
+                
+                {/* Upgrade Modal */}
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    title={upgradeModalConfig.title}
+                    message={upgradeModalConfig.message}
+                    suggestedPlan={upgradeModalConfig.suggestedPlan}
+                    limitType="team"
+                />
             </div>
         );
     }
@@ -355,6 +386,16 @@ const Team = ({ projectId, showInviteModal: externalShowModal, onCloseInviteModa
                     </div>
                 </div>
             )}
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="team"
+            />
         </div>
     );
 };

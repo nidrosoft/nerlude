@@ -13,6 +13,8 @@ import AssetPreviewModal from "./AssetPreviewModal";
 import FolderCard from "./FolderCard";
 import EmptyState from "./EmptyState";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface Folder {
     id: string;
@@ -42,6 +44,7 @@ type Props = {
 
 const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBreadcrumbChange }: Props) => {
     const toast = useToast();
+    const { canUploadFile, getUpgradeMessage } = useSubscription();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [assets, setAssets] = useState<Asset[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +54,8 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
     const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     
     // Delete confirmation state
     const [deleteModal, setDeleteModal] = useState<{
@@ -130,7 +135,19 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
         onCloseUploadModal?.();
     };
 
-    const handleOpenUploadModal = (folderId?: string) => {
+    const handleOpenUploadModal = (folderId?: string, fileSize?: number) => {
+        // Check storage limit before opening upload modal
+        const storageCheck = canUploadFile(fileSize || 0);
+        if (!storageCheck.allowed) {
+            const upgradeMsg = getUpgradeMessage("storage");
+            setUpgradeModalConfig({
+                title: upgradeMsg.title,
+                message: upgradeMsg.message,
+                suggestedPlan: upgradeMsg.suggestedPlan,
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
         if (folderId) setSelectedFolderId(folderId);
         else if (currentFolderId) setSelectedFolderId(currentFolderId);
         setIsUploadModalOpen(true);
@@ -547,6 +564,16 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
                 itemName={deleteModal.itemName}
                 itemType={deleteModal.itemType}
                 isDeleting={isDeleting}
+            />
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="storage"
             />
         </div>
     );

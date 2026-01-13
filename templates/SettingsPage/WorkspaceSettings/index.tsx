@@ -9,6 +9,8 @@ import Skeleton from "@/components/Skeleton";
 import SettingsSidebar from "../SettingsSidebar";
 import { useToast } from "@/components/Toast";
 import { useWorkspaceStore } from "@/stores";
+import useSubscription from "@/hooks/useSubscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface TeamMember {
     id: string;
@@ -21,14 +23,33 @@ interface TeamMember {
 const WorkspaceSettingsPage = () => {
     const toast = useToast();
     const { currentWorkspace } = useWorkspaceStore();
+    const { canAddTeamMember, getUpgradeMessage } = useSubscription();
     const [workspaceName, setWorkspaceName] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("member");
     const [isLoading, setIsLoading] = useState(true);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+    // Check team member limit before showing invite modal
+    const handleShowInviteModal = () => {
+        const teamCheck = canAddTeamMember();
+        if (!teamCheck.allowed) {
+            const upgradeMsg = getUpgradeMessage("team");
+            setUpgradeModalConfig({
+                title: upgradeMsg.title,
+                message: upgradeMsg.message,
+                suggestedPlan: upgradeMsg.suggestedPlan,
+            });
+            setShowUpgradeModal(true);
+            return;
+        }
+        setShowInviteModal(true);
+    };
 
     // Fetch workspace data and members
     const fetchWorkspaceData = useCallback(async () => {
@@ -226,7 +247,7 @@ const WorkspaceSettingsPage = () => {
                             <div className="p-6 mb-6 rounded-4xl bg-b-surface2">
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-body-bold">Team Members</h2>
-                                    <Button isStroke onClick={() => setShowInviteModal(true)}>
+                                    <Button isStroke onClick={handleShowInviteModal}>
                                         <Icon className="mr-2 !w-5 !h-5" name="plus" />
                                         Invite Member
                                     </Button>
@@ -499,6 +520,16 @@ const WorkspaceSettingsPage = () => {
                     </div>
                 </div>
             )}
+            
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title={upgradeModalConfig.title}
+                message={upgradeModalConfig.message}
+                suggestedPlan={upgradeModalConfig.suggestedPlan}
+                limitType="team"
+            />
         </Layout>
     );
 };
