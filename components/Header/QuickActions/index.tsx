@@ -152,11 +152,11 @@ const QuickActions = () => {
                                     {isDisabled ? (
                                         <button
                                             onClick={(e) => handleActionClick(action, e)}
-                                            className="flex items-center w-full p-3 rounded-2xl transition-colors hover:bg-amber-500/5 cursor-pointer"
+                                            className="flex items-center w-full p-3 rounded-2xl border-[1.5px] border-stroke1 bg-b-surface1/50 transition-colors hover:border-amber-500/30 cursor-pointer"
                                         >
-                                            <div className={`flex items-center justify-center size-12 mr-3 rounded-2xl border-[1.5px] ${action.disabledBgColor} ${action.disabledBorderColor}`}>
+                                            <div className="flex items-center justify-center size-12 mr-3 rounded-2xl bg-amber-500/10">
                                                 <Icon
-                                                    className="!w-5 !h-5 fill-t-tertiary"
+                                                    className="!w-5 !h-5 fill-amber-500"
                                                     name="lock"
                                                 />
                                             </div>
