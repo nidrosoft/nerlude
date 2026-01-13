@@ -142,7 +142,7 @@ const QuickActions = () => {
                     anchor="bottom end"
                     transition
                 >
-                    <div className="p-3">
+                    <div className="p-3 space-y-2">
                         {quickActions.map((action, index) => {
                             const status = getActionStatus(action.id);
                             const isDisabled = !status.allowed;
@@ -152,40 +152,40 @@ const QuickActions = () => {
                                     {isDisabled ? (
                                         <button
                                             onClick={(e) => handleActionClick(action, e)}
-                                            className="flex items-center w-full p-3 rounded-2xl border-[1.5px] border-stroke1 bg-b-surface1/50 transition-colors hover:border-amber-500/30 cursor-pointer"
+                                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border-[1.5px] border-stroke1 bg-b-surface1/50 transition-colors hover:border-amber-500/30 cursor-pointer"
                                         >
-                                            <div className="flex items-center justify-center size-12 mr-3 rounded-2xl bg-amber-500/10">
+                                            <div className="flex items-center justify-center size-8 rounded-lg bg-amber-500/10">
                                                 <Icon
-                                                    className="!w-5 !h-5 fill-amber-500"
+                                                    className="!w-4 !h-4 fill-amber-500"
                                                     name="lock"
                                                 />
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="text-body font-medium text-t-tertiary">
+                                            <div className="flex-1 text-left">
+                                                <div className="text-small font-medium text-t-tertiary">
                                                     {action.title}
                                                 </div>
-                                                <div className="text-small text-amber-600">
+                                                <div className="text-xs text-amber-600">
                                                     Upgrade to unlock
                                                 </div>
                                             </div>
                                         </button>
                                     ) : (
                                         <Link
-                                            className="flex items-center w-full p-3 rounded-2xl transition-colors hover:bg-b-highlight"
+                                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors hover:bg-b-highlight"
                                             href={action.url}
                                             onClick={(e) => handleActionClick(action, e)}
                                         >
-                                            <div className={`flex items-center justify-center size-12 mr-3 rounded-2xl border-[1.5px] ${action.bgColor} ${action.borderColor}`}>
+                                            <div className={`flex items-center justify-center size-8 rounded-lg ${action.bgColor}`}>
                                                 <Icon
-                                                    className={`!w-5 !h-5 ${action.iconColor}`}
+                                                    className={`!w-4 !h-4 ${action.iconColor}`}
                                                     name={action.icon}
                                                 />
                                             </div>
                                             <div>
-                                                <div className="text-body font-medium text-t-primary">
+                                                <div className="text-small font-medium text-t-primary">
                                                     {action.title}
                                                 </div>
-                                                <div className="text-small text-t-tertiary">
+                                                <div className="text-xs text-t-tertiary">
                                                     {action.description}
                                                 </div>
                                             </div>

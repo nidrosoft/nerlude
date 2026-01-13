@@ -163,8 +163,7 @@ const PricingSection = () => {
                                         ))}
                                     </ul>
                                     <Button
-                                        isSecondary={plan.popular}
-                                        isStroke={!plan.popular}
+                                        isStroke
                                         as="link"
                                         href="/onboarding"
                                     >

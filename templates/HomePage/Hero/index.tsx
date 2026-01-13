@@ -17,7 +17,7 @@ const Hero = () => {
             </div>
             <Button
                 className="mb-12 max-lg:mb-10"
-                isSecondary
+                isStroke
                 as="link"
                 href="/onboarding"
             >

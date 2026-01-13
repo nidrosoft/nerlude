@@ -32,7 +32,7 @@ const Start = () => {
                                     track of their services again
                                 </div>
                                 <div className="flex flex-col items-center gap-4 max-md:items-start">
-                                    <Button isSecondary as="link" href="/onboarding">
+                                    <Button isStroke as="link" href="/onboarding">
                                         Get started for free
                                     </Button>
                                     <div className="flex items-center gap-4 text-small text-t-secondary max-md:flex-col max-md:items-start max-md:gap-2">
