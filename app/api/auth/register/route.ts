@@ -60,6 +60,33 @@ export async function POST(request: NextRequest) {
         user_id: authData.user.id,
       });
 
+    // Send welcome email via Edge Function (non-blocking)
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (supabaseUrl && supabaseAnonKey) {
+        // Fire and forget - don't wait for response
+        fetch(`${supabaseUrl}/functions/v1/send-welcome`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+          body: JSON.stringify({
+            userId: authData.user.id,
+            email: authData.user.email,
+            name,
+          }),
+        }).catch((err) => {
+          console.error('Failed to trigger welcome email:', err);
+        });
+      }
+    } catch (emailError) {
+      // Don't fail registration if welcome email fails
+      console.error('Error triggering welcome email:', emailError);
+    }
+
     return NextResponse.json({
       user: {
         id: authData.user.id,

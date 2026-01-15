@@ -20,6 +20,7 @@ const categoryLabels: Record<ServiceCategory, string> = {
     domains: 'Domains & DNS',
     distribution: 'Distribution',
     devtools: 'Developer Tools',
+    marketing: 'Marketing & Growth',
     other: 'Other',
 };
 

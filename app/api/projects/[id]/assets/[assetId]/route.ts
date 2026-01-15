@@ -3,6 +3,41 @@ import { NextRequest, NextResponse } from 'next/server';
 
 type Params = { params: Promise<{ id: string; assetId: string }> };
 
+// PATCH /api/projects/[id]/assets/[assetId] - Update asset (move to folder)
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    const { id, assetId } = await params;
+    const supabase = await createServerSupabaseClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { folder_id } = body;
+
+    // Update asset folder
+    const { data, error } = await supabase
+      .from('project_assets')
+      .update({ folder_id: folder_id || null })
+      .eq('id', assetId)
+      .eq('project_id', id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Update asset error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // DELETE /api/projects/[id]/assets/[assetId] - Delete asset
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {

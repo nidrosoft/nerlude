@@ -16,7 +16,8 @@ import CredentialsTab from "./CredentialsTab";
 import SettingsTab from "./SettingsTab";
 import EditServiceModal from "./EditServiceModal";
 import { CredentialTypeId } from "./credentialTypes";
-import { Service } from "@/types";
+import { Service, Project } from "@/types";
+import Sidebar from "@/templates/ProjectPage/Sidebar";
 
 type Props = {
     projectId: string;
@@ -26,6 +27,8 @@ type Props = {
 interface ProjectInfo {
     id: string;
     name: string;
+    icon: string;
+    status: "active" | "paused" | "archived";
 }
 
 const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
@@ -88,6 +91,8 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
             setProject({
                 id: projectData.id,
                 name: projectData.name,
+                icon: projectData.icon || "🚀",
+                status: projectData.status || "active",
             });
 
             // Map credentials if available
@@ -286,8 +291,20 @@ const ServiceDetailPage = ({ projectId, serviceId }: Props) => {
         }
     };
 
+    // Handle sidebar tab changes - navigate to project page with the selected tab
+    const handleSidebarTabChange = (tab: string) => {
+        router.push(`/projects/${projectId}?tab=${tab}`);
+    };
+
     return (
         <Layout isLoggedIn isFixedHeader>
+            {/* Project Sidebar - same as project page */}
+            <Sidebar 
+                project={project as Project} 
+                activeTab="services" 
+                onTabChange={handleSidebarTabChange} 
+            />
+            
             <div className="min-h-screen pt-20">
                 {/* Sticky Header with Breadcrumb and Service Info */}
                 <div className="sticky top-20 z-20 bg-b-surface1 pb-6 -mx-4 px-4">

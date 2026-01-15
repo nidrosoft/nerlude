@@ -103,13 +103,26 @@ export const serviceCategories: CategoryInfo[] = [
     {
         slug: "distribution",
         name: "Distribution",
-        description: "App stores, marketing, and customer support",
+        description: "App stores and customer support",
         icon: "share",
         color: "pink",
         subCategories: [
             { slug: "app_store", name: "App Stores", description: "Mobile and desktop app distribution" },
-            { slug: "marketing", name: "Marketing", description: "Marketing automation and campaigns" },
             { slug: "support", name: "Support", description: "Customer support and help desk" },
+        ],
+    },
+    {
+        slug: "marketing",
+        name: "Marketing & Growth",
+        description: "Advertising, social media, SEO, and growth tools",
+        icon: "chart",
+        color: "rose",
+        subCategories: [
+            { slug: "advertising", name: "Advertising", description: "Paid ads and campaign management" },
+            { slug: "social_media", name: "Social Media", description: "Social platforms and management tools" },
+            { slug: "seo", name: "SEO & Content", description: "Search optimization and content tools" },
+            { slug: "design_tools", name: "Design Tools", description: "Graphics, video, and creative tools" },
+            { slug: "marketing_automation", name: "Automation", description: "Marketing automation and workflows" },
         ],
     },
     {
@@ -158,7 +171,7 @@ export const legacyCategoryMapping: Record<string, { category: ServiceCategory; 
     cms: { category: "devtools", subCategory: "cms" },
     search: { category: "devtools", subCategory: "search" },
     media: { category: "devtools", subCategory: "media" },
-    marketing: { category: "distribution", subCategory: "marketing" },
+    marketing: { category: "marketing", subCategory: "marketing_automation" },
     appstores: { category: "distribution", subCategory: "app_store" },
     other: { category: "other", subCategory: "custom" },
 };

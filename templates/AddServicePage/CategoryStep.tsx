@@ -19,6 +19,7 @@ interface CategoryStepProps {
     onCategorySelect: (category: ServiceCategory) => void;
     onServiceSelect: (service: ServiceRegistryItem) => void;
     onBulkAdd: () => void;
+    onUploadClick: () => void;
 }
 
 const CategoryStep = ({
@@ -33,6 +34,7 @@ const CategoryStep = ({
     onCategorySelect,
     onServiceSelect,
     onBulkAdd,
+    onUploadClick,
 }: CategoryStepProps) => {
     const categories = Array.from(new Set(serviceRegistry.map((s) => s.category)));
 
@@ -191,31 +193,50 @@ const CategoryStep = ({
                     )}
                 </div>
             ) : (
-                <div className="grid grid-cols-3 gap-3 max-md:grid-cols-2">
-                    {categories.map((category) => {
-                        const colors = getCategoryColor(category);
-                        const count = getServicesByCategory(category).length;
-                        return (
-                            <button
-                                key={category}
-                                onClick={() => onCategorySelect(category)}
-                                className="flex flex-col items-center p-5 rounded-3xl bg-b-surface1 hover:shadow-hover transition-all text-center"
-                            >
-                                <div
-                                    className={`flex items-center justify-center size-12 mb-3 rounded-2xl border-[1.5px] ${colors.border} ${colors.bg} ${colors.icon}`}
+                <>
+                    <div className="grid grid-cols-3 gap-3 max-md:grid-cols-2">
+                        {categories.map((category) => {
+                            const colors = getCategoryColor(category);
+                            const count = getServicesByCategory(category).length;
+                            return (
+                                <button
+                                    key={category}
+                                    onClick={() => onCategorySelect(category)}
+                                    className="flex flex-col items-center p-5 rounded-3xl bg-b-surface1 hover:shadow-hover transition-all text-center"
                                 >
-                                    <Icon className="!w-6 !h-6" name={categoryIcons[category] || "star"} />
-                                </div>
-                                <div className="text-small font-medium text-t-primary">
-                                    {categoryLabels[category] || category}
-                                </div>
-                                <div className="text-xs text-t-tertiary mt-1">
-                                    {count} service{count !== 1 ? "s" : ""}
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
+                                    <div
+                                        className={`flex items-center justify-center size-12 mb-3 rounded-2xl border-[1.5px] ${colors.border} ${colors.bg} ${colors.icon}`}
+                                    >
+                                        <Icon className="!w-6 !h-6" name={categoryIcons[category] || "star"} />
+                                    </div>
+                                    <div className="text-small font-medium text-t-primary">
+                                        {categoryLabels[category] || category}
+                                    </div>
+                                    <div className="text-xs text-t-tertiary mt-1">
+                                        {count} service{count !== 1 ? "s" : ""}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    
+                    {/* Upload Card - Full width below categories */}
+                    <button
+                        onClick={onUploadClick}
+                        className="flex items-center w-full mt-3 p-5 rounded-3xl bg-gradient-to-r from-violet-500/5 to-purple-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-hover transition-all text-left group"
+                    >
+                        <div className="flex items-center justify-center size-12 mr-4 rounded-2xl bg-violet-500/10 border-[1.5px] border-violet-500/20 group-hover:border-violet-500/40 transition-colors">
+                            <Icon className="!w-6 !h-6 fill-violet-500" name="cloud-upload" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="text-body-bold text-t-primary">Upload Documents</div>
+                            <div className="text-small text-t-secondary">
+                                Drop invoices, receipts, or screenshots and let AI extract your services
+                            </div>
+                        </div>
+                        <Icon className="!w-5 !h-5 fill-violet-500 opacity-50 group-hover:opacity-100 transition-opacity" name="arrow-right" />
+                    </button>
+                </>
             )}
         </div>
     );

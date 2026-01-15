@@ -5,6 +5,13 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
+// CORS headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 // Service registry for matching - simplified version for the Edge Function
 const SERVICE_REGISTRY = [
   { id: "vercel", name: "Vercel", aliases: ["vercel inc", "vercel.com"], category: "infrastructure" },
@@ -41,6 +48,20 @@ const SERVICE_REGISTRY = [
   { id: "linear", name: "Linear", aliases: ["linear.app"], category: "devtools" },
   { id: "apple-developer", name: "Apple Developer", aliases: ["developer.apple.com", "apple inc"], category: "distribution" },
   { id: "google-play", name: "Google Play Console", aliases: ["play.google.com", "google play developer"], category: "distribution" },
+  // Marketing & Growth
+  { id: "google-ads", name: "Google Ads", aliases: ["ads.google.com", "google adwords", "adwords"], category: "marketing" },
+  { id: "meta-business", name: "Meta Business Suite", aliases: ["business.facebook.com", "facebook ads", "instagram ads", "meta ads"], category: "marketing" },
+  { id: "tiktok-ads", name: "TikTok Ads", aliases: ["ads.tiktok.com", "tiktok for business"], category: "marketing" },
+  { id: "linkedin-ads", name: "LinkedIn Ads", aliases: ["linkedin marketing", "linkedin campaign manager"], category: "marketing" },
+  { id: "canva", name: "Canva", aliases: ["canva.com", "canva pro", "canva teams"], category: "marketing" },
+  { id: "figma", name: "Figma", aliases: ["figma.com", "figma inc"], category: "marketing" },
+  { id: "buffer", name: "Buffer", aliases: ["buffer.com", "buffer app"], category: "marketing" },
+  { id: "hootsuite", name: "Hootsuite", aliases: ["hootsuite.com"], category: "marketing" },
+  { id: "ahrefs", name: "Ahrefs", aliases: ["ahrefs.com"], category: "marketing" },
+  { id: "semrush", name: "SEMrush", aliases: ["semrush.com"], category: "marketing" },
+  { id: "mailchimp", name: "Mailchimp", aliases: ["mailchimp.com", "intuit mailchimp"], category: "marketing" },
+  { id: "hubspot", name: "HubSpot", aliases: ["hubspot.com", "hubspot inc"], category: "marketing" },
+  { id: "zapier", name: "Zapier", aliases: ["zapier.com"], category: "marketing" },
   { id: "heroku", name: "Heroku", aliases: ["heroku.com", "salesforce heroku"], category: "infrastructure" },
   { id: "digitalocean", name: "DigitalOcean", aliases: ["digitalocean.com"], category: "infrastructure" },
   { id: "render", name: "Render", aliases: ["render.com"], category: "infrastructure" },
@@ -138,86 +159,85 @@ interface AnalysisResult {
   processingNotes: string;
 }
 
-async function analyzeWithGPT4o(documents: DocumentInput[]): Promise<AnalysisResult> {
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not configured");
+async function analyzeWithGemini(documents: DocumentInput[]): Promise<AnalysisResult> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured");
   }
 
-  // Build messages for GPT-4o using the chat completions format
-  const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [];
+  // Build parts array for Gemini - supports text and inline_data (images/PDFs)
+  const parts: Array<{ text?: string; inline_data?: { mime_type: string; data: string } }> = [];
 
-  userContent.push({
-    type: "text",
+  // Add system prompt as first text part
+  parts.push({ text: SYSTEM_PROMPT });
+
+  // Add instruction
+  parts.push({
     text: `Analyze the following ${documents.length} document(s) and extract all software services, subscriptions, and billing information. Return a single consolidated JSON response.`,
   });
 
+  // Add each document
   for (const doc of documents) {
     if (doc.type === "image") {
-      const dataUrl = doc.mimeType
-        ? `data:${doc.mimeType};base64,${doc.content}`
-        : `data:image/png;base64,${doc.content}`;
-
-      userContent.push({
-        type: "image_url",
-        image_url: { url: dataUrl, detail: "high" },
+      // For images and PDFs, use inline_data
+      const mimeType = doc.mimeType || "image/png";
+      parts.push({
+        inline_data: {
+          mime_type: mimeType,
+          data: doc.content, // Already base64 encoded
+        },
       });
 
       if (doc.filename) {
-        userContent.push({
-          type: "text",
-          text: `[Document: ${doc.filename}]`,
-        });
+        parts.push({ text: `[Document: ${doc.filename}]` });
       }
     } else {
-      userContent.push({
-        type: "text",
+      // For text content (CSV, plain text, etc.)
+      parts.push({
         text: `[Document${doc.filename ? `: ${doc.filename}` : ""}]\n${doc.content}`,
       });
     }
   }
 
-  // Call GPT-4o using chat completions API
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
+  // Add final instruction
+  parts.push({ text: "Analyze these documents and extract all service/subscription information. Return valid JSON only, no markdown formatting." });
+
+  // Call Gemini 3.0 Flash API
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 8192,
         },
-        {
-          role: "user",
-          content: userContent,
-        },
-      ],
-      max_tokens: 4096,
-      temperature: 0.1,
-    }),
-  });
+      }),
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("OpenAI API error:", response.status, errorText);
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    console.error("Gemini API error:", response.status, errorText);
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
 
   const result = await response.json();
-  const outputText = result.choices?.[0]?.message?.content;
+  const outputText = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!outputText) {
-    throw new Error("No output from GPT-4o");
+    console.error("No output from Gemini:", JSON.stringify(result));
+    throw new Error("No output from Gemini");
   }
 
-  console.log("GPT-4o raw response:", outputText.substring(0, 500));
+  console.log("Gemini raw response:", outputText.substring(0, 500));
 
   // Parse the JSON response
   try {
     let cleanedOutput = outputText.trim();
+    
+    // Remove markdown code blocks if present
     if (cleanedOutput.startsWith("```json")) {
       cleanedOutput = cleanedOutput.slice(7);
     }
@@ -228,10 +248,18 @@ async function analyzeWithGPT4o(documents: DocumentInput[]): Promise<AnalysisRes
       cleanedOutput = cleanedOutput.slice(0, -3);
     }
 
+    // Try to extract JSON object from response
+    const jsonMatch = cleanedOutput.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed: AnalysisResult = JSON.parse(jsonMatch[0]);
+      return parsed;
+    }
+
+    // If no JSON object found, try parsing the whole thing
     const parsed: AnalysisResult = JSON.parse(cleanedOutput.trim());
     return parsed;
   } catch (parseError) {
-    console.error("Failed to parse GPT-4o response:", outputText);
+    console.error("Failed to parse Gemini response:", outputText);
     return {
       success: false,
       suggestedProjectName: null,
@@ -314,9 +342,9 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Analyze documents with GPT-5.2
+    // Analyze documents with Gemini 3.0 Flash
     console.log(`Analyzing ${documents.length} documents for user ${user.id}`);
-    const analysisResult = await analyzeWithGPT4o(documents);
+    const analysisResult = await analyzeWithGemini(documents);
 
     // Log the analysis for audit purposes
     if (workspaceId) {

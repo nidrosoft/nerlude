@@ -1,9 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 import { getAssetType, getAssetTypeLabel, AssetFileType } from "./AssetTypeIcon";
 import { cn } from "@/lib/utils";
+
+interface Folder {
+    id: string;
+    name: string;
+    color: string;
+}
 
 interface Asset {
     id: string;
@@ -18,7 +26,9 @@ interface Asset {
 
 interface AssetTableProps {
     assets: Asset[];
+    folders?: Folder[];
     onDelete: (assetId: string, assetName: string) => void;
+    onMove?: (assetId: string, folderId: string | null) => void;
     onPreview?: (asset: Asset) => void;
     className?: string;
 }
@@ -102,7 +112,9 @@ const TypeBadge = ({ type }: { type: AssetFileType }) => {
     );
 };
 
-const AssetTable = ({ assets, onDelete, onPreview, className }: AssetTableProps) => {
+const AssetTable = ({ assets, folders = [], onDelete, onMove, onPreview, className }: AssetTableProps) => {
+    const [showMoveSubmenu, setShowMoveSubmenu] = useState<string | null>(null);
+    
     const handleDownload = async (e: React.MouseEvent, asset: Asset) => {
         e.stopPropagation();
         const url = asset.metadata?.url;
@@ -188,24 +200,106 @@ const AssetTable = ({ assets, onDelete, onPreview, className }: AssetTableProps)
                                     <span className="text-small text-t-secondary">{formatDate(asset.created_at)}</span>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={(e) => handleDownload(e, asset)}
-                                            className="size-8 flex items-center justify-center rounded-full border border-transparent hover:border-stroke-subtle hover:bg-b-surface2 fill-t-tertiary hover:fill-t-primary transition-all"
-                                            title="Download"
-                                        >
-                                            <Icon className="!w-4 !h-4" name="import" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDelete(asset.id, asset.name);
-                                            }}
-                                            className="size-8 flex items-center justify-center rounded-full border border-transparent hover:border-red-500/30 hover:bg-red-500/10 fill-t-tertiary hover:fill-red-500 transition-all"
-                                            title="Delete"
-                                        >
-                                            <Icon className="!w-4 !h-4" name="trash" />
-                                        </button>
+                                    <div className="flex items-center justify-end">
+                                        <Menu>
+                                            {({ close }) => (
+                                                <>
+                                                    <MenuButton 
+                                                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                                                        className="size-8 flex items-center justify-center rounded-full border border-transparent hover:border-stroke-subtle hover:bg-b-surface2 fill-t-tertiary hover:fill-t-primary transition-all"
+                                                    >
+                                                        <Icon className="!w-4 !h-4" name="more" />
+                                                    </MenuButton>
+                                                    <MenuItems
+                                                        anchor="bottom end"
+                                                        className="z-50 w-48 p-1.5 mt-1 bg-b-surface2 rounded-xl shadow-hover border border-stroke-subtle origin-top-right transition duration-100 ease-out data-closed:scale-95 data-closed:opacity-0"
+                                                    >
+                                                        <MenuItem>
+                                                            <button
+                                                                onClick={(e) => handleDownload(e, asset)}
+                                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-small text-t-primary hover:bg-b-highlight transition-colors"
+                                                            >
+                                                                <Icon className="!w-4 !h-4 fill-t-secondary" name="import" />
+                                                                Download
+                                                            </button>
+                                                        </MenuItem>
+                                                        {onMove && (
+                                                            <>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        e.preventDefault();
+                                                                        setShowMoveSubmenu(showMoveSubmenu === asset.id ? null : asset.id);
+                                                                    }}
+                                                                    className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-small text-t-primary hover:bg-b-highlight transition-colors"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <Icon className="!w-4 !h-4 fill-t-secondary" name="folder-open" />
+                                                                        Move to Folder
+                                                                    </div>
+                                                                    <Icon className={cn("!w-3 !h-3 fill-t-tertiary transition-transform", showMoveSubmenu === asset.id && "rotate-180")} name="arrow-down" />
+                                                                </button>
+                                                                {showMoveSubmenu === asset.id && (
+                                                                    <div className="pl-6 py-1">
+                                                                        {asset.folder_id && (
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    onMove(asset.id, null);
+                                                                                    setShowMoveSubmenu(null);
+                                                                                    close();
+                                                                                }}
+                                                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-small text-t-secondary hover:bg-b-highlight transition-colors"
+                                                                            >
+                                                                                <Icon className="!w-4 !h-4 fill-t-tertiary" name="minus-circle" />
+                                                                                Remove from folder
+                                                                            </button>
+                                                                        )}
+                                                                        {folders.filter(f => f.id !== asset.folder_id).length > 0 ? (
+                                                                            folders.filter(f => f.id !== asset.folder_id).map((folder) => (
+                                                                                <button
+                                                                                    key={folder.id}
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        onMove(asset.id, folder.id);
+                                                                                        setShowMoveSubmenu(null);
+                                                                                        close();
+                                                                                    }}
+                                                                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-small text-t-primary hover:bg-b-highlight transition-colors"
+                                                                                >
+                                                                                    <div 
+                                                                                        className="size-4 rounded"
+                                                                                        style={{ backgroundColor: folder.color }}
+                                                                                    />
+                                                                                    {folder.name}
+                                                                                </button>
+                                                                            ))
+                                                                        ) : (
+                                                                            <p className="px-3 py-2 text-small text-t-tertiary">
+                                                                                No folders yet. Create a folder first.
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        <div className="my-1 border-t border-stroke-subtle" />
+                                                        <MenuItem>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onDelete(asset.id, asset.name);
+                                                                }}
+                                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-small text-red-500 hover:bg-red-500/10 transition-colors"
+                                                            >
+                                                                <Icon className="!w-4 !h-4 fill-red-500" name="trash" />
+                                                                Delete
+                                                            </button>
+                                                        </MenuItem>
+                                                    </MenuItems>
+                                                </>
+                                            )}
+                                        </Menu>
                                     </div>
                                 </td>
                             </tr>

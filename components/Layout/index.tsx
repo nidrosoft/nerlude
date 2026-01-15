@@ -46,11 +46,18 @@ const Layout = ({
         if (!isLoggedIn) return;
         
         try {
-            const res = await fetch('/api/notifications');
-            if (res.ok) {
-                const data = await res.json();
-                // Transform notifications to Alert type
-                const alerts: Alert[] = data.map((n: Record<string, unknown>) => {
+            // Fetch both notifications and dashboard alerts
+            const [notificationsRes, alertsRes] = await Promise.all([
+                fetch('/api/notifications'),
+                fetch('/api/dashboard/alerts'),
+            ]);
+            
+            const allAlerts: Alert[] = [];
+            
+            // Process notifications
+            if (notificationsRes.ok) {
+                const data = await notificationsRes.json();
+                data.forEach((n: Record<string, unknown>) => {
                     let priority: 'high' | 'medium' | 'low' = 'medium';
                     const nData = n.data as Record<string, unknown> || {};
                     const subtype = nData.subtype as string;
@@ -65,7 +72,7 @@ const Layout = ({
                     
                     const alertType: 'renewal' | 'cost_alert' | 'team' | 'system' = n.type as 'renewal' | 'cost_alert' | 'team' | 'system';
                     
-                    return {
+                    allAlerts.push({
                         id: n.id as string,
                         type: alertType,
                         priority,
@@ -78,10 +85,42 @@ const Layout = ({
                         dueDate: nData.renewal_date as string | undefined,
                         isRead: !!n.read_at,
                         isDismissed: !!n.dismissed_at,
-                    };
+                        createdAt: n.created_at as string,
+                    });
                 });
-                setInternalAlerts(alerts);
             }
+            
+            // Process dashboard alerts (renewals, cost alerts, etc.)
+            if (alertsRes.ok) {
+                const data = await alertsRes.json();
+                data.forEach((a: Record<string, unknown>) => {
+                    // Skip if already exists (by id)
+                    if (allAlerts.some(existing => existing.id === a.id)) return;
+                    
+                    const severity = a.severity as string;
+                    let priority: 'high' | 'medium' | 'low' = 'medium';
+                    if (severity === 'high' || severity === 'critical') priority = 'high';
+                    else if (severity === 'low') priority = 'low';
+                    
+                    allAlerts.push({
+                        id: a.id as string,
+                        type: (a.type as 'renewal' | 'cost_alert' | 'team' | 'system') || 'system',
+                        priority,
+                        title: a.title as string,
+                        message: a.message as string,
+                        projectId: a.projectId as string | undefined,
+                        projectName: a.projectName as string | undefined,
+                        serviceId: a.serviceId as string | undefined,
+                        serviceName: a.serviceName as string | undefined,
+                        dueDate: a.date as string | undefined,
+                        isRead: false,
+                        isDismissed: false,
+                        createdAt: new Date().toISOString(),
+                    });
+                });
+            }
+            
+            setInternalAlerts(allAlerts);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
         }

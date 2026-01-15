@@ -33,7 +33,7 @@ export interface Project {
     updatedAt: string;
 }
 
-// Service Types - Primary Categories (consolidated from 18 to 8)
+// Service Types - Primary Categories (consolidated from 18 to 9)
 export type ServiceCategory = 
     | 'infrastructure'  // hosting, database, storage, cdn
     | 'identity'        // auth, security
@@ -41,8 +41,9 @@ export type ServiceCategory =
     | 'communications'  // email, sms, push, chat
     | 'analytics'       // analytics, monitoring, logging
     | 'domains'         // domain, dns, ssl
-    | 'distribution'    // appstores, marketing
+    | 'distribution'    // appstores, support
     | 'devtools'        // devtools, ai, cms, search, media
+    | 'marketing'       // advertising, social media, seo, design, automation
     | 'other';
 
 // Sub-categories for more granular organization within primary categories
@@ -78,8 +79,13 @@ export type ServiceSubCategory =
     | 'ssl'
     // Distribution
     | 'app_store'
-    | 'marketing'
     | 'support'
+    // Marketing & Growth
+    | 'advertising'
+    | 'social_media'
+    | 'seo'
+    | 'design_tools'
+    | 'marketing_automation'
     // Dev Tools
     | 'version_control'
     | 'ci_cd'

@@ -36,10 +36,10 @@ const Notifications = ({ alerts, onMarkAsRead, onMarkAllAsRead }: Props) => {
 
     return (
         <Menu>
-            <MenuButton className="relative flex items-center justify-center size-12 border-4 border-b-surface2 rounded-full outline-0 bg-b-surface2 transition-colors hover:bg-b-surface3 before:absolute before:-inset-1 before:z-1 before:rounded-full before:border-[1.5px] before:border-stroke2 before:opacity-0 before:transition-opacity data-open:before:opacity-100">
+            <MenuButton className="relative flex items-center justify-center size-12 border-4 border-b-surface2 rounded-full outline-0 bg-b-surface2 transition-colors hover:bg-b-surface3 before:absolute before:-inset-1 before:z-1 before:rounded-full before:border-[1.5px] before:border-stroke2 before:opacity-0 before:transition-opacity data-open:before:opacity-100 overflow-visible">
                 <Icon className="!w-5 !h-5 fill-amber-500" name="bell" />
                 {hasAlerts && (
-                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">
+                    <span className="absolute -top-1 -right-1 z-10 flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm">
                         {activeAlerts.length > 9 ? "9+" : activeAlerts.length}
                     </span>
                 )}

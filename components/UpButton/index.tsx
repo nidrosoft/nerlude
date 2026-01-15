@@ -5,8 +5,14 @@ import { useScrollPosition } from "@/hooks/index";
 
 const UpButton = () => {
     const scrollPosition = useScrollPosition();
-
     const pathname = usePathname();
+
+    // Only show on landing page, not in dashboard/logged-in areas
+    const isLandingPage = pathname === "/" || pathname === "/pricing" || pathname === "/about" || pathname === "/contact";
+    
+    if (!isLandingPage) {
+        return null;
+    }
 
     const goTop = () => {
         window.scrollTo({

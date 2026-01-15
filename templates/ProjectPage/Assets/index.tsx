@@ -65,6 +65,7 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
         itemType: "file" | "folder";
     }>({ isOpen: false, itemId: "", itemName: "", itemType: "file" });
     const [isDeleting, setIsDeleting] = useState(false);
+    const [pendingUploadFromFolderCreate, setPendingUploadFromFolderCreate] = useState(false);
 
     // Get current folder info
     const currentFolder = currentFolderId ? folders.find(f => f.id === currentFolderId) : null;
@@ -173,12 +174,20 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
                 const newFolder = await response.json();
                 setFolders(prev => [newFolder, ...prev]);
                 toast.success("Folder created", `${folder.name} has been created`);
+                
+                // If folder was created from upload modal, auto-select it and reopen upload modal
+                if (pendingUploadFromFolderCreate) {
+                    setPendingUploadFromFolderCreate(false);
+                    setSelectedFolderId(newFolder.id);
+                    setTimeout(() => setIsUploadModalOpen(true), 100);
+                }
             } else {
                 throw new Error('Failed to create folder');
             }
         } catch (error) {
             console.error('Error creating folder:', error);
             toast.error("Error", "Failed to create folder");
+            setPendingUploadFromFolderCreate(false);
         }
     };
 
@@ -284,6 +293,32 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
         }
     };
 
+    const handleMoveAsset = async (assetId: string, folderId: string | null) => {
+        try {
+            const response = await fetch(`/api/projects/${projectId}/assets/${assetId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ folder_id: folderId }),
+            });
+
+            if (response.ok) {
+                setAssets(prev => prev.map(a => 
+                    a.id === assetId ? { ...a, folder_id: folderId } : a
+                ));
+                const folderName = folderId ? folders.find(f => f.id === folderId)?.name : null;
+                toast.success(
+                    "Asset moved", 
+                    folderId ? `Moved to ${folderName}` : "Removed from folder"
+                );
+            } else {
+                throw new Error('Failed to move asset');
+            }
+        } catch (error) {
+            console.error('Error moving asset:', error);
+            toast.error("Error", "Failed to move asset");
+        }
+    };
+
     const getAssetsByFolder = (folderId: string) => assets.filter(a => a.folder_id === folderId);
     const getUnorganizedAssets = () => assets.filter(a => !a.folder_id);
 
@@ -309,7 +344,6 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
         return (
             <div className="p-8 rounded-4xl bg-b-surface2">
                 <EmptyState 
-                    onCreateFolder={() => setIsCreateFolderModalOpen(true)}
                     onUpload={() => setIsUploadModalOpen(true)}
                 />
                 <CreateFolderModal
@@ -393,7 +427,9 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
                     {viewMode === "table" ? (
                         <AssetTable 
                             assets={currentAssets} 
+                            folders={folders}
                             onDelete={handleDeleteAsset}
+                            onMove={handleMoveAsset}
                             onPreview={setPreviewAsset}
                         />
                     ) : (
@@ -506,7 +542,9 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
                             {viewMode === "table" ? (
                                 <AssetTable 
                                     assets={unorganizedAssets} 
+                                    folders={folders}
                                     onDelete={handleDeleteAsset}
+                                    onMove={handleMoveAsset}
                                     onPreview={setPreviewAsset}
                                 />
                             ) : (
@@ -546,6 +584,7 @@ const Assets = ({ projectId, showUploadModal = false, onCloseUploadModal, onBrea
                 onUpload={handleUpload}
                 folders={folders}
                 onCreateFolder={() => {
+                    setPendingUploadFromFolderCreate(true);
                     setIsUploadModalOpen(false);
                     setIsCreateFolderModalOpen(true);
                 }}

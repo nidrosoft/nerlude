@@ -171,7 +171,7 @@ const QuickActions = () => {
                                         </button>
                                     ) : (
                                         <Link
-                                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-colors hover:bg-b-highlight"
+                                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl border-[1.5px] border-stroke1 bg-b-surface1 transition-colors hover:border-stroke-highlight hover:bg-b-highlight`}
                                             href={action.url}
                                             onClick={(e) => handleActionClick(action, e)}
                                         >

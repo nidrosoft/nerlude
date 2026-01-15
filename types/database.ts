@@ -166,6 +166,7 @@ export type Database = {
           file_path: string
           file_size: number | null
           file_type: string | null
+          folder_id: string | null
           id: string
           metadata: Json | null
           name: string
@@ -178,6 +179,7 @@ export type Database = {
           file_path: string
           file_size?: number | null
           file_type?: string | null
+          folder_id?: string | null
           id?: string
           metadata?: Json | null
           name: string
@@ -190,6 +192,7 @@ export type Database = {
           file_path?: string
           file_size?: number | null
           file_type?: string | null
+          folder_id?: string | null
           id?: string
           metadata?: Json | null
           name?: string

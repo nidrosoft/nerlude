@@ -4,11 +4,10 @@ import Icon from "@/components/Icon";
 import Button from "@/components/Button";
 
 interface EmptyStateProps {
-    onCreateFolder: () => void;
     onUpload: () => void;
 }
 
-const EmptyState = ({ onCreateFolder, onUpload }: EmptyStateProps) => {
+const EmptyState = ({ onUpload }: EmptyStateProps) => {
     return (
         <div className="flex flex-col items-center justify-center py-16 px-4">
             <div className="flex items-center justify-center size-20 rounded-3xl bg-primary1/10 mb-6">
@@ -21,18 +20,12 @@ const EmptyState = ({ onCreateFolder, onUpload }: EmptyStateProps) => {
             </div>
             <h3 className="text-h3 mb-2">No assets yet</h3>
             <p className="text-body text-t-secondary text-center max-w-md mb-6">
-                Create folders to organize your project assets like logos, screenshots, documents, and more.
+                Upload assets to organize your project files like logos, screenshots, documents, and more.
             </p>
-            <div className="flex gap-3">
-                <Button isSecondary onClick={onCreateFolder}>
-                    <Icon className="mr-2 !w-5 !h-5" name="folder-add" />
-                    Create Folder
-                </Button>
-                <Button isPrimary onClick={onUpload}>
-                    <Icon className="mr-2 !w-5 !h-5" name="upload" />
-                    Upload Asset
-                </Button>
-            </div>
+            <Button isPrimary onClick={onUpload}>
+                <Icon className="mr-2 !w-5 !h-5" name="upload" />
+                Upload Asset
+            </Button>
         </div>
     );
 };

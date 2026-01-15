@@ -5,17 +5,21 @@ import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
-import { ServiceCategory } from "@/types";
+import { ServiceCategory, UploadedDocument } from "@/types";
 import { serviceRegistry, ServiceRegistryItem } from "@/registry";
 import { useToast } from "@/components/Toast";
 import Breadcrumb from "@/components/Breadcrumb";
-import { Step, steps } from "./types";
+import { Step, FlowType, manualSteps, uploadSteps } from "./types";
 import CategoryStep from "./CategoryStep";
 import ServiceStep from "./ServiceStep";
 import ConfigureStep from "./ConfigureStep";
 import ConfirmStep from "./ConfirmStep";
+import UploadStep from "./UploadStep";
+import ProcessingScreen from "./ProcessingScreen";
+import ReviewExtractedStep, { ExtractedServiceItem } from "./ReviewExtractedStep";
 import useSubscription from "@/hooks/useSubscription";
 import UpgradeModal from "@/components/UpgradeModal";
+import { ConfidenceLevel } from "@/types";
 
 type Props = {
     projectId: string;
@@ -26,6 +30,7 @@ const AddServicePage = ({ projectId }: Props) => {
     const toast = useToast();
     const { canAddService, getUpgradeMessage, isLoading: isLoadingSubscription } = useSubscription();
     const [currentStep, setCurrentStep] = useState<Step>("category");
+    const [flowType, setFlowType] = useState<FlowType>("manual");
     const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
     const [selectedService, setSelectedService] = useState<ServiceRegistryItem | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<string>("");
@@ -42,8 +47,15 @@ const AddServicePage = ({ projectId }: Props) => {
     const [projectName, setProjectName] = useState<string>("Project");
     const [currentServiceCount, setCurrentServiceCount] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Upload flow state
+    const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisProgress, setAnalysisProgress] = useState(0);
+    const [analysisStep, setAnalysisStep] = useState(0);
+    const [extractedServices, setExtractedServices] = useState<ExtractedServiceItem[]>([]);
 
-    const hasUnsavedChanges = selectedCategory !== null || selectedService !== null || Object.keys(credentials).some(k => credentials[k]);
+    const hasUnsavedChanges = selectedCategory !== null || selectedService !== null || Object.keys(credentials).some(k => credentials[k]) || uploadedDocuments.length > 0;
 
     // Fetch project name and service count
     useEffect(() => {
@@ -119,7 +131,183 @@ const AddServicePage = ({ projectId }: Props) => {
             setSelectedService(null);
         } else if (currentStep === "confirm") {
             setCurrentStep("configure");
+        } else if (currentStep === "upload") {
+            setCurrentStep("category");
+            setFlowType("manual");
+            setUploadedDocuments([]);
+        } else if (currentStep === "review-extracted") {
+            setCurrentStep("upload");
+            setExtractedServices([]);
+        } else if (currentStep === "processing") {
+            setCurrentStep("upload");
         }
+    };
+
+    const handleUploadClick = () => {
+        setFlowType("upload");
+        setCurrentStep("upload");
+    };
+
+    const getConfidenceLevel = (confidence: number): ConfidenceLevel => {
+        if (confidence >= 0.8) return 'high';
+        if (confidence >= 0.5) return 'medium';
+        return 'low';
+    };
+
+    const handleAnalyzeDocuments = async () => {
+        if (uploadedDocuments.length === 0 || isAnalyzing) return;
+        
+        setIsAnalyzing(true);
+        setCurrentStep("processing");
+        setAnalysisProgress(0);
+        setAnalysisStep(0);
+        
+        // Simulate progress steps
+        const progressInterval = setInterval(() => {
+            setAnalysisProgress(prev => Math.min(prev + 2, 90));
+        }, 100);
+        
+        const stepInterval = setInterval(() => {
+            setAnalysisStep(prev => Math.min(prev + 1, 2));
+        }, 1500);
+
+        try {
+            // Call the analyze-documents API
+            const documentInputs = await Promise.all(
+                uploadedDocuments.map(async (doc) => {
+                    const mimeType = doc.file.type;
+                    const isText = mimeType.startsWith('text/') || mimeType === 'application/json';
+                    
+                    if (isText) {
+                        const text = await doc.file.text();
+                        return {
+                            type: 'text' as const,
+                            content: text,
+                            filename: doc.name,
+                            mimeType,
+                        };
+                    } else {
+                        const base64 = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(doc.file);
+                            reader.onload = () => {
+                                const result = reader.result as string;
+                                resolve(result.split(',')[1]);
+                            };
+                            reader.onerror = reject;
+                        });
+                        return {
+                            type: 'image' as const,
+                            content: base64,
+                            filename: doc.name,
+                            mimeType,
+                        };
+                    }
+                })
+            );
+
+            const response = await fetch('/api/projects/analyze-documents', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ documents: documentInputs }),
+            });
+
+            clearInterval(progressInterval);
+            clearInterval(stepInterval);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to analyze documents');
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.data?.services && result.data.services.length > 0) {
+                const services: ExtractedServiceItem[] = result.data.services.map((s: any, index: number) => {
+                    const confidence = s.confidence || 0.5;
+                    const confidenceLevel = getConfidenceLevel(confidence);
+                    const category = (s.registryId 
+                        ? result.serviceRegistry?.find((r: any) => r.id === s.registryId)?.category 
+                        : 'other') as ServiceCategory || 'other';
+                    
+                    return {
+                        id: `extracted-${index}`,
+                        name: { value: s.detectedName || 'Unknown Service', confidence: confidenceLevel },
+                        category: { value: category, confidence: confidenceLevel },
+                        plan: s.planName ? { value: s.planName, confidence: confidenceLevel } : null,
+                        costAmount: { value: s.billing?.amount || 0, confidence: confidenceLevel },
+                        costFrequency: { value: s.billing?.frequency || 'monthly', confidence: confidenceLevel },
+                        currency: { value: s.billing?.currency || 'USD', confidence: confidenceLevel },
+                        renewalDate: s.renewalDate ? { value: s.renewalDate, confidence: confidenceLevel } : null,
+                        registryId: s.registryId || null,
+                        isConfirmed: false,
+                        documents: uploadedDocuments,
+                    };
+                });
+                
+                setAnalysisProgress(100);
+                setExtractedServices(services);
+                
+                // Short delay before showing review
+                setTimeout(() => {
+                    setCurrentStep("review-extracted");
+                    setIsAnalyzing(false);
+                }, 500);
+            } else {
+                // No services found - show error, go back to upload
+                setCurrentStep("upload");
+                setIsAnalyzing(false);
+                toast.error("No services found", "We couldn't extract any services from your documents. Please try uploading clearer invoices or receipts.");
+            }
+        } catch (error) {
+            clearInterval(progressInterval);
+            clearInterval(stepInterval);
+            console.error('Error analyzing documents:', error);
+            setCurrentStep("upload");
+            setIsAnalyzing(false);
+            toast.error("Analysis failed", error instanceof Error ? error.message : "Failed to analyze documents. Please try again.");
+        }
+    };
+
+    const handleAddExtractedServices = async () => {
+        const confirmedServices = extractedServices.filter(s => s.isConfirmed);
+        if (confirmedServices.length === 0 || isSubmitting) return;
+        
+        setIsSubmitting(true);
+        try {
+            const promises = confirmedServices.map(service => 
+                fetch(`/api/projects/${projectId}/services`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        registry_id: service.registryId,
+                        category_id: service.category.value,
+                        name: service.name.value,
+                        plan: service.plan?.value || null,
+                        cost_amount: service.costAmount.value || 0,
+                        cost_frequency: service.costFrequency.value || 'monthly',
+                        renewal_date: service.renewalDate?.value || null,
+                    }),
+                })
+            );
+
+            await Promise.all(promises);
+            
+            toast.success(
+                `${confirmedServices.length} service${confirmedServices.length !== 1 ? 's' : ''} added`, 
+                `Services have been added to your project.`
+            );
+            router.push(`/projects/${projectId}`);
+        } catch (error) {
+            console.error('Error adding services:', error);
+            toast.error("Error", "Failed to add some services");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleAddMoreFiles = () => {
+        setCurrentStep("upload");
     };
 
     const handleContinue = () => {
@@ -136,6 +324,7 @@ const AddServicePage = ({ projectId }: Props) => {
             const plan = selectedService.plans.find(p => p.name === selectedPlan);
             const cost = customCost ? parseFloat(customCost) : (plan?.price || 0);
             
+            // Step 1: Create the service
             const response = await fetch(`/api/projects/${projectId}/services`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -154,6 +343,44 @@ const AddServicePage = ({ projectId }: Props) => {
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || 'Failed to add service');
+            }
+
+            const createdService = await response.json();
+            
+            // Step 2: Save credentials if any were provided (excluding 'notes' which is already saved)
+            const credentialFields = Object.entries(credentials).filter(
+                ([key, value]) => key !== 'notes' && value && value.trim() !== ''
+            );
+            
+            if (credentialFields.length > 0) {
+                // Build the fields object from the credential entries
+                const fields: Record<string, string> = {};
+                credentialFields.forEach(([key, value]) => {
+                    fields[key] = value;
+                });
+                
+                // Determine credential type based on the service's credential fields
+                const credentialType = selectedService.credentialFields.some(f => f.type === 'password') 
+                    ? 'api_key' 
+                    : 'environment_variable';
+                
+                const credResponse = await fetch(
+                    `/api/projects/${projectId}/services/${createdService.id}/credentials`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            environment: 'production',
+                            type: credentialType,
+                            fields: fields,
+                            description: `${selectedService.name} credentials`,
+                        }),
+                    }
+                );
+
+                if (!credResponse.ok) {
+                    console.error('Failed to save credentials, but service was created');
+                }
             }
 
             toast.success("Service added", `${selectedService.name} has been added to your project.`);
@@ -216,15 +443,6 @@ const AddServicePage = ({ projectId }: Props) => {
         return selectedServices.some(s => s.id === serviceId);
     };
 
-    const steps = [
-        { id: "category", label: "Category", number: 1 },
-        { id: "service", label: "Service", number: 2 },
-        { id: "configure", label: "Configure", number: 3 },
-        { id: "confirm", label: "Confirm", number: 4 },
-    ];
-
-    const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
-    
     // Get recently used services (popular ones from registry)
     const recentlyUsedServices = serviceRegistry.slice(0, 5);
 
@@ -313,39 +531,45 @@ const AddServicePage = ({ projectId }: Props) => {
                     )}
 
                     {/* Progress Steps */}
-                    <div className="flex items-center gap-2 mb-8">
-                        {steps.map((step, index) => (
-                            <div key={step.id} className="flex items-center">
-                                <div
-                                    className={`flex items-center justify-center size-8 rounded-full text-small font-medium transition-all ${
-                                        index <= currentStepIndex
-                                            ? "bg-t-primary text-b-surface1"
-                                            : "bg-b-surface2 text-t-tertiary"
-                                    }`}
-                                >
-                                    {index < currentStepIndex ? (
-                                        <Icon className="!w-4 !h-4 fill-b-surface1" name="check" />
-                                    ) : (
-                                        step.number
-                                    )}
-                                </div>
-                                <span
-                                    className={`ml-2 text-small font-medium ${
-                                        index <= currentStepIndex ? "text-t-primary" : "text-t-tertiary"
-                                    }`}
-                                >
-                                    {step.label}
-                                </span>
-                                {index < steps.length - 1 && (
-                                    <div
-                                        className={`w-8 h-0.5 mx-3 ${
-                                            index < currentStepIndex ? "bg-t-primary" : "bg-b-surface2"
-                                        }`}
-                                    />
-                                )}
+                    {(() => {
+                        const steps = flowType === "upload" ? uploadSteps : manualSteps;
+                        const currentStepIdx = steps.findIndex((s) => s.id === currentStep);
+                        return (
+                            <div className="flex items-center gap-2 mb-8">
+                                {steps.map((step, index) => (
+                                    <div key={step.id} className="flex items-center">
+                                        <div
+                                            className={`flex items-center justify-center size-8 rounded-full text-small font-medium transition-all ${
+                                                index <= currentStepIdx
+                                                    ? "bg-t-primary text-b-surface1"
+                                                    : "bg-b-surface2 text-t-tertiary"
+                                            }`}
+                                        >
+                                            {index < currentStepIdx ? (
+                                                <Icon className="!w-4 !h-4 fill-b-surface1" name="check" />
+                                            ) : (
+                                                step.number
+                                            )}
+                                        </div>
+                                        <span
+                                            className={`ml-2 text-small font-medium ${
+                                                index <= currentStepIdx ? "text-t-primary" : "text-t-tertiary"
+                                            }`}
+                                        >
+                                            {step.label}
+                                        </span>
+                                        {index < steps.length - 1 && (
+                                            <div
+                                                className={`w-8 h-0.5 mx-3 ${
+                                                    index < currentStepIdx ? "bg-t-primary" : "bg-b-surface2"
+                                                }`}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })()}
 
                     {/* Step Content */}
                     <div className="p-6 rounded-4xl bg-b-surface2">
@@ -362,6 +586,7 @@ const AddServicePage = ({ projectId }: Props) => {
                                 onCategorySelect={handleCategorySelect}
                                 onServiceSelect={handleServiceSelect}
                                 onBulkAdd={handleBulkAddServices}
+                                onUploadClick={handleUploadClick}
                             />
                         )}
 
@@ -400,6 +625,35 @@ const AddServicePage = ({ projectId }: Props) => {
                                 credentials={credentials}
                                 onBack={handleBack}
                                 onAddService={handleAddService}
+                            />
+                        )}
+
+                        {currentStep === "upload" && (
+                            <UploadStep
+                                documents={uploadedDocuments}
+                                onDocumentsChange={setUploadedDocuments}
+                                onAnalyze={handleAnalyzeDocuments}
+                                onBack={handleBack}
+                                isAnalyzing={isAnalyzing}
+                            />
+                        )}
+
+                        {currentStep === "processing" && (
+                            <ProcessingScreen
+                                documents={uploadedDocuments}
+                                progress={analysisProgress}
+                                currentStep={analysisStep}
+                            />
+                        )}
+
+                        {currentStep === "review-extracted" && (
+                            <ReviewExtractedStep
+                                services={extractedServices}
+                                onServicesChange={setExtractedServices}
+                                onAddServices={handleAddExtractedServices}
+                                onBack={handleBack}
+                                onAddMore={handleAddMoreFiles}
+                                isAdding={isSubmitting}
                             />
                         )}
                     </div>

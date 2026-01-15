@@ -648,6 +648,241 @@ export const serviceRegistry: ServiceRegistryItem[] = [
             { key: "service_account_json", label: "Service Account JSON", type: "password", required: true, sensitive: true },
         ],
     },
+    // Marketing & Growth - Advertising
+    {
+        id: "google-ads",
+        slug: "google-ads",
+        name: "Google Ads",
+        category: "marketing",
+        description: "Search, display, and video advertising platform",
+        website: "https://ads.google.com",
+        docsUrl: "https://developers.google.com/google-ads/api/docs",
+        plans: [
+            { id: "payg", name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "customer_id", label: "Customer ID", type: "text", required: true },
+            { key: "developer_token", label: "Developer Token", type: "password", required: false, sensitive: true },
+            { key: "client_id", label: "OAuth Client ID", type: "text", required: false },
+            { key: "client_secret", label: "OAuth Client Secret", type: "password", required: false, sensitive: true },
+        ],
+    },
+    {
+        id: "meta-business",
+        slug: "meta-business",
+        name: "Meta Business Suite",
+        category: "marketing",
+        description: "Facebook and Instagram advertising and management",
+        website: "https://business.facebook.com",
+        docsUrl: "https://developers.facebook.com/docs/marketing-apis",
+        plans: [
+            { id: "payg", name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "app_id", label: "App ID", type: "text", required: true },
+            { key: "app_secret", label: "App Secret", type: "password", required: true, sensitive: true },
+            { key: "access_token", label: "Access Token", type: "password", required: true, sensitive: true },
+            { key: "ad_account_id", label: "Ad Account ID", type: "text", required: false },
+        ],
+    },
+    {
+        id: "tiktok-ads",
+        slug: "tiktok-ads",
+        name: "TikTok Ads",
+        category: "marketing",
+        description: "TikTok advertising and campaign management",
+        website: "https://ads.tiktok.com",
+        docsUrl: "https://ads.tiktok.com/marketing_api/docs",
+        plans: [
+            { id: "payg", name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "app_id", label: "App ID", type: "text", required: true },
+            { key: "secret", label: "Secret", type: "password", required: true, sensitive: true },
+            { key: "access_token", label: "Access Token", type: "password", required: true, sensitive: true },
+        ],
+    },
+    {
+        id: "linkedin-ads",
+        slug: "linkedin-ads",
+        name: "LinkedIn Ads",
+        category: "marketing",
+        description: "B2B advertising on LinkedIn",
+        website: "https://business.linkedin.com/marketing-solutions/ads",
+        docsUrl: "https://learn.microsoft.com/en-us/linkedin/marketing/",
+        plans: [
+            { id: "payg", name: "Pay as you go", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "client_id", label: "Client ID", type: "text", required: true },
+            { key: "client_secret", label: "Client Secret", type: "password", required: true, sensitive: true },
+            { key: "account_id", label: "Ad Account ID", type: "text", required: false },
+        ],
+    },
+    // Marketing & Growth - Design Tools
+    {
+        id: "canva",
+        slug: "canva",
+        name: "Canva",
+        category: "marketing",
+        description: "Online design and visual content creation",
+        website: "https://canva.com",
+        docsUrl: "https://www.canva.dev/docs/connect/",
+        plans: [
+            { id: "free", name: "Free", price: 0, frequency: "monthly" },
+            { id: "pro", name: "Pro", price: 13, frequency: "monthly" },
+            { id: "teams", name: "Teams", price: 10, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "email", label: "Account Email", type: "email", required: true },
+            { key: "api_key", label: "API Key", type: "password", required: false, sensitive: true },
+        ],
+    },
+    {
+        id: "figma",
+        slug: "figma",
+        name: "Figma",
+        category: "marketing",
+        description: "Collaborative design and prototyping tool",
+        website: "https://figma.com",
+        docsUrl: "https://www.figma.com/developers/api",
+        plans: [
+            { id: "starter", name: "Starter", price: 0, frequency: "monthly" },
+            { id: "professional", name: "Professional", price: 15, frequency: "monthly" },
+            { id: "organization", name: "Organization", price: 45, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "access_token", label: "Personal Access Token", type: "password", required: true, sensitive: true },
+            { key: "team_id", label: "Team ID", type: "text", required: false },
+        ],
+    },
+    // Marketing & Growth - Social Media
+    {
+        id: "buffer",
+        slug: "buffer",
+        name: "Buffer",
+        category: "marketing",
+        description: "Social media scheduling and analytics",
+        website: "https://buffer.com",
+        docsUrl: "https://buffer.com/developers/api",
+        plans: [
+            { id: "free", name: "Free", price: 0, frequency: "monthly" },
+            { id: "essentials", name: "Essentials", price: 6, frequency: "monthly" },
+            { id: "team", name: "Team", price: 12, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "access_token", label: "Access Token", type: "password", required: true, sensitive: true },
+        ],
+    },
+    {
+        id: "hootsuite",
+        slug: "hootsuite",
+        name: "Hootsuite",
+        category: "marketing",
+        description: "Social media management platform",
+        website: "https://hootsuite.com",
+        docsUrl: "https://developer.hootsuite.com",
+        plans: [
+            { id: "professional", name: "Professional", price: 99, frequency: "monthly" },
+            { id: "team", name: "Team", price: 249, frequency: "monthly" },
+            { id: "enterprise", name: "Enterprise", price: 0, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+            { key: "api_secret", label: "API Secret", type: "password", required: true, sensitive: true },
+        ],
+    },
+    // Marketing & Growth - SEO
+    {
+        id: "ahrefs",
+        slug: "ahrefs",
+        name: "Ahrefs",
+        category: "marketing",
+        description: "SEO tools and backlink analysis",
+        website: "https://ahrefs.com",
+        docsUrl: "https://ahrefs.com/api",
+        plans: [
+            { id: "lite", name: "Lite", price: 99, frequency: "monthly" },
+            { id: "standard", name: "Standard", price: 199, frequency: "monthly" },
+            { id: "advanced", name: "Advanced", price: 399, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+        ],
+    },
+    {
+        id: "semrush",
+        slug: "semrush",
+        name: "SEMrush",
+        category: "marketing",
+        description: "SEO, content, and competitive research",
+        website: "https://semrush.com",
+        docsUrl: "https://developer.semrush.com",
+        plans: [
+            { id: "pro", name: "Pro", price: 130, frequency: "monthly" },
+            { id: "guru", name: "Guru", price: 250, frequency: "monthly" },
+            { id: "business", name: "Business", price: 500, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+        ],
+    },
+    // Marketing & Growth - Automation
+    {
+        id: "mailchimp",
+        slug: "mailchimp",
+        name: "Mailchimp",
+        category: "marketing",
+        description: "Email marketing and automation platform",
+        website: "https://mailchimp.com",
+        docsUrl: "https://mailchimp.com/developer/",
+        plans: [
+            { id: "free", name: "Free", price: 0, frequency: "monthly" },
+            { id: "essentials", name: "Essentials", price: 13, frequency: "monthly" },
+            { id: "standard", name: "Standard", price: 20, frequency: "monthly" },
+            { id: "premium", name: "Premium", price: 350, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+            { key: "server_prefix", label: "Server Prefix", type: "text", placeholder: "us1", required: true },
+        ],
+    },
+    {
+        id: "hubspot",
+        slug: "hubspot",
+        name: "HubSpot",
+        category: "marketing",
+        description: "CRM, marketing, and sales automation",
+        website: "https://hubspot.com",
+        docsUrl: "https://developers.hubspot.com",
+        plans: [
+            { id: "free", name: "Free", price: 0, frequency: "monthly" },
+            { id: "starter", name: "Starter", price: 20, frequency: "monthly" },
+            { id: "professional", name: "Professional", price: 890, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+            { key: "portal_id", label: "Portal ID", type: "text", required: false },
+        ],
+    },
+    {
+        id: "zapier",
+        slug: "zapier",
+        name: "Zapier",
+        category: "marketing",
+        description: "Workflow automation and app integrations",
+        website: "https://zapier.com",
+        docsUrl: "https://platform.zapier.com/docs",
+        plans: [
+            { id: "free", name: "Free", price: 0, frequency: "monthly" },
+            { id: "starter", name: "Starter", price: 20, frequency: "monthly" },
+            { id: "professional", name: "Professional", price: 49, frequency: "monthly" },
+            { id: "team", name: "Team", price: 69, frequency: "monthly" },
+        ],
+        credentialFields: [
+            { key: "api_key", label: "API Key", type: "password", required: true, sensitive: true },
+        ],
+    },
 ];
 
 // Helper functions

@@ -455,12 +455,12 @@ export const mockServices: Service[] = [
         updatedAt: "2024-12-19T00:00:00Z",
     },
     
-    // DISTRIBUTION - Marketing
+    // MARKETING & GROWTH
     {
         id: "s26",
         projectId: "1",
-        categoryId: "distribution",
-        subCategoryId: "marketing",
+        categoryId: "marketing",
+        subCategoryId: "advertising",
         name: "Google Ads",
         plan: "Pay as you go",
         costAmount: 500,
@@ -473,8 +473,8 @@ export const mockServices: Service[] = [
     {
         id: "s27",
         projectId: "1",
-        categoryId: "distribution",
-        subCategoryId: "marketing",
+        categoryId: "marketing",
+        subCategoryId: "advertising",
         name: "Meta Ads",
         plan: "Pay as you go",
         costAmount: 300,
@@ -487,8 +487,8 @@ export const mockServices: Service[] = [
     {
         id: "s28",
         projectId: "1",
-        categoryId: "distribution",
-        subCategoryId: "marketing",
+        categoryId: "marketing",
+        subCategoryId: "seo",
         name: "Ahrefs",
         plan: "Lite",
         costAmount: 99,
@@ -710,7 +710,7 @@ export const mockServices: Service[] = [
     },
 ];
 
-// Consolidated category labels (8 primary categories + subcategories)
+// Consolidated category labels (9 primary categories + subcategories)
 export const categoryLabels: Record<string, string> = {
     // Primary categories
     infrastructure: "Infrastructure",
@@ -721,6 +721,7 @@ export const categoryLabels: Record<string, string> = {
     domains: "Domains & DNS",
     distribution: "Distribution",
     devtools: "Developer Tools",
+    marketing: "Marketing & Growth",
     other: "Other",
     // Sub-categories (used in service registry)
     hosting: "Hosting",
@@ -792,6 +793,7 @@ export const categoryIcons: Record<string, string> = {
     domains: "globe",
     distribution: "share",
     devtools: "code",
+    marketing: "chart",
     other: "plus",
     // Sub-categories (used in service registry)
     hosting: "cloud-upload",
@@ -816,6 +818,7 @@ export const categoryColors: Record<string, string> = {
     domains: "teal",
     distribution: "pink",
     devtools: "gray",
+    marketing: "rose",
     other: "slate",
     // Sub-categories (used in service registry) - all distinct colors
     hosting: "blue",

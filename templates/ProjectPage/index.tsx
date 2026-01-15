@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import Sidebar from "./Sidebar";
 import Overview from "./Overview";
@@ -30,7 +31,31 @@ type Props = {
 };
 
 const ProjectPage = ({ projectId }: Props) => {
-    const [activeTab, setActiveTab] = useState("overview");
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const tabFromUrl = searchParams.get('tab') || 'overview';
+    const [activeTab, setActiveTab] = useState(tabFromUrl);
+    
+    // Update URL when tab changes (for persistence on refresh)
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        const params = new URLSearchParams(searchParams.toString());
+        if (tab === 'overview') {
+            params.delete('tab');
+        } else {
+            params.set('tab', tab);
+        }
+        const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+        router.replace(newUrl, { scroll: false });
+    };
+    
+    // Sync state with URL on mount/URL change
+    useEffect(() => {
+        if (tabFromUrl !== activeTab) {
+            setActiveTab(tabFromUrl);
+        }
+    }, [tabFromUrl]);
+    
     const [isLoading, setIsLoading] = useState(true);
     const [project, setProject] = useState<Project | null>(null);
     const [services, setServices] = useState<Service[]>([]);
@@ -572,7 +597,7 @@ const ProjectPage = ({ projectId }: Props) => {
             <Sidebar
                 project={project}
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={handleTabChange}
             />
             
             {/* Main Content - with left margin to account for collapsed sidebar */}

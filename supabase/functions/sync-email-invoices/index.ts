@@ -250,7 +250,7 @@ If you cannot extract information from a document, return an empty services arra
   parts.push({ text: "Analyze these documents and extract all service/subscription information. Return valid JSON only." });
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
