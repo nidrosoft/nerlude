@@ -1,9 +1,16 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
+import { createProjectSchema, validateBody } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServiceById } from '@/registry/services';
 
 // GET /api/projects - List projects (filtered by workspace)
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -60,24 +67,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Service registry mapping - maps service IDs to their details
-// Valid category_ids: infrastructure, identity, payments, communications, analytics, domains, distribution, devtools, other
-const SERVICE_REGISTRY: Record<string, { name: string; category_id: string; logo_url?: string }> = {
-  vercel: { name: 'Vercel', category_id: 'infrastructure', logo_url: '/images/services/vercel.svg' },
-  supabase: { name: 'Supabase', category_id: 'infrastructure', logo_url: '/images/services/supabase.svg' },
-  clerk: { name: 'Clerk', category_id: 'identity', logo_url: '/images/services/clerk.svg' },
-  stripe: { name: 'Stripe', category_id: 'payments', logo_url: '/images/services/stripe.svg' },
-  resend: { name: 'Resend', category_id: 'communications', logo_url: '/images/services/resend.svg' },
-  posthog: { name: 'PostHog', category_id: 'analytics', logo_url: '/images/services/posthog.svg' },
-  sentry: { name: 'Sentry', category_id: 'devtools', logo_url: '/images/services/sentry.svg' },
-  cloudinary: { name: 'Cloudinary', category_id: 'infrastructure', logo_url: '/images/services/cloudinary.svg' },
-  railway: { name: 'Railway', category_id: 'infrastructure', logo_url: '/images/services/railway.svg' },
-  redis: { name: 'Redis Cloud', category_id: 'infrastructure', logo_url: '/images/services/redis.svg' },
+// Helper function to get service info from the full registry
+const getServiceInfo = (serviceId: string): { name: string; category_id: string; logo_url?: string } | null => {
+  const service = getServiceById(serviceId);
+  if (!service) return null;
+  
+  return {
+    name: service.name,
+    category_id: service.category,
+    logo_url: service.logoUrl || `/images/services/${service.slug}.svg`,
+  };
 };
 
 // POST /api/projects - Create a new project
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -86,18 +94,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    console.log('=== PROJECT CREATION REQUEST ===');
-    console.log('Full body received:', JSON.stringify(body, null, 2));
-    const { workspace_id, name, description, icon, type, services, template_id } = body;
-    console.log('Extracted services:', services);
-
-    if (!workspace_id || !name || !type) {
-      return NextResponse.json(
-        { error: 'workspace_id, name, and type are required' },
-        { status: 400 }
-      );
+    // Validate input
+    const { data: body, error: validationError } = await validateBody(request, createProjectSchema);
+    if (validationError || !body) {
+      return NextResponse.json({ error: validationError || 'Invalid input' }, { status: 400 });
     }
+
+    const { workspace_id, name, description, icon, type, services, template_id } = body;
 
     // Check workspace membership
     const { data: membership } = await supabase
@@ -157,13 +160,13 @@ export async function POST(request: NextRequest) {
       console.error('Error logging project creation:', auditError);
     }
 
-    // Create services if provided - use admin client to bypass RLS
-    console.log('Services received:', services);
+    // Create services if provided
     if (services && Array.isArray(services) && services.length > 0) {
       const serviceRecords = services
-        .filter((serviceId: string) => SERVICE_REGISTRY[serviceId])
         .map((serviceId: string) => {
-          const serviceInfo = SERVICE_REGISTRY[serviceId];
+          const serviceInfo = getServiceInfo(serviceId);
+          if (!serviceInfo) return null;
+          
           return {
             project_id: data.id,
             registry_id: serviceId,
@@ -176,9 +179,8 @@ export async function POST(request: NextRequest) {
             status: 'active',
             created_by: user.id,
           };
-        });
-
-      console.log('Service records to insert:', serviceRecords);
+        })
+        .filter(Boolean);
       
       if (serviceRecords.length > 0) {
         // Insert services using the authenticated user's supabase client
@@ -189,30 +191,20 @@ export async function POST(request: NextRequest) {
 
         if (servicesError) {
           console.error('Error creating services:', servicesError);
-          console.error('Service records attempted:', JSON.stringify(serviceRecords, null, 2));
-        } else {
-          console.log('Services created successfully:', insertedServices);
-          
+        } else if (insertedServices && insertedServices.length > 0) {
           // Log activity for each service added
-          if (insertedServices && insertedServices.length > 0) {
-            const auditLogs = insertedServices.map((service: any) => ({
-              workspace_id,
-              user_id: user.id,
-              action: 'service_added',
-              entity_type: 'service',
-              entity_id: service.id,
-              metadata: { name: service.name, registry_id: service.registry_id, category_id: service.category_id },
-            }));
-            
-            const { error: auditLogsError } = await supabase.from('audit_logs').insert(auditLogs);
-            if (auditLogsError) {
-              console.error('Error logging service additions:', auditLogsError);
-            }
-          }
+          const auditLogs = insertedServices.map((service: { id: string; name: string; registry_id: string; category_id: string }) => ({
+            workspace_id,
+            user_id: user.id,
+            action: 'service_added',
+            entity_type: 'service',
+            entity_id: service.id,
+            metadata: { name: service.name, registry_id: service.registry_id, category_id: service.category_id },
+          }));
+          
+          await supabase.from('audit_logs').insert(auditLogs);
         }
       }
-    } else {
-      console.log('No services to create - services array:', services);
     }
 
     return NextResponse.json(data, { status: 201 });

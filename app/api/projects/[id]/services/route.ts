@@ -1,11 +1,48 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * Verify user has access to a project via workspace membership
+ */
+async function verifyProjectAccess(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  projectId: string
+): Promise<{ hasAccess: boolean; workspaceId: string | null; role: string | null }> {
+  const { data: project } = await supabase
+    .from('projects')
+    .select('workspace_id')
+    .eq('id', projectId)
+    .single();
+
+  if (!project?.workspace_id) {
+    return { hasAccess: false, workspaceId: null, role: null };
+  }
+
+  const { data: membership } = await supabase
+    .from('workspace_members')
+    .select('role')
+    .eq('workspace_id', project.workspace_id)
+    .eq('user_id', userId)
+    .single();
+
+  return {
+    hasAccess: !!membership,
+    workspaceId: project.workspace_id,
+    role: membership?.role || null,
+  };
+}
+
 // GET /api/projects/[id]/services - List project services
 export async function GET(request: NextRequest, { params }: Params) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
@@ -13,6 +50,12 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify project access
+    const { hasAccess } = await verifyProjectAccess(supabase, user.id, id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
     const { data, error } = await supabase
@@ -40,6 +83,10 @@ export async function GET(request: NextRequest, { params }: Params) {
 // POST /api/projects/[id]/services - Add service to project
 export async function POST(request: NextRequest, { params }: Params) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
@@ -47,6 +94,16 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Verify project access - need edit permissions
+    const { hasAccess, workspaceId, role } = await verifyProjectAccess(supabase, user.id, id);
+    if (!hasAccess || !workspaceId) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    if (!role || !['owner', 'admin', 'member'].includes(role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -104,26 +161,17 @@ export async function POST(request: NextRequest, { params }: Params) {
         project_service_id: data.id,
       });
 
-    // Get project to find workspace_id for activity log
-    const { data: project } = await supabase
-      .from('projects')
-      .select('workspace_id')
-      .eq('id', id)
-      .single();
-
     // Log activity for service addition
-    if (project) {
-      await supabase
-        .from('audit_logs')
-        .insert({
-          workspace_id: project.workspace_id,
-          user_id: user.id,
-          action: 'service_added',
-          entity_type: 'service',
-          entity_id: data.id,
-          metadata: { name, registry_id, category_id, plan, cost_amount },
-        });
-    }
+    await supabase
+      .from('audit_logs')
+      .insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        action: 'service_added',
+        entity_type: 'service',
+        entity_id: data.id,
+        metadata: { name, registry_id, category_id, plan, cost_amount },
+      });
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

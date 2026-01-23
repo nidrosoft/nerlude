@@ -1,16 +1,21 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
+import { registerSchema, validateBody } from '@/lib/validations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    // Apply strict rate limiting for auth endpoints (5 per minute)
+    const rateLimitResponse = await applyRateLimit(request, 'auth');
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!email || !password || !name) {
-      return NextResponse.json(
-        { error: 'Email, password, and name are required' },
-        { status: 400 }
-      );
+    // Validate input with password strength requirements
+    const { data: body, error: validationError } = await validateBody(request, registerSchema);
+    if (validationError || !body) {
+      return NextResponse.json({ error: validationError || 'Invalid input' }, { status: 400 });
     }
+
+    const { email, password, name } = body;
 
     const supabase = await createServerSupabaseClient();
 

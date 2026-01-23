@@ -43,6 +43,22 @@ export const templates: ProjectTemplate[] = [
         suggestedServices: ["supabase", "posthog", "sentry"],
     },
     {
+        id: "marketing",
+        name: "Marketing & Growth",
+        description: "Ads, social media, SEO tools, and analytics",
+        icon: "📈",
+        type: "web",
+        suggestedServices: ["google-ads", "meta-business", "buffer", "mailchimp", "posthog"],
+    },
+    {
+        id: "ecommerce",
+        name: "E-commerce",
+        description: "Online store with payments and inventory",
+        icon: "🛒",
+        type: "web",
+        suggestedServices: ["vercel", "stripe", "supabase", "cloudinary", "resend"],
+    },
+    {
         id: "blank",
         name: "Blank Project",
         description: "Start from scratch with no pre-selected services",
@@ -69,6 +85,8 @@ export const emojiOptions = [
     "🤖", "🧠", "💎", "🔮", "🎵", "📸", "🛒", "💬", "📊", "🔐",
 ];
 
+// Legacy service names - kept for backward compatibility
+// The full service registry is now used in ServicesStep
 export const serviceNames: Record<string, string> = {
     vercel: "Vercel",
     supabase: "Supabase",
@@ -80,6 +98,54 @@ export const serviceNames: Record<string, string> = {
     cloudinary: "Cloudinary",
     railway: "Railway",
     redis: "Redis Cloud",
+    // Marketing services
+    "google-ads": "Google Ads",
+    "meta-business": "Meta Business Suite",
+    "tiktok-ads": "TikTok Ads",
+    "linkedin-ads": "LinkedIn Ads",
+    buffer: "Buffer",
+    hootsuite: "Hootsuite",
+    mailchimp: "Mailchimp",
+    hubspot: "HubSpot",
+    zapier: "Zapier",
+    canva: "Canva",
+    figma: "Figma",
+    ahrefs: "Ahrefs",
+    semrush: "SEMrush",
+    // Additional infrastructure
+    netlify: "Netlify",
+    aws: "AWS",
+    planetscale: "PlanetScale",
+    mongodb: "MongoDB Atlas",
+    neon: "Neon",
+    upstash: "Upstash",
+    // Domains
+    namecheap: "Namecheap",
+    cloudflare: "Cloudflare",
+    porkbun: "Porkbun",
+    // Identity
+    auth0: "Auth0",
+    // Payments
+    lemonsqueezy: "Lemon Squeezy",
+    paddle: "Paddle",
+    // Communications
+    sendgrid: "SendGrid",
+    postmark: "Postmark",
+    // Analytics
+    plausible: "Plausible",
+    mixpanel: "Mixpanel",
+    logrocket: "LogRocket",
+    // AI/DevTools
+    openai: "OpenAI",
+    anthropic: "Anthropic",
+    replicate: "Replicate",
+    github: "GitHub",
+    linear: "Linear",
+    // Distribution
+    "apple-developer": "Apple Developer",
+    "google-play": "Google Play Console",
+    // Storage
+    uploadthing: "UploadThing",
 };
 
 export const manualSteps = [

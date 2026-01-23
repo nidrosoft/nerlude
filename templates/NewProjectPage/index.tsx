@@ -85,9 +85,6 @@ const NewProjectPage = () => {
     };
 
     const handleTemplateSelect = (template: ProjectTemplate) => {
-        console.log('=== TEMPLATE SELECTED ===');
-        console.log('Template:', template.name);
-        console.log('Suggested services:', template.suggestedServices);
         setSelectedTemplate(template);
         setSelectedServices(template.suggestedServices);
         setProjectType(template.type);
@@ -341,10 +338,6 @@ const NewProjectPage = () => {
     };
 
     const handleContinue = () => {
-        console.log('=== CONTINUE CLICKED ===');
-        console.log('Current step:', currentStep);
-        console.log('Selected services at continue:', selectedServices);
-        
         if (currentStep === "basics") {
             if (!projectName.trim()) return;
             setCurrentStep("template");
@@ -372,10 +365,6 @@ const NewProjectPage = () => {
             services: selectedServices,
             template_id: selectedTemplate?.id || null,
         };
-        
-        console.log('=== FRONTEND: Creating project ===');
-        console.log('Selected services state:', selectedServices);
-        console.log('Request body:', JSON.stringify(requestBody, null, 2));
         
         try {
             const response = await fetch('/api/projects', {

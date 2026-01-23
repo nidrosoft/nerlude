@@ -1,11 +1,48 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * Verify user has access to a project via workspace membership
+ */
+async function verifyProjectAccess(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  projectId: string
+): Promise<{ hasAccess: boolean; workspaceId: string | null; role: string | null }> {
+  const { data: project } = await supabase
+    .from('projects')
+    .select('workspace_id')
+    .eq('id', projectId)
+    .single();
+
+  if (!project?.workspace_id) {
+    return { hasAccess: false, workspaceId: null, role: null };
+  }
+
+  const { data: membership } = await supabase
+    .from('workspace_members')
+    .select('role')
+    .eq('workspace_id', project.workspace_id)
+    .eq('user_id', userId)
+    .single();
+
+  return {
+    hasAccess: !!membership,
+    workspaceId: project.workspace_id,
+    role: membership?.role || null,
+  };
+}
+
 // GET /api/projects/[id] - Get project details
 export async function GET(request: NextRequest, { params }: Params) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
@@ -54,6 +91,10 @@ export async function GET(request: NextRequest, { params }: Params) {
 // PATCH /api/projects/[id] - Update project
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
@@ -63,25 +104,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get project and check access
-    const { data: project } = await supabase
-      .from('projects')
-      .select('workspace_id')
-      .eq('id', id)
-      .single();
+    // Verify project access
+    const { hasAccess, workspaceId, role } = await verifyProjectAccess(supabase, user.id, id);
 
-    if (!project) {
+    if (!hasAccess || !workspaceId) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('role')
-      .eq('workspace_id', project.workspace_id!)
-      .eq('user_id', user.id)
-      .single();
-
-    if (!membership || !['owner', 'admin', 'member'].includes(membership.role)) {
+    if (!role || !['owner', 'admin', 'member'].includes(role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -110,7 +140,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     // Create audit log for project update
     await supabase.from('audit_logs').insert({
-      workspace_id: project.workspace_id,
+      workspace_id: workspaceId,
       user_id: user.id,
       action: 'project_updated',
       entity_type: 'project',
@@ -131,6 +161,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 // DELETE /api/projects/[id] - Delete project
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { id } = await params;
     const supabase = await createServerSupabaseClient();
 
@@ -140,25 +174,14 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get project and check access
-    const { data: project } = await supabase
-      .from('projects')
-      .select('workspace_id')
-      .eq('id', id)
-      .single();
+    // Verify project access - only owners and admins can delete
+    const { hasAccess, workspaceId, role } = await verifyProjectAccess(supabase, user.id, id);
 
-    if (!project) {
+    if (!hasAccess || !workspaceId) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const { data: membership } = await supabase
-      .from('workspace_members')
-      .select('role')
-      .eq('workspace_id', project.workspace_id!)
-      .eq('user_id', user.id)
-      .single();
-
-    if (!membership || !['owner', 'admin'].includes(membership.role)) {
+    if (!role || !['owner', 'admin'].includes(role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -180,7 +203,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     // Create audit log for project deletion
     await supabase.from('audit_logs').insert({
-      workspace_id: project.workspace_id,
+      workspace_id: workspaceId,
       user_id: user.id,
       action: 'project_deleted',
       entity_type: 'project',

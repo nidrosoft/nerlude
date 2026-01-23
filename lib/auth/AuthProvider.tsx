@@ -44,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -68,11 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUserData = async (userId: string) => {
     const supabase = getSupabaseClient();
-    console.log('loadUserData: Starting for user', userId);
     
     try {
       // Load user profile
-      console.log('loadUserData: Fetching user profile...');
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
@@ -80,9 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (profileError) {
-        console.error('loadUserData: Error loading user profile:', profileError);
-      } else {
-        console.log('loadUserData: Profile loaded successfully');
+        console.error('Error loading user profile:', profileError);
       }
 
       if (profile) {
@@ -97,35 +92,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Load workspaces - first get membership IDs
-      console.log('loadUserData: Fetching workspace memberships...');
       const { data: memberships, error: memberError } = await supabase
         .from('workspace_members')
         .select('workspace_id, role')
         .eq('user_id', userId);
 
       if (memberError) {
-        console.error('loadUserData: Error loading workspace memberships:', memberError);
+        console.error('Error loading workspace memberships:', memberError);
         return;
       }
-      console.log('loadUserData: Memberships loaded:', memberships?.length || 0);
 
       if (memberships && memberships.length > 0) {
         // Then fetch the workspaces separately
         const workspaceIds = memberships.map(m => m.workspace_id).filter((id): id is string => id !== null);
-        console.log('loadUserData: Fetching workspaces for IDs:', workspaceIds);
         const { data: workspacesData, error: wsError } = await supabase
           .from('workspaces')
           .select('*')
           .in('id', workspaceIds);
 
         if (wsError) {
-          console.error('loadUserData: Error loading workspaces:', wsError);
+          console.error('Error loading workspaces:', wsError);
           return;
         }
-        console.log('loadUserData: Workspaces loaded:', workspacesData?.length || 0);
 
         if (workspacesData) {
-          const workspaces = workspacesData.map((ws: any) => {
+          const workspaces = workspacesData.map((ws: { id: string; name: string; slug: string; owner_id: string | null; workspace_type: string | null; settings: Record<string, unknown> | null; created_at: string | null; updated_at: string | null }) => {
             const membership = memberships.find(m => m.workspace_id === ws.id);
             return {
               ...ws,
@@ -139,9 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-      console.log('loadUserData: Completed successfully');
     } catch (error) {
-      console.error('loadUserData: Unexpected error:', error);
+      console.error('Unexpected error loading user data:', error);
     }
   };
 
@@ -221,7 +211,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             status: 'active',
           });
           if (subError) console.error('Error creating subscription:', subError);
+
+          // Set the workspace in the store immediately so it's available for navigation
+          const workspaceWithRole = {
+            ...workspace,
+            role: 'owner' as const,
+          };
+          setWorkspaces([workspaceWithRole]);
+          setCurrentWorkspace(workspaceWithRole);
         }
+
+        // Also set the user in the store immediately
+        setStoreUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
 
       return {};

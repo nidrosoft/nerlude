@@ -112,7 +112,10 @@ const UserMenu = ({ onLogout }: Props) => {
     };
     return (
         <Menu>
-            <MenuButton className="relative flex size-12 border-4 border-b-surface2 rounded-full outline-0 before:absolute before:-inset-1 before:z-1 before:rounded-full before:border-[1.5px] before:border-stroke2 before:opacity-0 before:transition-opacity data-open:before:opacity-100">
+            <MenuButton 
+                className="relative flex size-12 border-4 border-b-surface2 rounded-full outline-0 before:absolute before:-inset-1 before:z-1 before:rounded-full before:border-[1.5px] before:border-stroke2 before:opacity-0 before:transition-opacity data-open:before:opacity-100"
+                aria-label="User menu"
+            >
                 <Image
                     className="size-10 object-cover rounded-full opacity-100"
                     src="/images/avatar.png"

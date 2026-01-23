@@ -41,7 +41,7 @@ interface CredentialState {
     getCredentialsByService: (serviceId: string) => Credential[];
     getCredentialsByProject: (projectId: string) => Credential[];
     getCredentialsByEnvironment: (projectId: string, environment: Credential['environment']) => Credential[];
-    getCredentialForServiceAndEnv: (serviceId: string, environment: Credential['environment']) => Credential | undefined;
+    getCredentialForServiceAndEnv: (serviceId: string, environment: Credential['environment'], projectId?: string) => Credential | undefined;
     
     // Field visibility
     toggleFieldVisibility: (fieldId: string) => void;
@@ -95,8 +95,12 @@ export const useCredentialStore = create<CredentialState>()((set, get) => ({
         return get().credentials.filter((c) => c.projectId === projectId && c.environment === environment);
     },
     
-    getCredentialForServiceAndEnv: (serviceId, environment) => {
-        return get().credentials.find((c) => c.serviceId === serviceId && c.environment === environment);
+    getCredentialForServiceAndEnv: (serviceId, environment, projectId?: string) => {
+        return get().credentials.find((c) => 
+            c.serviceId === serviceId && 
+            c.environment === environment &&
+            (projectId ? c.projectId === projectId : true)
+        );
     },
 
     // Field Visibility

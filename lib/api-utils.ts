@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/db/server';
 import { rateLimit, rateLimitResponse, RateLimitType } from '@/lib/rate-limit';
 import * as Sentry from '@sentry/nextjs';
@@ -15,6 +15,18 @@ export type ApiHandler = (
   request: Request,
   context: ApiContext
 ) => Promise<NextResponse>;
+
+/**
+ * Extract IP address from request for rate limiting
+ */
+function getIpAddress(request: Request): string {
+  // Check various headers that might contain the real IP
+  const forwarded = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+  const realIp = request.headers.get('x-real-ip');
+  const cfConnectingIp = request.headers.get('cf-connecting-ip');
+  
+  return cfConnectingIp || realIp || forwarded || 'unknown';
+}
 
 /**
  * Wraps an API handler with authentication, rate limiting, and error handling
@@ -39,13 +51,12 @@ export function withApiHandler(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      // Apply rate limiting
-      if (user) {
-        const rateLimitResult = await rateLimit(user.id, rateLimitType);
-        
-        if (rateLimitResult && !rateLimitResult.success) {
-          return rateLimitResponse(rateLimitResult.reset);
-        }
+      // Apply rate limiting - use user ID if authenticated, otherwise use IP
+      const rateLimitIdentifier = user?.id || getIpAddress(request);
+      const rateLimitResult = await rateLimit(rateLimitIdentifier, rateLimitType);
+      
+      if (rateLimitResult && !rateLimitResult.success) {
+        return rateLimitResponse(rateLimitResult.reset);
       }
 
       // Call the actual handler
@@ -67,6 +78,24 @@ export function withApiHandler(
       );
     }
   };
+}
+
+/**
+ * Apply rate limiting only (for routes that don't need the full wrapper)
+ * Useful for unauthenticated routes like login/register
+ */
+export async function applyRateLimit(
+  request: Request | NextRequest,
+  type: RateLimitType = 'api'
+): Promise<NextResponse | null> {
+  const identifier = getIpAddress(request);
+  const result = await rateLimit(identifier, type);
+  
+  if (result && !result.success) {
+    return rateLimitResponse(result.reset);
+  }
+  
+  return null;
 }
 
 /**

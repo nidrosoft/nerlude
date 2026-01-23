@@ -1,9 +1,14 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/users/me - Get current user profile
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -45,6 +50,10 @@ export async function GET() {
 // PATCH /api/users/me - Update current user profile
 export async function PATCH(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -93,8 +102,12 @@ export async function PATCH(request: NextRequest) {
 }
 
 // DELETE /api/users/me - Delete current user account
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();

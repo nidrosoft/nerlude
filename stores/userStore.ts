@@ -45,7 +45,7 @@ export const useUserStore = create<UserState>()(
             setLoading: (isLoading) => set({ isLoading }),
         }),
         {
-            name: 'nelrude-user-storage',
+            name: 'nerlude-user-storage',
             partialize: (state) => ({ 
                 user: state.user,
                 isAuthenticated: state.isAuthenticated 

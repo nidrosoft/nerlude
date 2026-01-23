@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
@@ -21,6 +22,7 @@ interface TeamMember {
 }
 
 const WorkspaceSettingsPage = () => {
+    const router = useRouter();
     const toast = useToast();
     const { currentWorkspace } = useWorkspaceStore();
     const { canAddTeamMember, getUpgradeMessage } = useSubscription();
@@ -172,7 +174,7 @@ const WorkspaceSettingsPage = () => {
             if (response.ok) {
                 setShowDeleteModal(false);
                 toast.info("Workspace deleted", "Your workspace has been permanently deleted.");
-                window.location.href = '/dashboard';
+                router.push('/dashboard');
             } else {
                 toast.error("Error", "Failed to delete workspace.");
             }

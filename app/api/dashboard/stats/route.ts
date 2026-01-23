@@ -1,9 +1,14 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
+import { applyRateLimit } from '@/lib/api-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
 // GET /api/dashboard/stats - Get aggregated dashboard statistics
 export async function GET(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();

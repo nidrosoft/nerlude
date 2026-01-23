@@ -11,6 +11,8 @@ type FieldProps = {
     isLarge?: boolean;
     currency?: string;
     variant?: "surface1" | "surface2";
+    error?: string | boolean;
+    helperText?: string;
 };
 
 const Field = ({
@@ -23,12 +25,15 @@ const Field = ({
     isLarge,
     currency,
     variant = "surface2",
+    error,
+    helperText,
     ...inputProps
 }: FieldProps &
     React.InputHTMLAttributes<HTMLInputElement> &
     React.TextareaHTMLAttributes<HTMLTextAreaElement>) => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const error = false;
+    const hasError = Boolean(error);
+    const errorMessage = typeof error === 'string' ? error : undefined;
 
     return (
         <div
@@ -50,7 +55,7 @@ const Field = ({
                     <textarea
                         className={`w-full px-6.5 py-4 border-[1.5px] border-stroke1 text-t-primary font-medium transition-colors resize-none outline-0 placeholder:text-t-tertiary focus:border-[#A8A8A8]/50! max-md:text-[1rem] ${
                             variant === "surface1" ? "bg-b-surface1" : "bg-b-surface2"
-                        } ${error ? "border-primary3!" : ""} ${
+                        } ${hasError ? "!border-red-500" : ""} ${
                             isLarge
                                 ? "h-77 rounded-2xl text-heading-thin tracking-normal! max-md:h-65"
                                 : "h-32 rounded-3xl text-input"
@@ -61,7 +66,7 @@ const Field = ({
                     <input
                         className={`w-full px-6.5 border-[1.5px] border-stroke1 text-t-primary font-medium transition-colors outline-0 placeholder:text-t-tertiary focus:border-[#A8A8A8]/50! max-md:text-[1rem] ${
                             variant === "surface1" ? "bg-b-surface1" : "bg-b-surface2"
-                        } ${error ? "!border-primary3!" : ""} ${
+                        } ${hasError ? "!border-red-500" : ""} ${
                             onResetPassword || type === "password"
                                 ? "pr-12"
                                 : ""
@@ -93,6 +98,8 @@ const Field = ({
                         className="group absolute top-1/2 right-5 -translate-y-1/2"
                         type="button"
                         onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                        aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                        aria-pressed={isPasswordVisible}
                     >
                         <Icon
                             className="fill-t-tertiary transition-colors group-hover:fill-t-primary"
@@ -106,6 +113,12 @@ const Field = ({
                     </div>
                 )}
             </div>
+            {/* Error or helper text */}
+            {(errorMessage || helperText) && (
+                <p className={`mt-1.5 px-6 text-small ${hasError ? 'text-red-500' : 'text-t-tertiary'}`}>
+                    {errorMessage || helperText}
+                </p>
+            )}
         </div>
     );
 };

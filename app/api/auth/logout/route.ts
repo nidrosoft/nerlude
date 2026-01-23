@@ -1,8 +1,13 @@
 import { createServerSupabaseClient } from '@/lib/db/server';
-import { NextResponse } from 'next/server';
+import { applyRateLimit } from '@/lib/api-utils';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = await applyRateLimit(request, 'api');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createServerSupabaseClient();
 
     // Get current user before logout for audit log

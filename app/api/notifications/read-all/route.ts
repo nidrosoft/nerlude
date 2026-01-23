@@ -2,10 +2,9 @@ import { createServerSupabaseClient } from '@/lib/db/server';
 import { applyRateLimit } from '@/lib/api-utils';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/notifications - List user notifications
-export async function GET(request: NextRequest) {
+// POST /api/notifications/read-all - Mark all notifications as read
+export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting
     const rateLimitResponse = await applyRateLimit(request, 'api');
     if (rateLimitResponse) return rateLimitResponse;
 
@@ -17,31 +16,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const unreadOnly = searchParams.get('unread') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '50');
-
-    let query = supabase
+    const { error } = await supabase
       .from('notifications')
-      .select('*')
+      .update({ read_at: new Date().toISOString() })
       .eq('user_id', user.id)
-      .is('dismissed_at', null)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (unreadOnly) {
-      query = query.is('read_at', null);
-    }
-
-    const { data, error } = await query;
+      .is('read_at', null);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ message: 'All notifications marked as read' });
   } catch (error) {
-    console.error('List notifications error:', error);
+    console.error('Mark all read error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
@@ -124,6 +124,11 @@ const IntegrationsPage = () => {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [upgradeModalConfig, setUpgradeModalConfig] = useState({ title: "", message: "", suggestedPlan: "Pro" });
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const filteredIntegrations = integrations.filter((integration) => {
         const matchesCategory = activeCategory === "all" || integration.category === activeCategory;
@@ -257,7 +262,7 @@ const IntegrationsPage = () => {
                                                         </div>
                                                         <p className="text-xs text-t-tertiary mt-0.5">
                                                             Connected by {integration.connectedBy} on{" "}
-                                                            {new Date(integration.connectedAt!).toLocaleDateString()}
+                                                            {isMounted ? new Date(integration.connectedAt!).toLocaleDateString() : integration.connectedAt}
                                                         </p>
                                                     </div>
                                                 </div>

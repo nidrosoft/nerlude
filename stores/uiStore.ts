@@ -29,6 +29,9 @@ interface Toast {
     duration?: number;
 }
 
+// Track toast timeouts to prevent memory leaks
+const toastTimeouts = new Map<string, NodeJS.Timeout>();
+
 interface UIState {
     // Theme
     theme: ThemeMode;
@@ -42,6 +45,9 @@ interface UIState {
     sidebarState: SidebarState;
     setSidebarState: (state: SidebarState) => void;
     toggleSidebar: () => void;
+    expandSidebar: () => void;
+    collapseSidebar: () => void;
+    hideSidebar: () => void;
     
     // Modals
     activeModal: ModalData;
@@ -85,9 +91,16 @@ export const useUIStore = create<UIState>()(
             // Sidebar
             sidebarState: 'expanded',
             setSidebarState: (sidebarState) => set({ sidebarState }),
-            toggleSidebar: () => set((state) => ({
-                sidebarState: state.sidebarState === 'expanded' ? 'collapsed' : 'expanded'
-            })),
+            toggleSidebar: () => set((state) => {
+                // Cycle through all states: expanded -> collapsed -> hidden -> expanded
+                const stateOrder: SidebarState[] = ['expanded', 'collapsed', 'hidden'];
+                const currentIndex = stateOrder.indexOf(state.sidebarState);
+                const nextIndex = (currentIndex + 1) % stateOrder.length;
+                return { sidebarState: stateOrder[nextIndex] };
+            }),
+            expandSidebar: () => set({ sidebarState: 'expanded' }),
+            collapseSidebar: () => set({ sidebarState: 'collapsed' }),
+            hideSidebar: () => set({ sidebarState: 'hidden' }),
             
             // Modals
             activeModal: { type: null },
@@ -97,22 +110,43 @@ export const useUIStore = create<UIState>()(
             // Toasts
             toasts: [],
             addToast: (toast) => {
-                const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const id = `toast-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
                 const newToast = { ...toast, id };
                 set((state) => ({ toasts: [...state.toasts, newToast] }));
                 
                 // Auto-remove after duration (default 5 seconds)
                 const duration = toast.duration ?? 5000;
                 if (duration > 0) {
-                    setTimeout(() => {
+                    // Clear any existing timeout for this toast
+                    const existingTimeout = toastTimeouts.get(id);
+                    if (existingTimeout) {
+                        clearTimeout(existingTimeout);
+                    }
+                    
+                    // Set new timeout and store reference
+                    const timeout = setTimeout(() => {
                         get().removeToast(id);
                     }, duration);
+                    toastTimeouts.set(id, timeout);
                 }
             },
-            removeToast: (id) => set((state) => ({
-                toasts: state.toasts.filter((t) => t.id !== id)
-            })),
-            clearToasts: () => set({ toasts: [] }),
+            removeToast: (id) => {
+                // Clear the timeout when toast is removed
+                const timeout = toastTimeouts.get(id);
+                if (timeout) {
+                    clearTimeout(timeout);
+                    toastTimeouts.delete(id);
+                }
+                set((state) => ({
+                    toasts: state.toasts.filter((t) => t.id !== id)
+                }));
+            },
+            clearToasts: () => {
+                // Clear all timeouts
+                toastTimeouts.forEach((timeout) => clearTimeout(timeout));
+                toastTimeouts.clear();
+                set({ toasts: [] });
+            },
             
             // Loading
             globalLoading: false,
@@ -131,7 +165,7 @@ export const useUIStore = create<UIState>()(
             setCommandPaletteOpen: (isCommandPaletteOpen) => set({ isCommandPaletteOpen }),
         }),
         {
-            name: 'nelrude-ui-storage',
+            name: 'nerlude-ui-storage',
             partialize: (state) => ({
                 theme: state.theme,
                 sidebarState: state.sidebarState,

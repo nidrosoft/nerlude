@@ -13,7 +13,7 @@ const protectedRoutes = [
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/auth/login', '/auth/signup'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request,
   });
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   
   if (!supabaseUrl || !supabaseAnonKey) {
     // Skip auth check if env vars are missing (e.g., during build)
-    console.warn('Supabase environment variables not available in middleware');
+    console.warn('Supabase environment variables not available in proxy');
     return response;
   }
 

@@ -109,7 +109,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             setLoading: (isLoading) => set({ isLoading }),
         }),
         {
-            name: 'nelrude-workspace-storage',
+            name: 'nerlude-workspace-storage',
             partialize: (state) => ({
                 currentWorkspace: state.currentWorkspace,
                 settings: state.settings,

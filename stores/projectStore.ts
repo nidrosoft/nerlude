@@ -330,7 +330,7 @@ export const useProjectStore = create<ProjectState>()(
             setLoading: (isLoading) => set({ isLoading }),
         }),
         {
-            name: 'nelrude-project-storage',
+            name: 'nerlude-project-storage',
             partialize: (state) => ({
                 projects: state.projects,
                 services: state.services,

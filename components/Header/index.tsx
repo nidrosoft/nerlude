@@ -127,6 +127,9 @@ const Header = ({
                             <button
                                 className="hidden max-lg:flex items-center justify-center w-10 h-10 rounded-xl bg-b-surface2 hover:bg-b-surface3 transition-colors"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                                aria-expanded={isMobileMenuOpen}
+                                aria-controls="mobile-navigation"
                             >
                                 <Icon className="!w-5 !h-5 fill-t-primary" name={isMobileMenuOpen ? "close" : "menu"} />
                             </button>
@@ -137,7 +140,12 @@ const Header = ({
             
             {/* Mobile menu dropdown */}
             {!login && isHomePage && isMobileMenuOpen && (
-                <div className="hidden max-lg:block fixed top-16 left-0 right-0 z-40 bg-b-surface1 border-b border-stroke-subtle shadow-lg">
+                <div 
+                    id="mobile-navigation"
+                    className="hidden max-lg:block fixed top-16 left-0 right-0 z-40 bg-b-surface1 border-b border-stroke-subtle shadow-lg"
+                    role="navigation"
+                    aria-label="Mobile navigation"
+                >
                     <nav className="flex flex-col p-4">
                         {navLinks.map((link) => (
                             <a

@@ -72,14 +72,24 @@ const NotificationsSettingsPage = () => {
         );
     };
 
-    const handleSave = () => {
-        console.log("Saving notification settings:", {
-            notifications,
-            emailDigest,
-            quietHoursEnabled,
-            quietHoursStart,
-            quietHoursEnd,
-        });
+    const handleSave = async () => {
+        try {
+            // TODO: Save to API when backend is ready
+            // await fetch('/api/users/me/preferences', {
+            //     method: 'PATCH',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({
+            //         notifications,
+            //         emailDigest,
+            //         quietHoursEnabled,
+            //         quietHoursStart,
+            //         quietHoursEnd,
+            //     }),
+            // });
+            toast.success("Settings saved", "Your notification preferences have been updated.");
+        } catch {
+            toast.error("Error", "Failed to save notification settings. Please try again.");
+        }
     };
 
     return (

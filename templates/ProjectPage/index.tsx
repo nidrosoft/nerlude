@@ -192,8 +192,8 @@ const ProjectPage = ({ projectId }: Props) => {
                 const newProject = await response.json();
                 toast.success("Project duplicated", `"${project?.name} (Copy)" has been created.`);
                 setShowActionsMenu(false);
-                // Redirect to the new project
-                window.location.href = `/projects/${newProject.id}`;
+                // Navigate to the new project
+                router.push(`/projects/${newProject.id}`);
             } else {
                 const error = await response.json();
                 toast.error("Error", error.error || "Failed to duplicate project");
@@ -247,8 +247,8 @@ const ProjectPage = ({ projectId }: Props) => {
             if (response.ok) {
                 toast.success("Project archived", "This project has been moved to archives.");
                 setShowActionsMenu(false);
-                // Redirect to dashboard
-                window.location.href = '/dashboard';
+                // Navigate to dashboard
+                router.push('/dashboard');
             } else {
                 const error = await response.json();
                 toast.error("Error", error.error || "Failed to archive project");
@@ -275,8 +275,8 @@ const ProjectPage = ({ projectId }: Props) => {
             if (response.ok) {
                 toast.success("Project deleted", "This project has been permanently deleted.");
                 setShowDeleteModal(false);
-                // Redirect to dashboard
-                window.location.href = '/dashboard';
+                // Navigate to dashboard
+                router.push('/dashboard');
             } else {
                 const error = await response.json();
                 toast.error("Error", error.error || "Failed to delete project");
@@ -539,7 +539,7 @@ const ProjectPage = ({ projectId }: Props) => {
                                     icon: <Icon className={`!w-5 !h-5 ${canAddMoreServices ? 'fill-t-tertiary' : 'fill-amber-500'}`} name={canAddMoreServices ? "cube" : "lock"} />, 
                                     onClick: () => { 
                                         if (canAddMoreServices) {
-                                            window.location.href = `/projects/${projectId}/services/new`; 
+                                            router.push(`/projects/${projectId}/services/new`); 
                                         } else {
                                             setShowServiceUpgradeModal(true);
                                         }

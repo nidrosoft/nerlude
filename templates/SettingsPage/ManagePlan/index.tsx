@@ -235,15 +235,11 @@ const ManagePlanPage = () => {
             const supabase = getSupabaseClient();
             const { data: { session }, error: sessionError } = await supabase.auth.getSession();
             
-            console.log('Session check:', { session: !!session, error: sessionError });
-            
             if (!session || sessionError) {
-                toast.error("Error", "Please sign in to upgrade. You may need to log out and log back in.");
+                toast.error("Session expired", "Please sign in to upgrade. You may need to log out and log back in.");
                 setIsUpgrading(false);
                 return;
             }
-
-            console.log('Calling stripe-checkout with token:', session.access_token?.substring(0, 20) + '...');
 
             // Call the Stripe checkout Edge Function
             const response = await fetch(
