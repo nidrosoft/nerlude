@@ -515,8 +515,11 @@ export type Database = {
         Row: {
           created_at: string | null
           credentials_encrypted: string
+          credential_type: string | null
+          description: string | null
           environment: string
           id: string
+          key_name: string | null
           last_rotated_at: string | null
           project_service_id: string | null
           rotation_reminder_days: number | null
@@ -525,8 +528,11 @@ export type Database = {
         Insert: {
           created_at?: string | null
           credentials_encrypted: string
+          credential_type?: string | null
+          description?: string | null
           environment: string
           id?: string
+          key_name?: string | null
           last_rotated_at?: string | null
           project_service_id?: string | null
           rotation_reminder_days?: number | null
@@ -535,8 +541,11 @@ export type Database = {
         Update: {
           created_at?: string | null
           credentials_encrypted?: string
+          credential_type?: string | null
+          description?: string | null
           environment?: string
           id?: string
+          key_name?: string | null
           last_rotated_at?: string | null
           project_service_id?: string | null
           rotation_reminder_days?: number | null
