@@ -101,19 +101,7 @@ const NewProjectPage = () => {
     // Method selection handler
     const handleMethodSelect = (method: ImportMethod) => {
         if (method === 'documents') {
-            // Check if user has AI Document Import feature (Pro+ only)
-            const aiImportCheck = hasFeature("hasAiDocumentImport");
-            if (!aiImportCheck.allowed) {
-                const upgradeMsg = getUpgradeMessage("feature", "AI Document Import");
-                setUpgradeModalConfig({
-                    title: "AI Document Import - Pro Plan",
-                    message: "AI-powered document import is available on Pro and Team plans. Upgrade to automatically extract services from receipts and invoices.",
-                    suggestedPlan: upgradeMsg.suggestedPlan,
-                    limitType: "feature",
-                });
-                setShowUpgradeModal(true);
-                return;
-            }
+            // AI Document Import is now free for all users to explore
             setFlowType('documents');
             setCurrentStep('upload');
         } else if (method === 'email') {
