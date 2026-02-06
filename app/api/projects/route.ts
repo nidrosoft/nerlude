@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
             created_by: user.id,
           };
         })
-        .filter(Boolean);
+        .filter((s): s is NonNullable<typeof s> => s !== null);
       
       if (serviceRecords.length > 0) {
         // Insert services using the authenticated user's supabase client
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
           console.error('Error creating services:', servicesError);
         } else if (insertedServices && insertedServices.length > 0) {
           // Log activity for each service added
-          const auditLogs = insertedServices.map((service: { id: string; name: string; registry_id: string; category_id: string }) => ({
+          const auditLogs = insertedServices.map((service) => ({
             workspace_id,
             user_id: user.id,
             action: 'service_added',
