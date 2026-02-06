@@ -116,17 +116,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (workspacesData) {
-          const workspaces = workspacesData.map((ws: { id: string; name: string; slug: string; owner_id: string | null; workspace_type: string | null; settings: Record<string, unknown> | null; created_at: string | null; updated_at: string | null }) => {
+          const workspaces = workspacesData.map((ws) => {
             const membership = memberships.find(m => m.workspace_id === ws.id);
+            const settings = (typeof ws.settings === 'string' ? JSON.parse(ws.settings) : ws.settings) as Record<string, unknown> | null;
             return {
-              ...ws,
+              id: ws.id,
+              name: ws.name,
+              slug: ws.slug,
+              ownerId: ws.owner_id || '',
+              workspaceType: ws.workspace_type as any,
+              settings,
+              createdAt: ws.created_at || '',
+              updatedAt: ws.updated_at || '',
               role: membership?.role,
             };
           });
-          setWorkspaces(workspaces);
+          setWorkspaces(workspaces as any);
           
           if (workspaces.length > 0) {
-            setCurrentWorkspace(workspaces[0]);
+            setCurrentWorkspace(workspaces[0] as any);
           }
         }
       }
@@ -214,11 +222,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Set the workspace in the store immediately so it's available for navigation
           const workspaceWithRole = {
-            ...workspace,
+            id: workspace.id,
+            name: workspace.name,
+            slug: workspace.slug,
+            ownerId: workspace.owner_id || '',
+            workspaceType: workspace.workspace_type as any,
+            settings: (typeof workspace.settings === 'string' ? JSON.parse(workspace.settings) : workspace.settings) as Record<string, unknown> | null,
+            createdAt: workspace.created_at || '',
+            updatedAt: workspace.updated_at || '',
             role: 'owner' as const,
           };
-          setWorkspaces([workspaceWithRole]);
-          setCurrentWorkspace(workspaceWithRole);
+          setWorkspaces([workspaceWithRole] as any);
+          setCurrentWorkspace(workspaceWithRole as any);
         }
 
         // Also set the user in the store immediately
