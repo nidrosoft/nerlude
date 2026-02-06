@@ -67,7 +67,7 @@ export const updateProjectSchema = z.object({
   icon: z.string().max(10).optional(),
   type: z.enum(projectTypes).optional(),
   status: z.enum(projectStatuses).optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ================================
@@ -138,8 +138,8 @@ const environments = ['production', 'staging', 'development'] as const;
 export const createCredentialSchema = z.object({
   environment: z.enum(environments, { error: 'Invalid environment' }),
   type: z.enum(credentialTypes).optional(),
-  fields: z.record(z.string()).optional(),
-  credentials: z.record(z.unknown()).optional(),
+  fields: z.record(z.string(), z.string()).optional(),
+  credentials: z.record(z.string(), z.unknown()).optional(),
   description: z.string().max(500).optional(),
 }).refine(
   (data) => data.fields || data.credentials,
