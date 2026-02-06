@@ -56,7 +56,7 @@ export const createProjectSchema = z.object({
   description: z.string().max(500, 'Description too long').optional(),
   icon: z.string().max(10).optional(),
   workspace_id: z.string().uuid('Invalid workspace ID'),
-  type: z.enum(projectTypes, { errorMap: () => ({ message: 'Invalid project type' }) }),
+  type: z.enum(projectTypes, { error: 'Invalid project type' }),
   services: z.array(z.string()).optional(),
   template_id: z.string().optional(),
 });
@@ -81,7 +81,7 @@ const serviceStatuses = ['active', 'inactive', 'paused', 'deprecated'] as const;
 
 export const createServiceSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
-  category_id: z.enum(serviceCategories, { errorMap: () => ({ message: 'Invalid category' }) }),
+  category_id: z.enum(serviceCategories, { error: 'Invalid category' }),
   sub_category_id: z.string().optional(),
   registry_id: z.string().optional(),
   custom_logo_url: z.string().url().optional().or(z.literal('')),
@@ -136,7 +136,7 @@ const credentialTypes = ['api_key', 'database', 'login', 'env_vars', 'ssh_key', 
 const environments = ['production', 'staging', 'development'] as const;
 
 export const createCredentialSchema = z.object({
-  environment: z.enum(environments, { errorMap: () => ({ message: 'Invalid environment' }) }),
+  environment: z.enum(environments, { error: 'Invalid environment' }),
   type: z.enum(credentialTypes).optional(),
   fields: z.record(z.string()).optional(),
   credentials: z.record(z.unknown()).optional(),
