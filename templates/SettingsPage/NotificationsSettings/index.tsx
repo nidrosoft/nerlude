@@ -4,6 +4,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import { useToast } from "@/components/Toast";
 import SettingsSidebar from "../SettingsSidebar";
 
 interface NotificationSetting {
@@ -16,6 +17,7 @@ interface NotificationSetting {
 }
 
 const NotificationsSettingsPage = () => {
+    const toast = useToast();
     const [notifications, setNotifications] = useState<NotificationSetting[]>([
         {
             id: "renewals",
