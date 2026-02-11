@@ -1,7 +1,9 @@
 import Image from "@/components/Image";
 import Button from "@/components/Button";
+import { useAuthModal } from "@/components/Layout";
 
 const Hero = () => {
+    const openAuthModal = useAuthModal();
 
     return (
         <div className="section section-lines pt-20 text-center max-md:pt-10 before:-top-22! after:-top-22! max-lg:before:top-0! max-lg:after:top-0! max-md:before:bottom-4! max-md:after:bottom-4!">
@@ -18,8 +20,7 @@ const Hero = () => {
             <Button
                 className="mb-12 max-lg:mb-10"
                 isStroke
-                as="link"
-                href="/onboarding"
+                onClick={() => openAuthModal?.()}
             >
                 Get started for free
             </Button>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import Button from "@/components/Button";
+import { useAuthModal } from "@/components/Layout";
 
 const plans = [
     {
@@ -74,6 +75,7 @@ const plans = [
 ];
 
 const PricingSection = () => {
+    const openAuthModal = useAuthModal();
     const [isYearly, setIsYearly] = useState(false);
 
     const getPrice = (price: number) => {
@@ -164,8 +166,7 @@ const PricingSection = () => {
                                     </ul>
                                     <Button
                                         isStroke
-                                        as="link"
-                                        href="/onboarding"
+                                        onClick={() => openAuthModal?.()}
                                     >
                                         {plan.cta}
                                     </Button>

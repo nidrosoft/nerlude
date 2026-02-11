@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import ThemeButton from "@/components/ThemeButton";
@@ -10,6 +10,10 @@ import WorkspaceLoadingOverlay from "@/components/WorkspaceLoadingOverlay";
 import { useAuth } from "@/lib/auth";
 import { getSupabaseClient } from "@/lib/db";
 import { Alert } from "@/types";
+
+// Context to allow child components to open the auth modal
+const AuthModalContext = createContext<(() => void) | null>(null);
+export const useAuthModal = () => useContext(AuthModalContext);
 
 type Props = {
     className?: string;
@@ -40,6 +44,7 @@ const Layout = ({
     const { signOut } = useAuth();
     const [loginOpen, setLoginOpen] = useState(isLoggedIn);
     const [internalAlerts, setInternalAlerts] = useState<Alert[]>([]);
+    const openAuthModalRef = useRef<(() => void) | null>(null);
 
     // Fetch notifications from API when logged in
     const fetchNotifications = useCallback(async () => {
@@ -222,8 +227,11 @@ const Layout = ({
                 alerts={alerts}
                 onMarkAsRead={handleMarkAsRead}
                 onMarkAllAsRead={handleMarkAllAsRead}
+                onOpenAuthModal={(fn) => { openAuthModalRef.current = fn; }}
             />
-            <div className={`grow ${classContainer || ""}`}>{children}</div>
+            <AuthModalContext.Provider value={() => openAuthModalRef.current?.()}>
+                <div className={`grow ${classContainer || ""}`}>{children}</div>
+            </AuthModalContext.Provider>
             {!isHiddenFooter && <Footer />}
             <ThemeButton className="fixed! left-5 bottom-5 z-5 max-md:bottom-20" />
             <UpButton />

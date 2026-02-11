@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Button from "@/components/Button";
@@ -28,6 +28,7 @@ type HeaderProps = {
     alerts?: Alert[];
     onMarkAsRead?: (id: string) => void;
     onMarkAllAsRead?: () => void;
+    onOpenAuthModal?: (callback: () => void) => void;
 };
 
 const Header = ({
@@ -39,11 +40,22 @@ const Header = ({
     alerts = [],
     onMarkAsRead,
     onMarkAllAsRead,
+    onOpenAuthModal,
 }: HeaderProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const isHomePage = pathname === "/";
+
+    const openAuthModal = useCallback(() => {
+        setIsMenuOpen(true);
+    }, []);
+
+    useEffect(() => {
+        if (onOpenAuthModal) {
+            onOpenAuthModal(openAuthModal);
+        }
+    }, [onOpenAuthModal, openAuthModal]);
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         if (isHomePage && href.startsWith("#")) {

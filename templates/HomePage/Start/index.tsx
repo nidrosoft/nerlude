@@ -1,7 +1,9 @@
 import Button from "@/components/Button";
 import Image from "@/components/Image";
+import { useAuthModal } from "@/components/Layout";
 
 const Start = () => {
+    const openAuthModal = useAuthModal();
 
     return (
         <div className="section section-lines before:-top-38! before:-bottom-21! after:-top-38! after:-bottom-21! max-lg:before:-top-23.5! max-lg:before:-bottom-4! max-lg:after:-top-23.5! max-lg:after:-bottom-4! max-md:before:hidden max-md:after:hidden">
@@ -32,7 +34,7 @@ const Start = () => {
                                     track of their services again
                                 </div>
                                 <div className="flex flex-col items-center gap-4 max-md:items-start">
-                                    <Button isStroke as="link" href="/onboarding">
+                                    <Button isStroke onClick={() => openAuthModal?.()}>
                                         Get started for free
                                     </Button>
                                     <div className="flex items-center gap-4 text-small text-t-secondary max-md:flex-col max-md:items-start max-md:gap-2">
